@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render } from '@testing-library/react';
 import App from './App';
 
 // Mock Firebase
@@ -13,7 +13,7 @@ vi.mock('firebase/firestore', () => ({
   doc: vi.fn(),
   onSnapshot: vi.fn((q, callback) => {
     callback({ forEach: vi.fn() });
-    return vi.fn(); // Return unsubscribe function
+    return vi.fn();
   }),
   query: vi.fn(),
   deleteDoc: vi.fn(),
@@ -24,12 +24,10 @@ vi.mock('firebase/firestore', () => ({
 
 vi.mock('firebase/auth', () => ({
   getAuth: vi.fn(),
-  signInAnonymously: vi.fn(() => Promise.resolve({ user: { uid: 'test-uid' } })),
   onAuthStateChanged: vi.fn((auth, callback) => {
-    callback({ uid: 'test-uid' });
+    callback({ uid: 'test-uid', displayName: 'Test User', photoURL: null });
     return vi.fn();
   }),
-  signInWithCustomToken: vi.fn(),
   GoogleAuthProvider: vi.fn(),
   signInWithPopup: vi.fn(() => Promise.resolve({ user: { uid: 'google-test-uid', displayName: 'Test User' } })),
   signOut: vi.fn(() => Promise.resolve()),
