@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, doc, onSnapshot, query, deleteDoc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { Plus, Trash2, X, Search, CheckSquare, Calendar, AlertCircle, BarChart3, ChevronRight, CheckCircle2, Circle, LogOut, User, Layers } from 'lucide-react';
 import Landing from './Landing';
 
@@ -127,6 +127,20 @@ export default function App() {
     }
   };
 
+  const handleEmailSignIn = async (email, password, name, isSignUp) => {
+    try {
+      if (isSignUp) {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: name });
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+    } catch (error) {
+      console.error("Email sign-in error:", error);
+      throw error;
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -236,6 +250,7 @@ export default function App() {
     return (
       <Landing
         onGoogleSignIn={handleGoogleSignIn}
+        onEmailSignIn={handleEmailSignIn}
         isLoading={false}
       />
     );
