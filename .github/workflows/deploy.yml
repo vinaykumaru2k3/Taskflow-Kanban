@@ -2,13 +2,35 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
   test:
+    name: Test (Matrix)
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
@@ -17,21 +39,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-
-      - name: Cache node_modules
-        uses: actions/cache@v3
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ matrix.node-version }}-
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -39,45 +53,48 @@ jobs:
       - name: Run tests
         run: npm run test
 
-      - name: Build
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
         run: npm run build
 
-      - name: Cache build artifact
-        if: matrix.os == 'ubuntu-latest' && matrix.node-version == 18
-        uses: actions/cache@v3
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
+          name: dist
           path: dist
-          key: build-${{ github.sha }}
 
   deploy:
     name: Deploy to Firebase
-    needs: test
     runs-on: ubuntu-latest
+    needs: build
     if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Restore node_modules
-        uses: actions/cache@v3
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-18-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-18-
-
-      - name: Restore build artifact
-        uses: actions/cache@v3
-        with:
+          name: dist
           path: dist
-          key: build-${{ github.sha }}
 
       - name: Deploy to Firebase
         id: firebase_deploy
@@ -90,7 +107,6 @@ jobs:
 
       - name: Print deployed URL
         run: |
-          echo "🚀 Deployment complete"
-          echo "🌍 Live URL: https://taskflow-app-f6474.web.app"
-          echo "🌍 Alt URL: https://taskflow-app-f6474.firebaseapp.com"
-
+          echo "Deployment complete"
+          echo "Live URL: https://taskflow-app-f6474.web.app"
+          echo "Alt URL: https://taskflow-app-f6474.firebaseapp.com"
