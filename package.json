@@ -24,6 +24,8 @@
     "vitest": "^1.0.4"
   },
   "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
