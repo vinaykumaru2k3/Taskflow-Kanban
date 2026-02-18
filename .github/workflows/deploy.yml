@@ -14,13 +14,15 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         node-version: [18, 20]
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      
+          cache: 'npm'
+
       - name: Cache node_modules
         uses: actions/cache@v3
         with:
@@ -28,15 +30,15 @@ jobs:
           key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-${{ matrix.node-version }}-
-      
+
       - run: npm ci
-      
+
       - name: Run tests
         run: npm run test
-      
+
       - name: Build
         run: npm run build
-      
+
       - name: Cache build
         if: matrix.os == 'ubuntu-latest' && matrix.node-version == 18
         uses: actions/cache@v3
@@ -48,33 +50,32 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
-      
-      - name: Cache node_modules
+          cache: 'npm'
+
+      - name: Restore node_modules
         uses: actions/cache@v3
         with:
           path: node_modules
           key: ${{ runner.os }}-node-18-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-18-
-      
-      - name: Restore build cache
+
+      - name: Restore build
         uses: actions/cache@v3
         with:
           path: dist
           key: build-${{ github.sha }}
-      
-      - run: npm ci
-      - run: npm run build
-      
+
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           channelId: live
           projectId: taskflow-app-f6474
