@@ -121,6 +121,7 @@ export default function App() {
   const [showBoardModal, setShowBoardModal] = useState(false);
   const [editingBoard, setEditingBoard] = useState(null);
   const [boardForm, setBoardForm] = useState({ name: '', color: '#3B82F6' });
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, boardId: null, boardName: '' });
 
   const initialTaskState = { title: '', description: '', priority: 'medium', status: 'todo', dueDate: '', tags: [], subtasks: [] };
   const [taskForm, setTaskForm] = useState(initialTaskState);
@@ -224,17 +225,21 @@ export default function App() {
     }
   };
 
-  const handleDeleteBoard = async (boardId) => {
-    if (!user) return;
-    if (!confirm('Delete this board? All tasks in this board will also be deleted.')) return;
+  const handleDeleteBoard = async () => {
+    if (!user || !deleteConfirm.boardId) return;
     try {
-      await deleteDoc(doc(db, 'users', user.uid, 'boards', boardId));
-      if (currentBoard?.id === boardId) {
-        setCurrentBoard(boards.find(b => b.id !== boardId) || null);
+      await deleteDoc(doc(db, 'users', user.uid, 'boards', deleteConfirm.boardId));
+      if (currentBoard?.id === deleteConfirm.boardId) {
+        setCurrentBoard(boards.find(b => b.id !== deleteConfirm.boardId) || null);
       }
+      setDeleteConfirm({ show: false, boardId: null, boardName: '' });
     } catch (err) {
       console.error('Error deleting board:', err);
     }
+  };
+
+  const confirmDeleteBoard = (board) => {
+    setDeleteConfirm({ show: true, boardId: board.id, boardName: board.name });
   };
 
   const openEditBoard = (board) => {
@@ -356,7 +361,7 @@ export default function App() {
                     <button onClick={(e) => { e.stopPropagation(); openEditBoard(board); }} className="p-1 hover:bg-slate-200 rounded">
                       <Edit2 size={12} />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDeleteBoard(board.id); }} className="p-1 hover:bg-rose-100 text-slate-400 hover:text-rose-500 rounded">
+                    <button onClick={(e) => { e.stopPropagation(); confirmDeleteBoard(board); }} className="p-1 hover:bg-rose-100 text-slate-400 hover:text-rose-500 rounded">
                       <Trash2 size={12} />
                     </button>
                   </div>
@@ -532,6 +537,33 @@ export default function App() {
             <ChevronRight size={16} />
           </button>
         </form>
+      </Modal>
+
+      {/* Delete Board Confirmation Modal */}
+      <Modal isOpen={deleteConfirm.show} onClose={() => setDeleteConfirm({ show: false, boardId: null, boardName: '' })} title="Delete Board">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 flex items-center justify-center">
+            <Trash2 size={32} className="text-rose-500" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">Delete "{deleteConfirm.boardName}"?</h3>
+          <p className="text-sm text-slate-500 mb-6">
+            This will permanently delete the board and all its tasks. This action cannot be undone.
+          </p>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setDeleteConfirm({ show: false, boardId: null, boardName: '' })}
+              className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleDeleteBoard}
+              className="flex-1 px-4 py-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-rose-500/30"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
       </Modal>
 
       <footer className="px-4 md:px-6 lg:px-8 py-4 text-center border-t border-slate-200 bg-white/50 backdrop-blur-sm">
