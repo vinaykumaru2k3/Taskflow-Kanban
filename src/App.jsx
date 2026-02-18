@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, doc, onSnapshot, query, deleteDoc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { Plus, Trash2, X, Zap, Search, CheckSquare, Calendar, AlertCircle, BarChart3, ChevronRight, CheckCircle2, Circle, Moon, Sun, LogOut, User } from 'lucide-react';
+import { Plus, Trash2, X, Zap, Search, CheckSquare, Calendar, AlertCircle, BarChart3, ChevronRight, CheckCircle2, Circle, Moon, Sun, LogOut, User, Layers } from 'lucide-react';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC5JJIcfKd8c0AbtzpVrtRRF_I3FmhXUcc",
@@ -147,18 +147,9 @@ export default function App() {
   };
 
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        await signInAnonymously(auth);
-      } catch (error) { 
-        console.error("Auth error:", error);
-        // Set user anyway to bypass auth issues during development
-        setUser({ uid: 'demo-user' });
-      }
-    };
-    initAuth();
+    // Don't sign in anonymously - let onAuthStateChanged handle the session
     const unsubscribe = onAuthStateChanged(auth, (u) => {
-      if (u) setUser(u);
+      setUser(u);
     });
     return () => unsubscribe();
   }, []);
@@ -244,7 +235,14 @@ export default function App() {
     <div className={`flex items-center justify-center min-h-screen ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
       <div className="flex flex-col items-center gap-6" style={{ fontFamily: "'Poppins', sans-serif" }}>
         <div className="w-16 h-16 border-8 border-blue-600 border-t-transparent rounded-full animate-spin shadow-xl"></div>
-        <p className={`font-black tracking-widest text-xs uppercase animate-pulse ${darkMode ? 'text-slate-600' : 'text-slate-400'}`}>Launching Engine...</p>
+        <p className={`font-black tracking-widest text-xs uppercase animate-pulse ${darkMode ? 'text-slate-600' : 'text-slate-400'}`}>Loading...</p>
+        <button 
+          onClick={handleGoogleSignIn} 
+          className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/30"
+        >
+          <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+          Sign in with Google
+        </button>
       </div>
     </div>
   );
@@ -305,17 +303,20 @@ export default function App() {
           {showStats && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
               {[
-                { label: 'Total', val: stats.total, bg: 'bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-900/10', text: 'text-blue-600 dark:text-blue-400', icon: '📊' },
-                { label: 'Done', val: stats.completed, bg: 'bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/20 dark:to-emerald-900/10', text: 'text-emerald-600 dark:text-emerald-400', icon: '✅' },
-                { label: 'Urgent', val: stats.urgent, bg: 'bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-900/10', text: 'text-orange-600 dark:text-orange-400', icon: '🔥' },
-                { label: 'Overdue', val: stats.overdue, bg: 'bg-gradient-to-br from-rose-50 to-rose-100/50 dark:from-rose-900/20 dark:to-rose-900/10', text: 'text-rose-600 dark:text-rose-400', icon: '⚠️' },
+                { label: 'Total', val: stats.total, bg: 'bg-gradient-to-br from-indigo-500/10 to-indigo-500/5 dark:from-indigo-500/20 dark:to-indigo-500/5', border: 'border-indigo-200/50 dark:border-indigo-800/50', text: 'text-indigo-600 dark:text-indigo-400', icon: 'layers' },
+                { label: 'Done', val: stats.completed, bg: 'bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/20 dark:to-emerald-500/5', border: 'border-emerald-200/50 dark:border-emerald-800/50', text: 'text-emerald-600 dark:text-emerald-400', icon: 'check-circle' },
+                { label: 'Urgent', val: stats.urgent, bg: 'bg-gradient-to-br from-amber-500/10 to-amber-500/5 dark:from-amber-500/20 dark:to-amber-500/5', border: 'border-amber-200/50 dark:border-amber-800/50', text: 'text-amber-600 dark:text-amber-400', icon: 'alert-triangle' },
+                { label: 'Overdue', val: stats.overdue, bg: 'bg-gradient-to-br from-rose-500/10 to-rose-500/5 dark:from-rose-500/20 dark:to-rose-500/5', border: 'border-rose-200/50 dark:border-rose-800/50', text: 'text-rose-600 dark:text-rose-400', icon: 'clock' },
               ].map((s, i) => (
-                <div key={i} className={`${s.bg} p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50`}>
+                <div key={i} className={`${s.bg} p-3 rounded-xl border ${s.border} backdrop-blur-sm`}>
                   <div className="flex items-center justify-between mb-1">
-                    <p className={`text-[10px] font-black uppercase tracking-wider ${s.text}`}>{s.label}</p>
-                    <span className="text-lg">{s.icon}</span>
+                    <p className={`text-[10px] font-bold uppercase tracking-wider ${s.text}`}>{s.label}</p>
+                    {s.icon === 'layers' && <Layers size={14} className={s.text} />}
+                    {s.icon === 'check-circle' && <CheckCircle2 size={14} className={s.text} />}
+                    {s.icon === 'alert-triangle' && <AlertCircle size={14} className={s.text} />}
+                    {s.icon === 'clock' && <Calendar size={14} className={s.text} />}
                   </div>
-                  <p className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{s.val}</p>
+                  <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{s.val}</p>
                 </div>
               ))}
             </div>

@@ -30,6 +30,9 @@ vi.mock('firebase/auth', () => ({
     return vi.fn();
   }),
   signInWithCustomToken: vi.fn(),
+  GoogleAuthProvider: vi.fn(),
+  signInWithPopup: vi.fn(() => Promise.resolve({ user: { uid: 'google-test-uid', displayName: 'Test User' } })),
+  signOut: vi.fn(() => Promise.resolve()),
 }));
 
 describe('App Component', () => {
