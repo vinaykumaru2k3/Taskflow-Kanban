@@ -1,197 +1,224 @@
 import React, { useState, useMemo } from 'react';
-import Calendar from 'react-calendar';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, AlertCircle, CheckSquare } from 'lucide-react';
-import 'react-calendar/dist/Calendar.css';
-
-const PRIORITIES = {
-  low: { label: 'Low', color: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' },
-  medium: { label: 'Medium', color: 'bg-blue-100 text-blue-600', dot: 'bg-blue-500' },
-  high: { label: 'High', color: 'bg-orange-100 text-orange-600', dot: 'bg-orange-500' },
-  urgent: { label: 'Urgent', color: 'bg-rose-100 text-rose-600', dot: 'bg-rose-600' },
-};
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { PRIORITIES } from './utils/constants';
+import Modal from './components/Modal';
 
 const CalendarView = ({ tasks, onTaskClick }) => {
-  const [date, setDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState(null); // { date: string, tasks: [] }
+
+  // Constants
+  const daysInWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  // Helper functions
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+  // Navigation handlers
+  const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  const goToToday = () => setCurrentDate(new Date());
+
+  // Data processing
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const daysCount = getDaysInMonth(year, month);
+  const firstDay = getFirstDayOfMonth(year, month);
+  const today = new Date();
 
   const tasksByDate = useMemo(() => {
     const grouped = {};
     tasks.forEach(task => {
       if (task.dueDate) {
-        const dateKey = new Date(task.dueDate).toDateString();
-        if (!grouped[dateKey]) {
-          grouped[dateKey] = [];
-        }
-        grouped[dateKey].push(task);
+        // Normalize date to local YYYY-MM-DD for comparison
+        const d = new Date(task.dueDate);
+        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(task);
       }
     });
     return grouped;
   }, [tasks]);
 
-  const selectedDateTasks = useMemo(() => {
-    return tasksByDate[date.toDateString()] || [];
-  }, [tasksByDate, date]);
+  // Generate calendar grid
+  const calendarDays = [];
+  
+  // Empty slots for previous month
+  for (let i = 0; i < firstDay; i++) {
+    calendarDays.push({ key: `prev-${i}`, type: 'empty' });
+  }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const tileContent = ({ date, view }) => {
-    if (view !== 'month') return null;
-    const dateKey = date.toDateString();
+  // Days of current month
+  for (let i = 1; i <= daysCount; i++) {
+    const dateKey = `${year}-${month}-${i}`;
     const dayTasks = tasksByDate[dateKey] || [];
-    if (dayTasks.length === 0) return null;
-
-    const hasOverdue = dayTasks.some(t => new Date(t.dueDate) < new Date() && t.status !== 'done');
-    const allDone = dayTasks.every(t => t.status === 'done');
+    const isToday = i === today.getDate() && month === today.getMonth() && year === today.getFullYear();
     
-    let dotColor = 'bg-blue-500';
-    if (hasOverdue) dotColor = 'bg-rose-500';
-    else if (allDone) dotColor = 'bg-emerald-500';
+    calendarDays.push({
+      key: dateKey,
+      type: 'day',
+      day: i,
+      tasks: dayTasks,
+      isToday,
+      fullDate: new Date(year, month, i)
+    });
+  }
 
-    return (
-      <div className="flex justify-center">
-        <div className={`w-2 h-2 rounded-full ${dotColor}`} />
-      </div>
-    );
-  };
-
-  const tileClassName = ({ date, view }) => {
-    if (view !== 'month') return '';
-    const dateKey = date.toDateString();
-    const dayTasks = tasksByDate[dateKey] || [];
-    if (dayTasks.length === 0) return '';
-    
-    const hasOverdue = dayTasks.some(t => 
-      new Date(t.dueDate) < new Date() && t.status !== 'done'
-    );
-    const allDone = dayTasks.every(t => t.status === 'done');
-    const isToday = date.toDateString() === new Date().toDateString();
-    
-    if (hasOverdue) return 'bg-rose-50';
-    if (allDone) return 'bg-emerald-50';
-    if (isToday) return 'bg-blue-50';
-    return 'bg-slate-50';
+  const handleDayClick = (day) => {
+    setSelectedDay({
+      date: day.fullDate,
+      tasks: day.tasks
+    });
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      {/* Calendar Section */}
-      <div className="flex-1 bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+    <>
+      <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden flex flex-col h-[calc(90vh-140px)] w-[95%] mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <CalendarIcon size={20} className="text-white" />
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white/50 backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-700">
+              <CalendarIcon size={20} strokeWidth={2} />
             </div>
-            <h3 className="text-lg font-bold text-slate-800">
-              {date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-            </h3>
+            <div>
+              <h2 className="text-xl font-black text-slate-800 tracking-tight">
+                {monthNames[month]} <span className="text-slate-400 font-medium">{year}</span>
+              </h2>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setDate(new Date(date.getFullYear(), date.getMonth() - 1, 1))}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              <ChevronLeft size={20} className="text-slate-600" />
+          
+          <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-100">
+            <button onClick={prevMonth} className="p-1.5 hover:bg-white hover:shadow-sm rounded-lg text-slate-500 hover:text-blue-600 transition-all">
+              <ChevronLeft size={18} strokeWidth={2.5} />
             </button>
-            <button
-              onClick={() => setDate(new Date())}
-              className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-            >
+            <button onClick={goToToday} className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-600 hover:text-blue-600 hover:bg-white hover:shadow-sm rounded-lg transition-all">
               Today
             </button>
-            <button
-              onClick={() => setDate(new Date(date.getFullYear(), date.getMonth() + 1, 1))}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              <ChevronRight size={20} className="text-slate-600" />
+            <button onClick={nextMonth} className="p-1.5 hover:bg-white hover:shadow-sm rounded-lg text-slate-500 hover:text-blue-600 transition-all">
+              <ChevronRight size={18} strokeWidth={2.5} />
             </button>
           </div>
         </div>
-        
-        {/* Weekday Headers */}
-        <div className="grid grid-cols-7 mb-2">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="text-center text-xs font-bold text-slate-400 uppercase tracking-wider py-3 border-b border-slate-100">
-              {day}
+
+        {/* Weekday Header */}
+        <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/50">
+          {daysInWeek.map(day => (
+            <div key={day} className="py-3 text-center">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{day}</span>
             </div>
           ))}
         </div>
-        
+
         {/* Calendar Grid */}
-        <Calendar
-          onChange={setDate}
-          value={date}
-          tileContent={tileContent}
-          tileClassName={tileClassName}
-          showNeighboringMonth={true}
-          className="w-full"
-        />
+        <div className="grid grid-cols-7 flex-1 auto-rows-fr bg-slate-100 gap-[1px]">
+          {calendarDays.map((cell) => {
+            if (cell.type === 'empty') {
+              return <div key={cell.key} className="bg-slate-50/30" />;
+            }
+
+            return (
+              <div 
+                key={cell.key} 
+                onClick={() => handleDayClick(cell)}
+                className={`bg-white p-2 flex flex-col gap-1 min-h-[80px] transition-colors hover:bg-slate-50 cursor-pointer ${cell.isToday ? 'bg-blue-50/30' : ''}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`w-6 h-6 flex items-center justify-center rounded-md text-xs font-bold ${cell.isToday ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'text-slate-700'}`}>
+                    {cell.day}
+                  </span>
+                  {cell.tasks.length > 0 && (
+                     <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">{cell.tasks.length}</span>
+                  )}
+                </div>
+                
+                <div className="flex-1 flex flex-col gap-1 overflow-hidden relative">
+                  {cell.tasks.slice(0, 3).map(task => { // Show max 3 tasks directly
+                    const priority = PRIORITIES[task.priority] || PRIORITIES.medium;
+                    return (
+                      <div 
+                        key={task.id}
+                        onClick={(e) => { e.stopPropagation(); onTaskClick(task); }}
+                        className={`group relative pl-2 pr-1.5 py-1 rounded-md border border-slate-100 bg-white hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer`}
+                      >
+                        <div className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-l-md ${priority.dot.replace('bg-', 'bg-')}`} />
+                        <p className={`text-[10px] font-bold truncate ${task.status === 'done' ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                          {task.title}
+                        </p>
+                      </div>
+                    );
+                  })}
+                  {cell.tasks.length > 3 && (
+                    <div className="text-[9px] text-slate-400 font-medium text-center mt-auto">
+                      + {cell.tasks.length - 3}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Tasks Side Panel */}
-      <div className="w-full lg:w-80 bg-white rounded-2xl shadow-lg border border-slate-100 p-5 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-            <CalendarIcon size={18} className="text-white" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-800">
-              {date.toLocaleDateString('en-US', { weekday: 'long' })}
-            </h3>
-            <p className="text-xs text-slate-400 font-medium">
-              {date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-            </p>
-          </div>
-        </div>
-        
-        {selectedDateTasks.length === 0 ? (
-          <div className="text-center py-10">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-slate-50 flex items-center justify-center">
-              <CalendarIcon size={24} className="text-slate-300" />
+      {/* Day Details Modal */}
+      <Modal 
+        isOpen={!!selectedDay} 
+        onClose={() => setSelectedDay(null)} 
+        title={selectedDay ? selectedDay.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : ''}
+      >
+        <div className="space-y-3">
+          {selectedDay?.tasks.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300">
+                <CalendarIcon size={32} />
+              </div>
+              <p className="text-slate-500 font-medium">No tasks scheduled for this day.</p>
             </div>
-            <p className="text-sm text-slate-500 font-medium">No tasks</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {selectedDateTasks.map(task => {
-              const priority = PRIORITIES[task.priority] || PRIORITIES.low;
-              const isOverdue = new Date(task.dueDate) < today && task.status !== 'done';
-              const isDone = task.status === 'done';
+          ) : (
+            selectedDay?.tasks.map(task => {
+              const priority = PRIORITIES[task.priority] || PRIORITIES.medium;
+              const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'done';
               
               return (
-                <div
+                <div 
                   key={task.id}
-                  onClick={() => onTaskClick(task)}
-                  className="group p-3 rounded-xl border border-slate-100 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+                  onClick={() => { onTaskClick(task); setSelectedDay(null); }}
+                  className="group flex items-center gap-4 p-4 rounded-xl border border-slate-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 transition-all cursor-pointer bg-white"
                 >
-                  <div className="flex items-start gap-2">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${priority.dot}`} />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">{task.title}</h4>
-                      <div className="flex items-center gap-1.5 mt-2">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${priority.color}`}>
-                          {priority.label}
+                  <div className={`w-1 h-12 rounded-full ${priority.dot}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${priority.color}`}>
+                        {priority.label}
+                      </span>
+                      {isOverdue && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-600 flex items-center gap-1">
+                          <AlertCircle size={10} /> Overdue
                         </span>
-                        {isOverdue && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-600 flex items-center gap-1">
-                            <AlertCircle size={10} /> Overdue
-                          </span>
-                        )}
-                        {isDone && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-600 flex items-center gap-1">
-                            <CheckCircle2 size={10} /> Done
-                          </span>
-                        )}
-                      </div>
+                      )}
+                      {task.status === 'done' && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 flex items-center gap-1">
+                          <CheckCircle2 size={10} /> Completed
+                        </span>
+                      )}
                     </div>
+                    <h4 className={`text-sm font-bold ${task.status === 'done' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
+                      {task.title}
+                    </h4>
+                    {task.description && (
+                      <p className="text-xs text-slate-400 truncate mt-1">{task.description}</p>
+                    )}
+                  </div>
+                  <div className="text-slate-300 group-hover:text-blue-500 transition-colors">
+                    <ChevronRight size={16} />
                   </div>
                 </div>
               );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
+            })
+          )}
+        </div>
+      </Modal>
+    </>
   );
 };
 
