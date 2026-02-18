@@ -11,7 +11,10 @@ vi.mock('firebase/firestore', () => ({
   getFirestore: vi.fn(),
   collection: vi.fn(),
   doc: vi.fn(),
-  onSnapshot: vi.fn(),
+  onSnapshot: vi.fn((q, callback) => {
+    callback({ forEach: vi.fn() });
+    return vi.fn(); // Return unsubscribe function
+  }),
   query: vi.fn(),
   deleteDoc: vi.fn(),
   updateDoc: vi.fn(),
