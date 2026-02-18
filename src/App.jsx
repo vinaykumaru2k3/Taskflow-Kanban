@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, doc, onSnapshot, query, deleteDoc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, doc, onSnapshot, query, deleteDoc, updateDoc, addDoc, serverTimestamp, orderBy, where } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { Plus, Trash2, X, Search, CheckSquare, Calendar, AlertCircle, BarChart3, ChevronRight, CheckCircle2, Circle, LogOut, User, Layers } from 'lucide-react';
+import { Plus, Trash2, X, Search, CheckSquare, Calendar, AlertCircle, BarChart3, ChevronRight, CheckCircle2, Circle, LogOut, User, Layers, MoreVertical, Edit2, FolderPlus } from 'lucide-react';
 import Landing from './Landing';
 
 const firebaseConfig = {
@@ -110,11 +110,17 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [boards, setBoards] = useState([]);
+  const [currentBoard, setCurrentBoard] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingTask, setEditingTask] = useState(null);
   const [showStats, setShowStats] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [showBoardModal, setShowBoardModal] = useState(false);
+  const [editingBoard, setEditingBoard] = useState(null);
+  const [boardForm, setBoardForm] = useState({ name: '', color: '#3B82F6' });
 
   const initialTaskState = { title: '', description: '', priority: 'medium', status: 'todo', dueDate: '', tags: [], subtasks: [] };
   const [taskForm, setTaskForm] = useState(initialTaskState);
@@ -159,15 +165,83 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
-    const q = query(collection(db, 'users', user.uid, 'tasks'));
+    if (!user || !currentBoard) return;
+    const q = query(collection(db, 'users', user.uid, 'tasks'), where('boardId', '==', currentBoard.id));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const items = [];
       snapshot.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
       setTasks(items);
     });
     return () => unsubscribe();
+  }, [user, currentBoard]);
+
+  // Load boards
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, 'users', user.uid, 'boards'), orderBy('createdAt', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = [];
+      snapshot.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
+      setBoards(items);
+      // Set first board as current if none selected
+      if (items.length > 0 && !currentBoard) {
+        setCurrentBoard(items[0]);
+      }
+    });
+    return () => unsubscribe();
   }, [user]);
+
+  // Board CRUD functions
+  const handleCreateBoard = async (e) => {
+    e.preventDefault();
+    if (!boardForm.name.trim() || !user) return;
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'boards'), {
+        name: boardForm.name,
+        color: boardForm.color,
+        createdAt: serverTimestamp(),
+      });
+      setShowBoardModal(false);
+      setBoardForm({ name: '', color: '#3B82F6' });
+    } catch (err) {
+      console.error('Error creating board:', err);
+    }
+  };
+
+  const handleUpdateBoard = async (e) => {
+    e.preventDefault();
+    if (!boardForm.name.trim() || !editingBoard || !user) return;
+    try {
+      await updateDoc(doc(db, 'users', user.uid, 'boards', editingBoard), {
+        name: boardForm.name,
+        color: boardForm.color,
+      });
+      setShowBoardModal(false);
+      setEditingBoard(null);
+      setBoardForm({ name: '', color: '#3B82F6' });
+    } catch (err) {
+      console.error('Error updating board:', err);
+    }
+  };
+
+  const handleDeleteBoard = async (boardId) => {
+    if (!user) return;
+    if (!confirm('Delete this board? All tasks in this board will also be deleted.')) return;
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'boards', boardId));
+      if (currentBoard?.id === boardId) {
+        setCurrentBoard(boards.find(b => b.id !== boardId) || null);
+      }
+    } catch (err) {
+      console.error('Error deleting board:', err);
+    }
+  };
+
+  const openEditBoard = (board) => {
+    setEditingBoard(board.id);
+    setBoardForm({ name: board.name, color: board.color });
+    setShowBoardModal(true);
+  };
 
   const handleOpenCreate = () => {
     setEditingTask(null);
@@ -184,11 +258,16 @@ export default function App() {
   const handleSaveTask = async (e) => {
     e.preventDefault();
     if (!taskForm.title.trim()) return;
+    if (!currentBoard) {
+      alert('Please create a board first');
+      return;
+    }
     try {
+      const taskData = { ...taskForm, boardId: currentBoard.id, updatedAt: serverTimestamp() };
       if (editingTask) {
-        await updateDoc(doc(db, 'users', user.uid, 'tasks', editingTask), { ...taskForm, updatedAt: serverTimestamp() });
+        await updateDoc(doc(db, 'users', user.uid, 'tasks', editingTask), taskData);
       } else {
-        await addDoc(collection(db, 'users', user.uid, 'tasks'), { ...taskForm, createdAt: serverTimestamp() });
+        await addDoc(collection(db, 'users', user.uid, 'tasks'), { ...taskData, createdAt: serverTimestamp() });
       }
       setIsModalOpen(false);
       setTaskForm(initialTaskState);
@@ -257,43 +336,83 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-50 text-slate-900" style={{ fontFamily: "'Poppins', sans-serif" }}>
-      <header className="bg-gradient-to-r from-white to-blue-50/30 backdrop-blur-md border-b border-slate-200 px-4 md:px-6 lg:px-8 py-4 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <img src="/Taskflow logo.png" alt="TaskFlow" className="h-12 w-auto" />
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Live</p>
-              </div>
+    <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-white to-slate-50 text-slate-900" style={{ fontFamily: "'Poppins', sans-serif" }}>
+      {/* Sidebar */}
+      <aside className={`${showSidebar ? 'w-64' : 'w-0'} fixed lg:relative z-30 h-screen bg-white border-r border-slate-200 transition-all duration-300 overflow-hidden`}>
+        <div className="w-64 h-full flex flex-col">
+          <div className="p-4 border-b border-slate-200">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">Boards</h2>
+              <button onClick={() => { setEditingBoard(null); setBoardForm({ name: '', color: '#3B82F6' }); setShowBoardModal(true); }} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition-colors" title="Create new board">
+                <FolderPlus size={16} />
+              </button>
             </div>
-            <div className="flex flex-wrap items-center gap-2 md:gap-3">
-              <div className="flex items-center gap-2">
-                {user?.photoURL ? (
-                  <img src={user.photoURL} alt={user.displayName} className="w-8 h-8 rounded-full border-2 border-slate-200" />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white">
-                    <User size={16} />
+            <div className="space-y-1">
+              {boards.map(board => (
+                <div key={board.id} className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all ${currentBoard?.id === board.id ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-50 text-slate-600'}`} onClick={() => setCurrentBoard(board)}>
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: board.color || '#3B82F6' }} />
+                  <span className="flex-1 text-sm font-bold truncate">{board.name}</span>
+                  <div className="hidden group-hover:flex items-center gap-1">
+                    <button onClick={(e) => { e.stopPropagation(); openEditBoard(board); }} className="p-1 hover:bg-slate-200 rounded">
+                      <Edit2 size={12} />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDeleteBoard(board.id); }} className="p-1 hover:bg-rose-100 text-slate-400 hover:text-rose-500 rounded">
+                      <Trash2 size={12} />
+                    </button>
                   </div>
-                )}
-                <span className="text-xs font-bold text-slate-600 hidden md:block">{user?.displayName || 'User'}</span>
-                <button onClick={handleSignOut} className="p-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-all" title="Sign out">
-                  <LogOut size={16} />
-                </button>
-              </div>
-              <button onClick={() => setShowStats(!showStats)} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${showStats ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                <BarChart3 size={16} /> Stats
-              </button>
-              <div className="relative flex-1 lg:flex-initial">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input type="text" placeholder="Search..." className="pl-9 pr-4 py-2.5 bg-slate-100 border border-transparent rounded-xl text-sm font-medium focus:bg-white focus:border-blue-300 transition-all w-full lg:w-48 outline-none" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-              </div>
-              <button onClick={handleOpenCreate} className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/30 active:scale-95">
-                <Plus size={18} /> New
-              </button>
+                </div>
+              ))}
+              {boards.length === 0 && (
+                <p className="text-xs text-slate-400 text-center py-4">No boards yet.<br />Create one to get started!</p>
+              )}
             </div>
           </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+        <header className="bg-gradient-to-r from-white to-blue-50/30 backdrop-blur-md border-b border-slate-200 px-4 md:px-6 lg:px-8 py-4 sticky top-0 z-40 shadow-sm">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setShowSidebar(!showSidebar)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors lg:hidden">
+                  <Layers size={20} />
+                </button>
+                <img src="/Taskflow logo.png" alt="TaskFlow" className="h-10 w-auto" />
+                {currentBoard && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: currentBoard.color || '#3B82F6' }} />
+                    <span className="text-sm font-bold text-slate-700">{currentBoard.name}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                <div className="flex items-center gap-2">
+                  {user?.photoURL ? (
+                    <img src={user.photoURL} alt={user.displayName} className="w-8 h-8 rounded-full border-2 border-slate-200" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white">
+                      <User size={16} />
+                    </div>
+                  )}
+                  <span className="text-xs font-bold text-slate-600 hidden md:block">{user?.displayName || 'User'}</span>
+                  <button onClick={handleSignOut} className="p-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-all" title="Sign out">
+                    <LogOut size={16} />
+                  </button>
+                </div>
+                <button onClick={() => setShowStats(!showStats)} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${showStats ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                  <BarChart3 size={16} /> Stats
+                </button>
+                <div className="relative flex-1 lg:flex-initial">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <input type="text" placeholder="Search..." className="pl-9 pr-4 py-2.5 bg-slate-100 border border-transparent rounded-xl text-sm font-medium focus:bg-white focus:border-blue-300 transition-all w-full lg:w-48 outline-none" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                </div>
+                <button onClick={handleOpenCreate} className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/30 active:scale-95" disabled={!currentBoard} title={currentBoard ? 'New Task' : 'Select a board first'}>
+                  <Plus size={18} /> New
+                </button>
+              </div>
+            </div>
           {showStats && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
               {[
@@ -389,9 +508,36 @@ export default function App() {
           </button>
         </form>
       </Modal>
+
+      {/* Board Modal */}
+      <Modal isOpen={showBoardModal} onClose={() => { setShowBoardModal(false); setEditingBoard(null); setBoardForm({ name: '', color: '#3B82F6' }); }} title={editingBoard ? 'Edit Board' : 'New Board'}>
+        <form onSubmit={editingBoard ? handleUpdateBoard : handleCreateBoard} className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Board Name</label>
+            <input required className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-blue-500/20 outline-none transition-all" placeholder="My Project" value={boardForm.name} onChange={e => setBoardForm({...boardForm, name: e.target.value})} />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Color</label>
+            <div className="flex items-center gap-3">
+              <input type="color" className="w-12 h-12 rounded-xl border-2 border-slate-200 cursor-pointer" value={boardForm.color} onChange={e => setBoardForm({...boardForm, color: e.target.value})} />
+              <div className="flex gap-2">
+                {['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6'].map(color => (
+                  <button key={color} type="button" onClick={() => setBoardForm({...boardForm, color})} className={`w-8 h-8 rounded-lg transition-transform hover:scale-110 ${boardForm.color === color ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} style={{ backgroundColor: color }} />
+                ))}
+              </div>
+            </div>
+          </div>
+          <button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+            {editingBoard ? 'Update Board' : 'Create Board'}
+            <ChevronRight size={16} />
+          </button>
+        </form>
+      </Modal>
+
       <footer className="px-4 md:px-6 lg:px-8 py-4 text-center border-t border-slate-200 bg-white/50 backdrop-blur-sm">
         <p className="text-[10px] text-slate-400 font-bold">TaskFlow © 2025 </p>
       </footer>
+      </div>
     </div>
   );
 }
