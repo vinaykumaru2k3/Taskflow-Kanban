@@ -91,5 +91,6 @@ jobs:
       - name: Print deployed URL
         run: |
           echo "🚀 Deployment complete"
-          echo "🌍 Live URL: ${{ steps.firebase_deploy.outputs.hosting_url }}"
-          echo "🔎 Details: ${{ steps.firebase_deploy.outputs.details_url }}"
+          echo "🌍 Live URL: https://taskflow-app-f6474.web.app"
+          echo "🌍 Alt URL: https://taskflow-app-f6474.firebaseapp.com"
+

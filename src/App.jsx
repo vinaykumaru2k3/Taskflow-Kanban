@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, doc, onSnapshot, query, deleteDoc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { Plus, Trash2, X, Zap, Search, CheckSquare, Calendar, AlertCircle, BarChart3, ChevronRight, CheckCircle2, Circle, Moon, Sun } from 'lucide-react';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { Plus, Trash2, X, Zap, Search, CheckSquare, Calendar, AlertCircle, BarChart3, ChevronRight, CheckCircle2, Circle, Moon, Sun, LogOut, User } from 'lucide-react';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC5JJIcfKd8c0AbtzpVrtRRF_I3FmhXUcc",
@@ -17,6 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
 
 const COLUMNS = [
   { id: 'todo', title: 'To Do' },
@@ -126,6 +127,23 @@ export default function App() {
       localStorage.setItem('darkMode', JSON.stringify(newMode));
       return newMode;
     });
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
   };
 
   useEffect(() => {
@@ -249,6 +267,26 @@ export default function App() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 md:gap-3">
+              {user && user.isAnonymous ? (
+                <button onClick={handleGoogleSignIn} className="flex items-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/30">
+                  <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
+                  Sign in with Google
+                </button>
+              ) : user ? (
+                <div className="flex items-center gap-2">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt={user.displayName} className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-slate-700" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white">
+                      <User size={16} />
+                    </div>
+                  )}
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-300 hidden md:block">{user.displayName || 'User'}</span>
+                  <button onClick={handleSignOut} className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all" title="Sign out">
+                    <LogOut size={16} />
+                  </button>
+                </div>
+              ) : null}
               <button onClick={toggleTheme} className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95">
                 {darkMode ? <Sun size={18} /> : <Moon size={18} />}
               </button>
