@@ -4,6 +4,7 @@ import { getFirestore, collection, doc, onSnapshot, query, deleteDoc, updateDoc,
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { Plus, Trash2, X, Search, CheckSquare, Calendar, AlertCircle, BarChart3, ChevronRight, CheckCircle2, Circle, LogOut, User, Layers, MoreVertical, Edit2, FolderPlus } from 'lucide-react';
 import Landing from './Landing';
+import CalendarView from './CalendarView';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC5JJIcfKd8c0AbtzpVrtRRF_I3FmhXUcc",
@@ -122,6 +123,7 @@ export default function App() {
   const [editingBoard, setEditingBoard] = useState(null);
   const [boardForm, setBoardForm] = useState({ name: '', color: '#3B82F6' });
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, boardId: null, boardName: '' });
+  const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'calendar'
 
   const initialTaskState = { title: '', description: '', priority: 'medium', status: 'todo', dueDate: '', tags: [], subtasks: [] };
   const [taskForm, setTaskForm] = useState(initialTaskState);
@@ -409,6 +411,20 @@ export default function App() {
                 <button onClick={() => setShowStats(!showStats)} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${showStats ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                   <BarChart3 size={16} /> Stats
                 </button>
+                <div className="flex items-center bg-slate-100 rounded-xl p-1">
+                  <button 
+                    onClick={() => setViewMode('kanban')} 
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'kanban' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    <Layers size={14} /> Board
+                  </button>
+                  <button 
+                    onClick={() => setViewMode('calendar')} 
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'calendar' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    <Calendar size={14} /> Calendar
+                  </button>
+                </div>
                 <div className="relative flex-1 lg:flex-initial">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                   <input type="text" placeholder="Search..." className="pl-9 pr-4 py-2.5 bg-slate-100 border border-transparent rounded-xl text-sm font-medium focus:bg-white focus:border-blue-300 transition-all w-full lg:w-48 outline-none" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
@@ -443,6 +459,9 @@ export default function App() {
       </header>
       <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-hidden">
         <div className="max-w-7xl mx-auto">
+          {viewMode === 'calendar' ? (
+            <CalendarView tasks={filteredTasks} onTaskClick={handleOpenEdit} />
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {COLUMNS.map((col) => (
               <div key={col.id} className="flex flex-col" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, col.id)}>
@@ -462,6 +481,7 @@ export default function App() {
               </div>
             ))}
           </div>
+          )}
         </div>
       </main>
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingTask ? "Update Objective" : "New Entry"}>
