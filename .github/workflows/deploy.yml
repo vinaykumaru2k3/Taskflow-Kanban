@@ -113,6 +113,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E tests
+        id: run-tests
         run: npx playwright test
 
       - name: Upload Playwright Report
@@ -122,6 +123,14 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+      - name: Add Summary
+        if: always()
+        run: |
+          echo "### E2E Test Results 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ steps.run-tests.outcome == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Report**: Download the \`playwright-report\` artifact below to view details." >> $GITHUB_STEP_SUMMARY
 
   deploy:
     name: Deploy to Firebase
