@@ -121,7 +121,7 @@ jobs:
         run: curl -I http://127.0.0.1:3000
 
       - name: Run E2E tests
-        run: npx playwright test --workers=4
+        run: npx playwright test --workers=2
 
 
   deploy:
