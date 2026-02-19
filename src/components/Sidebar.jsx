@@ -1,5 +1,5 @@
 import React from 'react';
-import { FolderPlus, Edit2, Trash2, Layers } from 'lucide-react';
+import { FolderPlus, Edit2, Trash2, Layers, Hash } from 'lucide-react';
 
 const Sidebar = ({ 
   showSidebar, 
@@ -13,38 +13,63 @@ const Sidebar = ({
   return (
     <aside className={`${showSidebar ? 'w-64' : 'w-0'} fixed z-30 h-full bg-white border-r border-slate-200 transition-all duration-300 overflow-hidden`}>
       <div className="w-64 h-full flex flex-col">
-        <div className="p-4 border-b border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">Boards</h2>
+        <div className="p-6 border-b border-slate-200">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Your Boards</h2>
             <button 
               onClick={onAddBoard} 
-              className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition-colors" 
+              className="p-1.5 hover:bg-slate-900 hover:text-white rounded-lg text-slate-400 transition-all" 
               title="Create new board"
             >
               <FolderPlus size={16} />
             </button>
           </div>
-          <div className="space-y-1">
-            {boards.map(board => (
-              <div 
-                key={board.id} 
-                className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all ${currentBoard?.id === board.id ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-50 text-slate-600'}`} 
-                onClick={() => setCurrentBoard(board)}
-              >
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: board.color || '#3B82F6' }} />
-                <span className="flex-1 text-sm font-bold truncate">{board.name}</span>
-                <div className="hidden group-hover:flex items-center gap-1">
-                  <button onClick={(e) => { e.stopPropagation(); onEditBoard(board); }} className="p-1 hover:bg-slate-200 rounded">
-                    <Edit2 size={12} />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); onDeleteBoard(board); }} className="p-1 hover:bg-rose-100 text-slate-400 hover:text-rose-500 rounded">
-                    <Trash2 size={12} />
-                  </button>
+          
+          <div className="space-y-1.5">
+            {boards.map(board => {
+              const isActive = currentBoard?.id === board.id;
+              return (
+                <div 
+                  key={board.id} 
+                  className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all border-2 ${
+                    isActive 
+                      ? 'bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-200' 
+                      : 'hover:bg-slate-50 border-transparent text-slate-600'
+                  }`} 
+                  onClick={() => setCurrentBoard(board)}
+                >
+                  {/* Visual Differentiator: Minimalist Letter Mark */}
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black transition-colors ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'
+                  }`}>
+                    {board.name.charAt(0).toUpperCase()}
+                  </div>
+
+                  <span className="flex-1 text-sm font-bold truncate tracking-tight">{board.name}</span>
+                  
+                  <div className={`hidden group-hover:flex items-center gap-1 ${isActive ? 'text-white/70' : 'text-slate-400'}`}>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onEditBoard(board); }} 
+                      className={`p-1 rounded transition-colors ${isActive ? 'hover:bg-white/20' : 'hover:bg-slate-200'}`}
+                    >
+                      <Edit2 size={12} />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onDeleteBoard(board); }} 
+                      className={`p-1 rounded transition-colors ${isActive ? 'hover:bg-rose-500' : 'hover:bg-rose-50 hover:text-rose-500'}`}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+            
             {boards.length === 0 && (
-              <p className="text-xs text-slate-400 text-center py-4">No boards yet.<br />Create one to get started!</p>
+              <div className="flex flex-col items-center justify-center py-10 opacity-40">
+                <Hash size={32} strokeWidth={1} className="mb-2" />
+                <p className="text-[10px] font-bold uppercase tracking-widest text-center">No Boards</p>
+              </div>
             )}
           </div>
         </div>

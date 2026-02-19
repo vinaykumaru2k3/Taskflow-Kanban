@@ -4,8 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  zoom: 100%;
+@layer base {
+  html {
+    /* Remove zoom: 95%; */
+    @apply antialiased text-slate-900;
+    font-size: 15px; /* Slightly smaller than default 16px to prevent clutter */
+  }
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -19,8 +23,4 @@ html {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #334155;
 }

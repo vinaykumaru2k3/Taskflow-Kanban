@@ -11,6 +11,21 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Logo Component for reuse
+  const Logo = ({ size = "text-2xl" }) => (
+    <div className="flex items-center select-none">
+      <Layers size={size === "text-2xl" ? 22 : 18} className="text-slate-900 mr-2" strokeWidth={2.5} />
+      <div className="flex items-baseline">
+        <span className={`${size} font-black tracking-tighter text-slate-900`}>
+          Task
+        </span>
+        <span className={`${size} font-light tracking-tighter text-slate-500`}>
+          Flow
+        </span>
+      </div>
+    </div>
+  );
+
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -73,12 +88,10 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <img src="/Taskflow logo.png" alt="TaskFlow" className="h-12 w-auto" />
-            </div>
+            <Logo />
             <button
               onClick={() => setShowEmailForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-md"
+              className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold transition-all shadow-sm"
             >
               <Mail size={16} />
               Sign In
@@ -91,11 +104,14 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
       {showEmailForm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-300">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-800">
-                  {isSignUp ? 'Create Account' : 'Welcome Back'}
-                </h2>
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <Logo size="text-xl" />
+                  <h2 className="text-xl font-bold text-slate-800 mt-2">
+                    {isSignUp ? 'Create Account' : 'Welcome Back'}
+                  </h2>
+                </div>
                 <button 
                   onClick={() => { setShowEmailForm(false); setError(''); }}
                   className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"
@@ -115,7 +131,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                       <input
                         type="text"
                         required={isSignUp}
-                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-blue-500/20 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-slate-900/10 outline-none transition-all"
                         placeholder="John Doe"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
@@ -133,7 +149,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                     <input
                       type="email"
                       required
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-blue-500/20 outline-none transition-all"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-slate-900/10 outline-none transition-all"
                       placeholder="you@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -150,7 +166,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
-                      className="w-full pl-10 pr-12 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-blue-500/20 outline-none transition-all"
+                      className="w-full pl-10 pr-12 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-slate-900/10 outline-none transition-all"
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -166,7 +182,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl">
+                  <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl">
                     <p className="text-xs font-bold text-rose-600">{error}</p>
                   </div>
                 )}
@@ -174,7 +190,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -187,30 +203,30 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                 </button>
               </form>
 
-              <div className="mt-6">
+              <div className="mt-8">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200"></div>
+                    <div className="w-full border-t border-slate-100"></div>
                   </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="px-2 bg-white text-slate-400 font-bold">or</span>
+                  <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
+                    <span className="px-4 bg-white text-slate-400 font-bold">or</span>
                   </div>
                 </div>
 
                 <button
                   onClick={onGoogleSignIn}
-                  className="mt-4 w-full flex items-center justify-center gap-3 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition-all"
+                  className="mt-6 w-full flex items-center justify-center gap-3 px-4 py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-bold text-sm transition-all"
                 >
                   <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
                   Continue with Google
                 </button>
               </div>
 
-              <p className="mt-6 text-center text-xs text-slate-500">
+              <p className="mt-8 text-center text-xs text-slate-500">
                 {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
                 <button
                   onClick={() => { setIsSignUp(!isSignUp); setError(''); setName(''); }}
-                  className="text-blue-600 font-bold hover:underline"
+                  className="text-slate-900 font-bold hover:underline"
                 >
                   {isSignUp ? 'Sign In' : 'Sign Up'}
                 </button>
@@ -221,44 +237,51 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
       )}
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="pt-40 pb-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-slate-900 mb-8 leading-[1.1] tracking-tight">
               Organize tasks with{' '}
-              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <span className="text-slate-400 font-light">
                 effortless clarity
               </span>
             </h1>
-            <p className="text-lg sm:text-xl text-slate-600 mb-10 leading-relaxed">
-              A beautiful Kanban board that helps you manage projects, track progress,
-              and achieve your goals. Built for productivity.
+            <p className="text-lg sm:text-xl text-slate-600 mb-12 leading-relaxed">
+              A clean Kanban board that helps you manage projects, track progress,
+              and achieve your goals. Built for high-performance teams.
             </p>
             <button
               onClick={() => setShowEmailForm(true)}
-              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-lg font-bold transition-all shadow-xl shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-1"
+              className="inline-flex items-center gap-3 px-10 py-5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-lg font-bold transition-all hover:-translate-y-1 shadow-xl shadow-slate-200"
             >
               Get Started Free
               <ArrowRight size={20} />
             </button>
-            <p className="mt-4 text-sm text-slate-500">
-              No credit card required • Free forever plan
+            <p className="mt-6 text-xs font-bold text-slate-400 uppercase tracking-widest">
+              No credit card required • Free forever
             </p>
           </div>
 
           {/* App Preview */}
-          <div className="mt-16 relative">
-            <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent z-10" />
-            <div className="rounded-2xl overflow-hidden shadow-2xl border-8 border-slate-200">
+          <div className="mt-20 relative px-4">
+            <div className="rounded-2xl overflow-hidden shadow-2xl border-[12px] border-slate-100">
               <div className="aspect-video bg-slate-50 flex items-center justify-center">
                 <div className="text-center p-8 w-full">
-                  <div className="grid grid-cols-4 gap-4 max-w-2xl mx-auto">
-                    {['To Do', 'In Progress', 'Review', 'Done'].map((col, i) => (
-                      <div key={col} className="p-4 rounded-xl bg-white shadow-lg">
-                        <div className="text-xs font-bold uppercase tracking-wider mb-3 text-slate-400">{col}</div>
-                        <div className="space-y-2">
-                          <div className={`h-16 rounded-lg ${i === 0 ? 'bg-blue-500/20' : i === 1 ? 'bg-amber-500/20' : i === 2 ? 'bg-purple-500/20' : 'bg-emerald-500/20'}`}></div>
-                          {i < 2 && <div className="h-12 rounded-lg bg-slate-100"></div>}
+                  <div className="grid grid-cols-4 gap-4 max-w-4xl mx-auto">
+                    {[
+                      { name: 'To Do', color: 'bg-blue-500/20' },
+                      { name: 'In Progress', color: 'bg-amber-500/20' },
+                      { name: 'Review', color: 'bg-purple-500/20' },
+                      { name: 'Done', color: 'bg-emerald-500/20' }
+                    ].map((col, i) => (
+                      <div key={col.name} className="p-5 rounded-xl bg-white shadow-sm border border-slate-100">
+                        <div className="text-[10px] font-black uppercase tracking-widest mb-4 text-slate-400 text-left">
+                          {col.name}
+                        </div>
+                        <div className="space-y-3">
+                          {/* Colored Task Cards */}
+                          <div className={`h-20 rounded-lg ${col.color}`}></div>
+                          {i < 2 && <div className="h-14 rounded-lg bg-slate-50"></div>}
                         </div>
                       </div>
                     ))}
@@ -271,26 +294,26 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-50">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-slate-50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              Everything you need to stay productive
+          <div className="text-center mb-20">
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4 tracking-tight">
+              Productivity, simplified.
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Powerful features designed to help you manage tasks efficiently
+              Everything you need to manage tasks efficiently without the clutter.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-xl transition-all hover:-translate-y-1"
+                className="p-8 rounded-2xl bg-white border border-slate-200 hover:border-slate-900/10 transition-all group"
               >
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-blue-50 text-blue-600">
-                  <feature.icon size={24} />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-6 bg-slate-100 text-slate-900 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                  <feature.icon size={22} strokeWidth={2.5} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">
+                <h3 className="text-lg font-bold text-slate-900 mb-3">
                   {feature.title}
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
@@ -303,17 +326,14 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">
-            Start organizing your tasks today
+          <h2 className="text-4xl sm:text-5xl font-black text-slate-900 mb-8 tracking-tight">
+            Ready to flow?
           </h2>
-          <p className="text-lg text-slate-600 mb-10">
-            Join thousands of users who trust TaskFlow for their productivity
-          </p>
           <button
             onClick={() => setShowEmailForm(true)}
-            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-lg font-bold transition-all shadow-xl shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-1"
+            className="inline-flex items-center gap-3 px-10 py-5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-lg font-bold transition-all hover:-translate-y-1 shadow-2xl shadow-slate-200"
           >
             Start for Free
             <ArrowRight size={20} />
@@ -322,12 +342,10 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 sm:px-6 lg:px-8 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img src="/Taskflow logo.png" alt="TaskFlow" className="h-8 w-auto" />
-          </div>
-          <p className="text-sm text-slate-500">
+      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-slate-100">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+          <Logo size="text-lg" />
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
             Built with React & Firebase
           </p>
         </div>
