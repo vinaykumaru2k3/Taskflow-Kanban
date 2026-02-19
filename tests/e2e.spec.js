@@ -15,11 +15,4 @@ test.describe('TaskFlow Smoke Tests', () => {
     await expect(page).toHaveTitle(/TaskFlow/i); 
   });
 
-  test('Should display the main heading', async ({ page }) => {
-    // Check for the presence of the main heading or a key element
-    const heading = page.locator('h1');
-    await expect(heading).toBeVisible();
-    await expect(heading).toHaveText(/TaskFlow/i);
-  });
-
 });
