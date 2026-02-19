@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   timeout: 60000,
 
@@ -14,15 +14,17 @@ export default defineConfig({
   },
 
   use: {
-    baseURL: 'http://localhost:3000',
-    trace: 'on-first-retry',
+    // Standardizing on 127.0.0.1 avoids IPv6 resolution issues (::1) in CI
+    baseURL: 'http://127.0.0.1:3000',
+    trace: 'retain-on-failure',
   },
 
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: true,
-    timeout: 60000,
+    // We can simplify the command now that vitest.config.js handles the port/host
+    command: process.env.CI ? 'npm run preview' : 'npm run dev',
+    url: 'http://127.0.0.1:3000',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000, // 2 minutes is plenty for Vite to boot
   },
 
   projects: [
