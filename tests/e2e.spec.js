@@ -15,15 +15,11 @@ test.describe('TaskFlow Smoke Tests', () => {
     await expect(page).toHaveTitle(/TaskFlow/i); 
   });
 
-  test('Landing page elements are present', async ({ page }) => {
-    // Instead of regex headings, let's look for any button to confirm hydration
-    const getStartedBtn = page.getByRole('button').first();
-    await expect(getStartedBtn).toBeVisible({ timeout: 15000 });
+  test('Should display the main heading', async ({ page }) => {
+    // Check for the presence of the main heading or a key element
+    const heading = page.locator('h1');
+    await expect(heading).toBeVisible();
+    await expect(heading).toHaveText(/TaskFlow/i);
   });
 
-  test('Check for main layout container', async ({ page }) => {
-    // Verify that the React app actually rendered something inside the root div
-    const root = page.locator('#root');
-    await expect(root).not.toBeEmpty();
-  });
 });
