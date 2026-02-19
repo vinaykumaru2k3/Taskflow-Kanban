@@ -33,7 +33,7 @@
     "preview": "vite preview",
     "test": "vitest run --exclude tests/e2e.spec.js",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "npm run build && playwright test",
     "deploy": "npm run build && firebase deploy"
   }
 }

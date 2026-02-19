@@ -5,7 +5,6 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // Using 127.0.0.1 is more stable in CI than 'localhost'
   workers: process.env.CI ? 2 : undefined,
   reporter: 'html',
   timeout: 60000,
@@ -15,18 +14,19 @@ export default defineConfig({
   },
 
   use: {
-    // Standardize on 127.0.0.1 to avoid IPv6 resolution hangs
+    // Standardizing on 127.0.0.1 avoids IPv6 resolution issues (::1) in CI
     baseURL: 'http://127.0.0.1:3000',
     trace: 'on-first-retry',
   },
 
-webServer: {
-    // Uses the 'serve' package you already have in devDependencies
-    command: process.env.CI ? 'npm run preview -- --port 3000' : 'npm run dev',
+  webServer: {
+    // We can simplify the command now that vitest.config.js handles the port/host
+    command: process.env.CI ? 'npm run preview' : 'npm run dev',
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    timeout: 120000, // 2 minutes is plenty for Vite to boot
   },
+
   projects: [
     {
       name: 'chromium',
