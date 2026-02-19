@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   timeout: 60000,
 
@@ -16,7 +16,7 @@ export default defineConfig({
   use: {
     // Standardizing on 127.0.0.1 avoids IPv6 resolution issues (::1) in CI
     baseURL: 'http://127.0.0.1:3000',
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
   },
 
   webServer: {
