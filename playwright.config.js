@@ -20,15 +20,13 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
 
-  webServer: {
-    // In CI, we want to serve the 'dist' folder. 
-    // Locally, you can still use 'npm run dev' if you prefer.
-    command: process.env.CI ? 'npx serve -s dist -l 3000' : 'npm run dev',
+webServer: {
+    // Uses the 'serve' package you already have in devDependencies
+    command: process.env.CI ? 'npm run preview -- --port 3000' : 'npm run dev',
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000, // Give it 2 mins to start up in CI
+    timeout: 120000,
   },
-
   projects: [
     {
       name: 'chromium',
