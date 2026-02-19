@@ -101,7 +101,7 @@ jobs:
 
       - name: Run E2E tests
         id: run-tests
-        run: npx playwright test --reporter=lister --output=playwright-report
+        run: npx playwright test --reporter=list --output=playwright-report
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
