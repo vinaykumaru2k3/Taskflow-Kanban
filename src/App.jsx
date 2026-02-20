@@ -181,8 +181,9 @@ export default function App() {
           stats={stats}
         />
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col bg-slate-50/30">
-          <main className="flex-1 p-4 md:p-6 lg:p-8 min-h-0">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30"> 
+          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar">
             <div className="max-w-7xl mx-auto h-full flex flex-col">
               {viewMode === 'calendar' ? (
                 <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -201,7 +202,8 @@ export default function App() {
             </div>
           </main>
 
-          <footer className="px-8 py-3 text-center border-t border-slate-200 bg-white mt-auto">
+          {/* Fixed Footer */}
+          <footer className="px-8 py-3 text-center border-t border-slate-200 bg-white flex-shrink-0">
             <div className="flex items-center justify-center gap-2 opacity-40">
               <Layers size={12} />
               <p className="text-[9px] font-black uppercase tracking-[0.3em]">TaskFlow Protocol © 2026</p>
