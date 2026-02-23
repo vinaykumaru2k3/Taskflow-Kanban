@@ -38,6 +38,8 @@ export default function App() {
   const [viewMode, setViewMode] = useState('kanban');
   const [showFilters, setShowFilters] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [customTagInput, setCustomTagInput] = useState('');
+  const [customTagColor, setCustomTagColor] = useState('blue');
 
   // Filter & Sort State (persisted to localStorage)
   const [filters, setFilters] = useState(() => {
@@ -160,13 +162,16 @@ export default function App() {
     setTaskForm(prev => ({ ...prev, tags: prev.tags?.filter(t => t.id !== tagId) || [] }));
   };
 
-  const handleCreateCustomTag = (label, colorId) => {
+  const handleCreateCustomTag = () => {
+    if (!customTagInput.trim()) return;
     const newTag = {
       id: `custom-${Date.now()}`,
-      label,
-      colorId
+      label: customTagInput.trim(),
+      colorId: customTagColor
     };
     setTaskForm(prev => ({ ...prev, tags: [...(prev.tags || []), newTag] }));
+    setCustomTagInput('');
+    setCustomTagColor('blue');
   };
 
   // --- Memoized Data ---
@@ -399,7 +404,7 @@ export default function App() {
             )}
             
             {/* Tag Selector */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-3">
               {DEFAULT_TAGS.map((tag) => {
                 const color = TAG_COLORS.find(c => c.id === tag.colorId) || TAG_COLORS[0];
                 const isSelected = taskForm.tags?.some(t => t.id === tag.id);
@@ -418,6 +423,42 @@ export default function App() {
                   </button>
                 );
               })}
+            </div>
+            
+            {/* Custom Tag Creator */}
+            <div className="border-t border-slate-100 pt-3 mt-3">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">Create Custom Label</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Label name..."
+                  value={customTagInput}
+                  onChange={(e) => setCustomTagInput(e.target.value)}
+                  className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:border-slate-400 outline-none transition-all"
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleCreateCustomTag())}
+                />
+                <div className="flex gap-1">
+                  {TAG_COLORS.slice(0, 5).map((color) => (
+                    <button
+                      key={color.id}
+                      type="button"
+                      onClick={() => setCustomTagColor(color.id)}
+                      className={`w-6 h-6 rounded-md ${color.bg} border-2 transition-all ${
+                        customTagColor === color.id ? color.border : 'border-transparent'
+                      }`}
+                      title={color.id}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCreateCustomTag}
+                  disabled={!customTagInput.trim()}
+                  className="px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
             </div>
           </div>
           
