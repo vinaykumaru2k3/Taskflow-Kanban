@@ -132,29 +132,32 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                   </span>
 
                   {cell.tasks.length > 0 && (
-                    <span className="text-[9px] font-black text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full border border-slate-200">
+                    <span className="text-[9px] font-black text-white bg-slate-900 px-1.5 py-0.5 rounded-full shadow-sm">
                       {cell.tasks.length}
                     </span>
                   )}
                 </div>
 
                 <div className="flex-1 flex flex-col gap-1 overflow-hidden">
-                  {cell.tasks.slice(0, 2).map((task) => (
-                    <div
-                      key={task.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onTaskClick(task);
-                      }}
-                      className="group relative pl-2 pr-1.5 py-0.5 rounded bg-slate-50 border border-slate-200 hover:border-slate-400 transition-all"
-                    >
-                      <p className={`text-[9px] font-bold truncate ${
-                          task.status === 'done' ? 'text-slate-300 line-through' : 'text-slate-600'
-                        }`}>
-                        {task.title}
-                      </p>
-                    </div>
-                  ))}
+                  {cell.tasks.slice(0, 2).map((task) => {
+                    const taskPriority = PRIORITIES[task.priority] || PRIORITIES.low;
+                    return (
+                      <div
+                        key={task.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTaskClick(task);
+                        }}
+                        className={`group relative pl-2 pr-1.5 py-0.5 rounded bg-slate-50 border-l-2 ${taskPriority.border} hover:bg-slate-100 transition-all`}
+                      >
+                        <p className={`text-[9px] font-bold truncate ${
+                            task.status === 'done' ? 'text-slate-300 line-through' : 'text-slate-600'
+                          }`}>
+                          {task.title}
+                        </p>
+                      </div>
+                    );
+                  })}
                   {cell.tasks.length > 2 && (
                     <div className="text-[8px] font-black text-slate-300 pl-1 mt-auto">
                       + {cell.tasks.length - 2} MORE
@@ -194,6 +197,7 @@ const CalendarView = ({ tasks, onTaskClick }) => {
           ) : (
             selectedDay?.tasks.map((task) => {
               const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'done';
+              const taskPriority = PRIORITIES[task.priority] || PRIORITIES.low;
 
               return (
                 <div
@@ -202,18 +206,16 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                     onTaskClick(task);
                     setSelectedDay(null);
                   }}
-                  className="group flex items-center gap-4 p-4 rounded-xl border border-slate-100 hover:border-slate-900 transition-all cursor-pointer bg-white shadow-sm"
+                  className={`group flex items-center gap-4 p-4 rounded-xl border-l-4 ${taskPriority.border} border border-slate-100 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm`}
                 >
-                  <div className={`w-1 h-10 rounded-full bg-slate-200 group-hover:bg-slate-900 transition-colors`} />
-
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase border border-slate-200">
-                        {task.priority}
+                      <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${taskPriority.color}`}>
+                        {taskPriority.label}
                       </span>
 
                       {isOverdue && (
-                        <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-900 text-white uppercase flex items-center gap-1">
+                        <span className="text-[9px] font-black px-2 py-0.5 rounded bg-rose-500 text-white uppercase flex items-center gap-1">
                           <AlertCircle size={10} /> Overdue
                         </span>
                       )}

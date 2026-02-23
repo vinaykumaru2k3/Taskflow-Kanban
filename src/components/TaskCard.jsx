@@ -14,9 +14,8 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart }) => {
       draggable
       onDragStart={(e) => onDragStart(e, task.id)}
       onClick={() => onEdit(task)}
-      className="group relative bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:border-blue-400 hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden"
+      className={`group relative bg-gradient-to-br from-white to-slate-50 border-2 ${priority.border} rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden`}
     >
-      <div className={`absolute top-0 left-0 w-1 h-full ${priority.dot}`} />
       <div className="flex justify-between items-start mb-3">
         <div className="flex flex-wrap gap-1.5">
           <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1.5 ${priority.color}`}>
