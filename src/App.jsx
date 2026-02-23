@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers, Archive } from 'lucide-react';
 import Landing from './Landing';
 import CalendarView from './CalendarView';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import KanbanBoard from './components/KanbanBoard';
 import Modal from './components/Modal';
+import ArchivedTasksModal from './components/ArchivedTasksModal';
 import { PRIORITIES } from './utils/constants';
 import { useAuth } from './hooks/useAuth';
 import { useBoards } from './hooks/useBoards';
@@ -23,7 +24,7 @@ export default function App() {
   // Custom Hooks
   const { user, loading: authLoading, signInWithGoogle, signInWithEmail, signOut } = useAuth();
   const { boards, currentBoard, setCurrentBoard, createBoard, updateBoard, deleteBoard } = useBoards(user);
-  const { tasks, createTask, updateTask, deleteTask } = useTasks(user, currentBoard);
+  const { tasks, createTask, updateTask, deleteTask, archiveTask, restoreTask } = useTasks(user, currentBoard);
 
   // UI State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,6 +36,7 @@ export default function App() {
   const [editingBoard, setEditingBoard] = useState(null);
   const [viewMode, setViewMode] = useState('kanban');
   const [showFilters, setShowFilters] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
   // Filter & Sort State (persisted to localStorage)
   const [filters, setFilters] = useState(() => {
@@ -152,8 +154,10 @@ export default function App() {
 
   const filteredTasks = useMemo(() => {
     let result = tasks.filter(t => 
-      t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      t.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      // Exclude archived tasks from main view
+      !t.archived &&
+      (t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      t.description?.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     // Filter by priority
@@ -188,6 +192,11 @@ export default function App() {
 
     return result;
   }, [tasks, searchQuery, filters]);
+
+  // Archived tasks
+  const archivedTasks = useMemo(() => {
+    return tasks.filter(t => t.archived);
+  }, [tasks]);
 
   const stats = useMemo(() => {
     const total = tasks.length;
@@ -231,6 +240,8 @@ export default function App() {
         setShowFilters={setShowFilters}
         filters={filters}
         setFilters={setFilters}
+        archivedCount={archivedTasks.length}
+        setShowArchived={setShowArchived}
       />
 
       {/* Main Area - Sidebar + Content */}
@@ -262,6 +273,7 @@ export default function App() {
                     onEditTask={handleOpenEditTask}
                     onDeleteTask={deleteTask}
                     onAddTask={handleAddTaskToColumn}
+                    onArchiveTask={archiveTask}
                   />
                 )}
               </div>
@@ -393,6 +405,15 @@ export default function App() {
           </div>
         </div>
       </Modal>
+
+      {/* Archived Tasks Modal */}
+      <ArchivedTasksModal 
+        isOpen={showArchived}
+        onClose={() => setShowArchived(false)}
+        tasks={archivedTasks}
+        onRestore={restoreTask}
+        onDelete={deleteTask}
+      />
     </div>
   );
 }

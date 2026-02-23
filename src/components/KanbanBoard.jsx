@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import TaskCard from './TaskCard';
 import { COLUMNS } from '../utils/constants';
 
-const KanbanBoard = ({ tasks, onDragStart, onDrop, onEditTask, onDeleteTask, onAddTask }) => {
+const KanbanBoard = ({ tasks, onDragStart, onDrop, onEditTask, onDeleteTask, onAddTask, onArchiveTask }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
       {COLUMNS.map((col) => (
@@ -14,7 +14,7 @@ const KanbanBoard = ({ tasks, onDragStart, onDrop, onEditTask, onDeleteTask, onA
           </div>
           <div className="space-y-3 min-h-[200px]">
             {tasks.filter(t => t.status === col.id).map(task => (
-              <TaskCard key={task.id} task={task} onDelete={onDeleteTask} onEdit={onEditTask} onDragStart={onDragStart} />
+              <TaskCard key={task.id} task={task} onDelete={onDeleteTask} onEdit={onEditTask} onDragStart={onDragStart} onArchive={onArchiveTask} />
             ))}
             <button onClick={() => onAddTask(col.id)} className="w-full py-3 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:border-blue-300 hover:bg-blue-50 transition-all group/btn">
               <Plus size={16} className="group-hover/btn:scale-110 transition-transform" />

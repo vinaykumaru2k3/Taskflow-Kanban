@@ -1,8 +1,8 @@
 import React from 'react';
-import { Trash2, AlertCircle, CheckSquare, Calendar } from 'lucide-react';
+import { Trash2, AlertCircle, CheckSquare, Calendar, Archive } from 'lucide-react';
 import { PRIORITIES } from '../utils/constants';
 
-const TaskCard = ({ task, onDelete, onEdit, onDragStart }) => {
+const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive }) => {
   const priority = PRIORITIES[task.priority] || PRIORITIES.low;
   const subtasksCount = task.subtasks?.length || 0;
   const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0;
@@ -28,9 +28,20 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart }) => {
             </span>
           )}
         </div>
-        <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-all">
-          <Trash2 size={14} />
-        </button>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {task.status === 'done' && onArchive && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onArchive(task.id); }} 
+              className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all"
+              title="Archive task"
+            >
+              <Archive size={14} />
+            </button>
+          )}
+          <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-all">
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
       <h4 className="text-sm font-bold text-slate-800 mb-1.5 line-clamp-2 leading-snug">{task.title}</h4>
       {task.description && <p className="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed font-normal">{task.description}</p>}
