@@ -1,4 +1,4 @@
-import { FolderPlus, Edit2, Trash2, Hash } from 'lucide-react';
+import { FolderPlus, Edit2, Trash2, Hash, Check } from 'lucide-react';
 
 const Sidebar = ({ 
   showSidebar, 
@@ -24,38 +24,40 @@ const Sidebar = ({
             </button>
           </div>
           
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             {boards.map(board => {
               const isActive = currentBoard?.id === board.id;
               return (
                 <div 
                   key={board.id} 
-                  className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all border-2 ${
+                  className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${
                     isActive 
-                      ? 'bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-200' 
-                      : 'hover:bg-slate-50 border-transparent text-slate-600'
+                      ? 'bg-slate-100 text-slate-900' 
+                      : 'hover:bg-slate-50 text-slate-600'
                   }`} 
                   onClick={() => setCurrentBoard(board)}
                 >
-                  {/* Visual Differentiator: Minimalist Letter Mark */}
-                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black transition-colors ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'
+                  {/* Active Indicator */}
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
+                    isActive 
+                      ? 'bg-slate-900 text-white' 
+                      : 'border-2 border-slate-200 group-hover:border-slate-300'
                   }`}>
-                    {board.name.charAt(0).toUpperCase()}
+                    {isActive && <Check size={12} strokeWidth={3} />}
                   </div>
 
                   <span className="flex-1 text-sm font-bold truncate tracking-tight">{board.name}</span>
                   
-                  <div className={`hidden group-hover:flex items-center gap-1 ${isActive ? 'text-white/70' : 'text-slate-400'}`}>
+                  <div className={`hidden group-hover:flex items-center gap-1 ${isActive ? 'text-slate-400' : 'text-slate-400'}`}>
                     <button 
                       onClick={(e) => { e.stopPropagation(); onEditBoard(board); }} 
-                      className={`p-1 rounded transition-colors ${isActive ? 'hover:bg-white/20' : 'hover:bg-slate-200'}`}
+                      className="p-1 rounded hover:bg-slate-200 transition-colors"
                     >
                       <Edit2 size={12} />
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); onDeleteBoard(board); }} 
-                      className={`p-1 rounded transition-colors ${isActive ? 'hover:bg-rose-500' : 'hover:bg-rose-50 hover:text-rose-500'}`}
+                      className="p-1 rounded hover:bg-rose-50 hover:text-rose-500 transition-colors"
                     >
                       <Trash2 size={12} />
                     </button>

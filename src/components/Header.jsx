@@ -1,4 +1,4 @@
-import { Layers, User, LogOut, BarChart3, Search, Calendar, CheckCircle2, AlertCircle, Filter, ArrowUpDown, X } from 'lucide-react';
+import { Layers, User, LogOut, BarChart3, Search, Calendar, CheckCircle2, AlertCircle, Filter, ArrowUpDown, X, PanelLeftClose, PanelLeft, Folder } from 'lucide-react';
 import { PRIORITIES, COLUMNS } from '../utils/constants';
 
 const Header = ({
@@ -38,8 +38,9 @@ const Header = ({
           <button 
             onClick={() => setShowSidebar(!showSidebar)} 
             className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors"
+            title={showSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
           >
-            <Layers size={20} />
+            {showSidebar ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}
           </button>
           
           {/* Monochromatic Text Logo */}
@@ -57,13 +58,15 @@ const Header = ({
 
           {/* Current Board Indicator */}
           {currentBoard && (
-            <div className="flex items-center pl-4 border-l border-slate-200 ml-3">
-              <span className="text-slate-300 mx-1 select-none font-extralight text-xl">/</span>
-              <div className="flex flex-col ml-2">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none mb-1">
-                  Active Board
+            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-slate-200">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                <Folder size={16} className="text-slate-600" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none mb-0.5">
+                  Board
                 </span>
-                <h1 className="text-sm font-bold text-slate-900 tracking-tight leading-none truncate max-w-[150px] hidden sm:block">
+                <h1 className="text-sm font-bold text-slate-900 tracking-tight leading-none truncate max-w-[150px]">
                   {currentBoard.name}
                 </h1>
               </div>
