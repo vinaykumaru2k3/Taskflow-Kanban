@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { 
   Layers, User, LogOut, BarChart3, Search, Calendar, CheckCircle2, AlertCircle, 
   Filter, ArrowUpDown, X, PanelLeftClose, PanelLeft, Folder, Archive, 
-  MoreHorizontal, Settings, ChevronDown
+  MoreHorizontal, Settings, ChevronDown, Tag
 } from 'lucide-react';
-import { PRIORITIES, COLUMNS } from '../utils/constants';
+import { PRIORITIES, COLUMNS, TAG_COLORS, DEFAULT_TAGS } from '../utils/constants';
 
 const Header = ({
   user,
@@ -24,14 +24,15 @@ const Header = ({
   filters,
   setFilters,
   archivedCount,
-  setShowArchived
+  setShowArchived,
+  allTags
 }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const moreMenuRef = useRef(null);
   const userMenuRef = useRef(null);
   
-  const hasActiveFilters = filters.priority !== 'all' || filters.status !== 'all';
+  const hasActiveFilters = filters.priority !== 'all' || filters.status !== 'all' || filters.tag !== 'all';
 
   const resetFilters = () => {
     setFilters({
@@ -39,6 +40,7 @@ const Header = ({
       status: 'all',
       sortBy: 'createdAt',
       sortOrder: 'desc',
+      tag: 'all',
     });
   };
 
@@ -257,7 +259,7 @@ const Header = ({
             )}
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {/* Priority Filter */}
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Priority</label>
@@ -284,6 +286,21 @@ const Header = ({
                 <option value="all">All Statuses</option>
                 {COLUMNS.map((col) => (
                   <option key={col.id} value={col.id}>{col.title}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tag Filter */}
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Label</label>
+              <select 
+                value={filters.tag || 'all'}
+                onChange={(e) => setFilters({ ...filters, tag: e.target.value })}
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 focus:border-slate-400 outline-none transition-all cursor-pointer"
+              >
+                <option value="all">All Labels</option>
+                {(allTags || DEFAULT_TAGS).map((tag) => (
+                  <option key={tag.id} value={tag.id}>{tag.label}</option>
                 ))}
               </select>
             </div>

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers, Archive } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers, Archive, X, Tag } from 'lucide-react';
 import Landing from './Landing';
 import CalendarView from './CalendarView';
 import Sidebar from './components/Sidebar';
@@ -7,7 +7,7 @@ import Header from './components/Header';
 import KanbanBoard from './components/KanbanBoard';
 import Modal from './components/Modal';
 import ArchivedTasksModal from './components/ArchivedTasksModal';
-import { PRIORITIES } from './utils/constants';
+import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS } from './utils/constants';
 import { useAuth } from './hooks/useAuth';
 import { useBoards } from './hooks/useBoards';
 import { useTasks } from './hooks/useTasks';
@@ -18,6 +18,7 @@ const defaultFilters = {
   status: 'all', // 'all', 'todo', 'in-progress', 'review', 'done'
   sortBy: 'createdAt', // 'createdAt', 'dueDate', 'priority'
   sortOrder: 'desc', // 'asc', 'desc'
+  tag: 'all', // 'all' or tag id
 };
 
 export default function App() {
@@ -41,7 +42,12 @@ export default function App() {
   // Filter & Sort State (persisted to localStorage)
   const [filters, setFilters] = useState(() => {
     const saved = localStorage.getItem('taskflow-filters');
-    return saved ? JSON.parse(saved) : defaultFilters;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Merge with defaults to ensure all properties exist
+      return { ...defaultFilters, ...parsed };
+    }
+    return defaultFilters;
   });
 
   // Form States
@@ -142,6 +148,27 @@ export default function App() {
     setTaskForm(prev => ({ ...prev, subtasks: prev.subtasks.filter(s => s.id !== id) }));
   };
 
+  // --- Tag Handlers ---
+
+  const handleAddTag = (tag) => {
+    // Check if tag already exists
+    if (taskForm.tags?.some(t => t.id === tag.id)) return;
+    setTaskForm(prev => ({ ...prev, tags: [...(prev.tags || []), tag] }));
+  };
+
+  const handleRemoveTag = (tagId) => {
+    setTaskForm(prev => ({ ...prev, tags: prev.tags?.filter(t => t.id !== tagId) || [] }));
+  };
+
+  const handleCreateCustomTag = (label, colorId) => {
+    const newTag = {
+      id: `custom-${Date.now()}`,
+      label,
+      colorId
+    };
+    setTaskForm(prev => ({ ...prev, tags: [...(prev.tags || []), newTag] }));
+  };
+
   // --- Memoized Data ---
 
   // Persist filters to localStorage
@@ -170,6 +197,11 @@ export default function App() {
       result = result.filter(t => t.status === filters.status);
     }
 
+    // Filter by tag
+    if (filters.tag !== 'all') {
+      result = result.filter(t => t.tags?.some(tag => tag.id === filters.tag));
+    }
+
     // Sort
     result.sort((a, b) => {
       let comparison = 0;
@@ -196,6 +228,25 @@ export default function App() {
   // Archived tasks
   const archivedTasks = useMemo(() => {
     return tasks.filter(t => t.archived);
+  }, [tasks]);
+
+  // Collect all unique tags from tasks
+  const allTags = useMemo(() => {
+    const tagMap = new Map();
+    tasks.forEach(task => {
+      task.tags?.forEach(tag => {
+        if (!tagMap.has(tag.id)) {
+          tagMap.set(tag.id, tag);
+        }
+      });
+    });
+    // Also include default tags
+    DEFAULT_TAGS.forEach(tag => {
+      if (!tagMap.has(tag.id)) {
+        tagMap.set(tag.id, tag);
+      }
+    });
+    return Array.from(tagMap.values());
   }, [tasks]);
 
   const stats = useMemo(() => {
@@ -242,6 +293,7 @@ export default function App() {
         setFilters={setFilters}
         archivedCount={archivedTasks.length}
         setShowArchived={setShowArchived}
+        allTags={allTags}
       />
 
       {/* Main Area - Sidebar + Content */}
@@ -313,6 +365,62 @@ export default function App() {
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Deadline</label>
             <input type="date" className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 focus:border-slate-900/10 outline-none transition-all" value={taskForm.dueDate} onChange={e => setTaskForm({...taskForm, dueDate: e.target.value})} />
           </div>
+          
+          {/* Tags Section */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <Tag size={12} /> Labels
+              </label>
+            </div>
+            
+            {/* Selected Tags */}
+            {taskForm.tags && taskForm.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {taskForm.tags.map((tag, idx) => {
+                  const color = TAG_COLORS.find(c => c.id === tag.colorId) || TAG_COLORS[0];
+                  return (
+                    <span 
+                      key={idx} 
+                      className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md border ${color.bg} ${color.text} ${color.border}`}
+                    >
+                      {tag.label}
+                      <button 
+                        type="button"
+                        onClick={() => handleRemoveTag(tag.id)}
+                        className="hover:opacity-70"
+                      >
+                        <X size={10} />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            
+            {/* Tag Selector */}
+            <div className="flex flex-wrap gap-2">
+              {DEFAULT_TAGS.map((tag) => {
+                const color = TAG_COLORS.find(c => c.id === tag.colorId) || TAG_COLORS[0];
+                const isSelected = taskForm.tags?.some(t => t.id === tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => isSelected ? handleRemoveTag(tag.id) : handleAddTag(tag)}
+                    className={`text-[10px] font-bold px-2.5 py-1 rounded-md border transition-all ${
+                      isSelected 
+                        ? `${color.bg} ${color.text} ${color.border} ring-2 ring-offset-1 ring-slate-400` 
+                        : `bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300`
+                    }`}
+                  >
+                    {tag.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          
           <div>
             <div className="flex items-center justify-between mb-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Checklist</label>
