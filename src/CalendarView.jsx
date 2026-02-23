@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  CheckSquare,
+  Calendar
 } from 'lucide-react';
 import { PRIORITIES } from './utils/constants';
 import Modal from './components/Modal';
@@ -105,7 +107,7 @@ const CalendarView = ({ tasks, onTaskClick }) => {
           ))}
         </div>
 
-        {/* Calendar grid - Fixed height issues with flex-1 */}
+        {/* Calendar grid */}
         <div className="grid grid-cols-7 auto-rows-fr flex-1 bg-slate-200 gap-[1px] overflow-hidden">
           {calendarDays.map((cell) => {
             if (cell.type === 'empty') {
@@ -138,9 +140,10 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                   )}
                 </div>
 
-                <div className="flex-1 flex flex-col gap-1 overflow-hidden">
-                  {cell.tasks.slice(0, 2).map((task) => {
-                    const taskPriority = PRIORITIES[task.priority] || PRIORITIES.low;
+                <div className="flex-1 flex flex-col gap-0.5 overflow-hidden">
+                  {cell.tasks.slice(0, 3).map((task) => {
+                    const priority = PRIORITIES[task.priority] || PRIORITIES.low;
+                    
                     return (
                       <div
                         key={task.id}
@@ -148,9 +151,9 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                           e.stopPropagation();
                           onTaskClick(task);
                         }}
-                        className={`group relative pl-2 pr-1.5 py-0.5 rounded bg-slate-50 border-l-2 ${taskPriority.border} hover:bg-slate-100 transition-all`}
+                        className={`px-1.5 py-0.5 rounded border-l-2 ${priority.border} bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer`}
                       >
-                        <p className={`text-[9px] font-bold truncate ${
+                        <p className={`text-[9px] font-semibold truncate ${
                             task.status === 'done' ? 'text-slate-300 line-through' : 'text-slate-600'
                           }`}>
                           {task.title}
@@ -158,9 +161,9 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                       </div>
                     );
                   })}
-                  {cell.tasks.length > 2 && (
-                    <div className="text-[8px] font-black text-slate-300 pl-1 mt-auto">
-                      + {cell.tasks.length - 2} MORE
+                  {cell.tasks.length > 3 && (
+                    <div className="text-[8px] font-medium text-slate-400 pl-1">
+                      +{cell.tasks.length - 3} more
                     </div>
                   )}
                 </div>
@@ -170,7 +173,7 @@ const CalendarView = ({ tasks, onTaskClick }) => {
         </div>
       </div>
 
-      {/* Modal - Kept your original logic but monochromatic */}
+      {/* Modal with TaskCard-like styling */}
       <Modal
         isOpen={!!selectedDay}
         onClose={() => setSelectedDay(null)}
@@ -196,8 +199,11 @@ const CalendarView = ({ tasks, onTaskClick }) => {
             </div>
           ) : (
             selectedDay?.tasks.map((task) => {
-              const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'done';
-              const taskPriority = PRIORITIES[task.priority] || PRIORITIES.low;
+              const priority = PRIORITIES[task.priority] || PRIORITIES.low;
+              const subtasksCount = task.subtasks?.length || 0;
+              const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0;
+              const progress = subtasksCount > 0 ? (completedSubtasks / subtasksCount) * 100 : 0;
+              const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done';
 
               return (
                 <div
@@ -206,35 +212,53 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                     onTaskClick(task);
                     setSelectedDay(null);
                   }}
-                  className={`group flex items-center gap-4 p-4 rounded-xl border-l-4 ${taskPriority.border} border border-slate-100 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm`}
+                  className={`group relative bg-gradient-to-br from-white to-slate-50 border-2 ${priority.border} rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden`}
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${taskPriority.color}`}>
-                        {taskPriority.label}
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1.5 ${priority.color}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${priority.dot}`} />
+                        {priority.label}
                       </span>
-
                       {isOverdue && (
-                        <span className="text-[9px] font-black px-2 py-0.5 rounded bg-rose-500 text-white uppercase flex items-center gap-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 flex items-center gap-1">
                           <AlertCircle size={10} /> Overdue
                         </span>
                       )}
-
                       {task.status === 'done' && (
-                        <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-50 text-slate-400 uppercase flex items-center gap-1 border border-slate-100">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 flex items-center gap-1">
                           <CheckCircle2 size={10} /> Done
                         </span>
                       )}
                     </div>
-
-                    <h4 className={`text-sm font-bold tracking-tight ${
-                        task.status === 'done' ? 'text-slate-400 line-through' : 'text-slate-900'
-                      }`}>
-                      {task.title}
-                    </h4>
                   </div>
-
-                  <ChevronRight size={16} className="text-slate-300 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
+                  
+                  <h4 className="text-sm font-bold text-slate-800 mb-1.5 line-clamp-2 leading-snug">{task.title}</h4>
+                  
+                  {task.description && (
+                    <p className="text-xs text-slate-500 line-clamp-2 mb-3 leading-relaxed font-normal">{task.description}</p>
+                  )}
+                  
+                  {subtasksCount > 0 && (
+                    <div className="mb-3">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                          <CheckSquare size={10} /> {completedSubtasks}/{subtasksCount} Tasks
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400">{Math.round(progress)}%</span>
+                      </div>
+                      <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${progress}%` }} />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center pt-3 border-t border-slate-50 mt-auto">
+                    <div className={`flex items-center gap-1.5 text-[10px] font-bold ${isOverdue ? 'text-rose-500' : 'text-slate-400'}`}>
+                      <Calendar size={11} />
+                      <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}</span>
+                    </div>
+                  </div>
                 </div>
               );
             })
