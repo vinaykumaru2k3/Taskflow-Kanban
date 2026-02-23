@@ -211,66 +211,70 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex bg-white text-slate-900 overflow-hidden" style={{ fontFamily: "'Poppins', sans-serif" }}>
-      <Sidebar 
-        showSidebar={showSidebar}
-        boards={boards}
+    <div className="h-screen flex flex-col bg-white text-slate-900 overflow-hidden" style={{ fontFamily: "'Poppins', sans-serif" }}>
+      {/* Header - Full Width */}
+      <Header 
+        user={user}
         currentBoard={currentBoard}
-        setCurrentBoard={setCurrentBoard}
-        onAddBoard={() => { setEditingBoard(null); setBoardForm({ name: '', color: '#1e293b' }); setShowBoardModal(true); }}
-        onEditBoard={openEditBoard}
-        onDeleteBoard={confirmDeleteBoard}
+        showSidebar={showSidebar}
+        setShowSidebar={setShowSidebar}
+        handleSignOut={signOut}
+        showStats={showStats}
+        setShowStats={setShowStats}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        handleOpenCreateTask={handleOpenCreateTask}
+        stats={stats}
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+        filters={filters}
+        setFilters={setFilters}
       />
 
-      <div className={`flex-1 flex flex-col h-full overflow-hidden transition-all duration-300 ${showSidebar ? 'lg:pl-64' : 'lg:pl-0'}`}>
-        <Header 
-          user={user}
-          currentBoard={currentBoard}
+      {/* Main Area - Sidebar + Content */}
+      <div className="flex-1 flex overflow-hidden">
+        <Sidebar 
           showSidebar={showSidebar}
-          setShowSidebar={setShowSidebar}
-          handleSignOut={signOut}
-          showStats={showStats}
-          setShowStats={setShowStats}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          handleOpenCreateTask={handleOpenCreateTask}
-          stats={stats}
-          showFilters={showFilters}
-          setShowFilters={setShowFilters}
-          filters={filters}
-          setFilters={setFilters}
+          boards={boards}
+          currentBoard={currentBoard}
+          setCurrentBoard={setCurrentBoard}
+          onAddBoard={() => { setEditingBoard(null); setBoardForm({ name: '', color: '#1e293b' }); setShowBoardModal(true); }}
+          onEditBoard={openEditBoard}
+          onDeleteBoard={confirmDeleteBoard}
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30"> 
-          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar">
-            <div className="max-w-7xl mx-auto h-full flex flex-col">
-              {viewMode === 'calendar' ? (
-                <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                  <CalendarView tasks={filteredTasks} onTaskClick={handleOpenEditTask} />
-                </div>
-              ) : (
-                <KanbanBoard 
-                  tasks={filteredTasks}
-                  onDragStart={handleDragStart}
-                  onDrop={handleDrop}
-                  onEditTask={handleOpenEditTask}
-                  onDeleteTask={deleteTask}
-                  onAddTask={handleAddTaskToColumn}
-                />
-              )}
-            </div>
-          </main>
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30"> 
+            <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar">
+              <div className="max-w-7xl mx-auto h-full flex flex-col">
+                {viewMode === 'calendar' ? (
+                  <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <CalendarView tasks={filteredTasks} onTaskClick={handleOpenEditTask} />
+                  </div>
+                ) : (
+                  <KanbanBoard 
+                    tasks={filteredTasks}
+                    onDragStart={handleDragStart}
+                    onDrop={handleDrop}
+                    onEditTask={handleOpenEditTask}
+                    onDeleteTask={deleteTask}
+                    onAddTask={handleAddTaskToColumn}
+                  />
+                )}
+              </div>
+            </main>
 
-          {/* Fixed Footer */}
-          <footer className="px-8 py-3 text-center border-t border-slate-200 bg-white flex-shrink-0">
-            <div className="flex items-center justify-center gap-2 opacity-40">
-              <Layers size={12} />
-              <p className="text-[9px] font-black uppercase tracking-[0.3em]">TaskFlow Protocol © 2026</p>
-            </div>
-          </footer>
+            {/* Fixed Footer */}
+            <footer className="px-8 py-3 text-center border-t border-slate-200 bg-white flex-shrink-0">
+              <div className="flex items-center justify-center gap-2 opacity-40">
+                <Layers size={12} />
+                <p className="text-[9px] font-black uppercase tracking-[0.3em]">TaskFlow Protocol © 2026</p>
+              </div>
+            </footer>
+          </div>
         </div>
       </div>
 

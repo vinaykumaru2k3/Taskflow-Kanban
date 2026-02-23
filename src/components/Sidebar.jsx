@@ -1,5 +1,4 @@
-import React from 'react';
-import { FolderPlus, Edit2, Trash2, Layers, Hash } from 'lucide-react';
+import { FolderPlus, Edit2, Trash2, Hash } from 'lucide-react';
 
 const Sidebar = ({ 
   showSidebar, 
@@ -11,7 +10,7 @@ const Sidebar = ({
   onDeleteBoard 
 }) => {
   return (
-    <aside className={`${showSidebar ? 'w-64' : 'w-0'} fixed z-30 h-full bg-white border-r border-slate-200 transition-all duration-300 overflow-hidden`}>
+    <aside className={`${showSidebar ? 'w-64' : 'w-0'} h-full bg-white border-r border-slate-200 transition-all duration-300 overflow-hidden flex-shrink-0`}>
       <div className="w-64 h-full flex flex-col">
         <div className="p-6 border-b border-slate-200">
           <div className="flex items-center justify-between mb-6">
