@@ -38,6 +38,7 @@ export const useTasks = (user, currentBoard) => {
       await addDoc(collection(db, 'users', user.uid, 'tasks'), { 
         ...taskData, 
         boardId: currentBoard.id,
+        archived: false,
         createdAt: serverTimestamp() 
       });
     } catch (err) { 
@@ -69,5 +70,33 @@ export const useTasks = (user, currentBoard) => {
     }
   };
 
-  return { tasks, createTask, updateTask, deleteTask };
+  const archiveTask = async (taskId) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, 'users', user.uid, 'tasks', taskId), {
+        archived: true,
+        archivedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.error("Error archiving task:", err);
+      throw err;
+    }
+  };
+
+  const restoreTask = async (taskId) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, 'users', user.uid, 'tasks', taskId), {
+        archived: false,
+        archivedAt: null,
+        updatedAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.error("Error restoring task:", err);
+      throw err;
+    }
+  };
+
+  return { tasks, createTask, updateTask, deleteTask, archiveTask, restoreTask };
 };
