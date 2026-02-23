@@ -1,5 +1,5 @@
-import React from 'react';
-import { Layers, User, LogOut, BarChart3, Search, Calendar, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Layers, User, LogOut, BarChart3, Search, Calendar, CheckCircle2, AlertCircle, Filter, ArrowUpDown, X } from 'lucide-react';
+import { PRIORITIES, COLUMNS } from '../utils/constants';
 
 const Header = ({
   user,
@@ -13,8 +13,23 @@ const Header = ({
   setViewMode,
   searchQuery,
   setSearchQuery,
-  stats
+  stats,
+  showFilters,
+  setShowFilters,
+  filters,
+  setFilters
 }) => {
+  const hasActiveFilters = filters.priority !== 'all' || filters.status !== 'all';
+
+  const resetFilters = () => {
+    setFilters({
+      priority: 'all',
+      status: 'all',
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+    });
+  };
+
   return (
     <header className="bg-white border-b border-slate-200 px-4 md:px-6 lg:px-8 py-3 sticky top-0 z-40 shadow-sm">
       <div className="max-w-7xl mx-auto">
@@ -61,6 +76,20 @@ const Header = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            {/* Filter Toggle */}
+            <button 
+              onClick={() => setShowFilters(!showFilters)} 
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                showFilters || hasActiveFilters ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <Filter size={16} /> 
+              Filter
+              {hasActiveFilters && (
+                <span className="w-2 h-2 rounded-full bg-white" />
+              )}
+            </button>
+
             {/* Stats Toggle */}
             <button 
               onClick={() => setShowStats(!showStats)} 
@@ -127,6 +156,85 @@ const Header = ({
             </div>
           </div>
         </div>
+
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown size={16} className="text-slate-400" />
+                <span className="text-xs font-black uppercase tracking-widest text-slate-500">Filter & Sort</span>
+              </div>
+              {hasActiveFilters && (
+                <button 
+                  onClick={resetFilters}
+                  className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-slate-900 transition-colors"
+                >
+                  <X size={12} /> Reset
+                </button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Priority Filter */}
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Priority</label>
+                <select 
+                  value={filters.priority}
+                  onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 focus:border-slate-400 outline-none transition-all cursor-pointer"
+                >
+                  <option value="all">All Priorities</option>
+                  {Object.entries(PRIORITIES).map(([key, val]) => (
+                    <option key={key} value={key}>{val.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Status Filter */}
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Status</label>
+                <select 
+                  value={filters.status}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 focus:border-slate-400 outline-none transition-all cursor-pointer"
+                >
+                  <option value="all">All Statuses</option>
+                  {COLUMNS.map((col) => (
+                    <option key={col.id} value={col.id}>{col.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sort By */}
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sort By</label>
+                <select 
+                  value={filters.sortBy}
+                  onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 focus:border-slate-400 outline-none transition-all cursor-pointer"
+                >
+                  <option value="createdAt">Created Date</option>
+                  <option value="dueDate">Due Date</option>
+                  <option value="priority">Priority</option>
+                </select>
+              </div>
+
+              {/* Sort Order */}
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Order</label>
+                <select 
+                  value={filters.sortOrder}
+                  onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 focus:border-slate-400 outline-none transition-all cursor-pointer"
+                >
+                  <option value="desc">Descending</option>
+                  <option value="asc">Ascending</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats Panel */}
         {showStats && (

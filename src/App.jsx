@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers, Hash } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers } from 'lucide-react';
 import Landing from './Landing';
 import CalendarView from './CalendarView';
 import Sidebar from './components/Sidebar';
@@ -10,6 +10,14 @@ import { PRIORITIES } from './utils/constants';
 import { useAuth } from './hooks/useAuth';
 import { useBoards } from './hooks/useBoards';
 import { useTasks } from './hooks/useTasks';
+
+// Default filter/sort state
+const defaultFilters = {
+  priority: 'all', // 'all', 'urgent', 'high', 'medium', 'low'
+  status: 'all', // 'all', 'todo', 'in-progress', 'review', 'done'
+  sortBy: 'createdAt', // 'createdAt', 'dueDate', 'priority'
+  sortOrder: 'desc', // 'asc', 'desc'
+};
 
 export default function App() {
   // Custom Hooks
@@ -26,6 +34,13 @@ export default function App() {
   const [showBoardModal, setShowBoardModal] = useState(false);
   const [editingBoard, setEditingBoard] = useState(null);
   const [viewMode, setViewMode] = useState('kanban');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Filter & Sort State (persisted to localStorage)
+  const [filters, setFilters] = useState(() => {
+    const saved = localStorage.getItem('taskflow-filters');
+    return saved ? JSON.parse(saved) : defaultFilters;
+  });
 
   // Form States
   const [boardForm, setBoardForm] = useState({ name: '', color: '#1e293b' });
@@ -127,9 +142,52 @@ export default function App() {
 
   // --- Memoized Data ---
 
+  // Persist filters to localStorage
+  useEffect(() => {
+    localStorage.setItem('taskflow-filters', JSON.stringify(filters));
+  }, [filters]);
+
+  // Priority order for sorting
+  const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
+
   const filteredTasks = useMemo(() => {
-    return tasks.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()) || t.description?.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [tasks, searchQuery]);
+    let result = tasks.filter(t => 
+      t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      t.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Filter by priority
+    if (filters.priority !== 'all') {
+      result = result.filter(t => t.priority === filters.priority);
+    }
+
+    // Filter by status
+    if (filters.status !== 'all') {
+      result = result.filter(t => t.status === filters.status);
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      let comparison = 0;
+      
+      if (filters.sortBy === 'priority') {
+        comparison = (priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0);
+      } else if (filters.sortBy === 'dueDate') {
+        const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+        const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+        comparison = dateA - dateB;
+      } else {
+        // createdAt - default
+        const timeA = a.createdAt?.toMillis?.() || 0;
+        const timeB = b.createdAt?.toMillis?.() || 0;
+        comparison = timeA - timeB;
+      }
+
+      return filters.sortOrder === 'desc' ? -comparison : comparison;
+    });
+
+    return result;
+  }, [tasks, searchQuery, filters]);
 
   const stats = useMemo(() => {
     const total = tasks.length;
@@ -179,6 +237,10 @@ export default function App() {
           setSearchQuery={setSearchQuery}
           handleOpenCreateTask={handleOpenCreateTask}
           stats={stats}
+          showFilters={showFilters}
+          setShowFilters={setShowFilters}
+          filters={filters}
+          setFilters={setFilters}
         />
 
         {/* Main Content Area */}
