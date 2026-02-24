@@ -1,16 +1,18 @@
 import React, { useRef, useEffect } from 'react';
-import { Bell, X, Check, Trash2, UserPlus, AtSign, CheckSquare, MessageSquare } from 'lucide-react';
+import { Bell, X, Check, UserPlus, AtSign, CheckSquare, MessageSquare } from 'lucide-react';
 import NotificationItem from './NotificationItem';
 
 const NotificationPanel = ({ 
   isOpen, 
   onClose, 
   notifications, 
-  unreadCount, 
+  unreadCount = 0,
   onMarkAsRead, 
   onMarkAllAsRead,
   onDelete,
-  onAction 
+  onAction,
+  onAccept,
+  onReject
 }) => {
   const panelRef = useRef(null);
 
@@ -33,7 +35,7 @@ const NotificationPanel = ({
 
   const getNotificationIcon = (type) => {
     switch (type) {
-      case 'invitation':
+      case 'invite':
         return <UserPlus size={16} />;
       case 'mention':
         return <AtSign size={16} />;
@@ -49,9 +51,10 @@ const NotificationPanel = ({
   if (!isOpen) return null;
 
   return (
+    /* Fixed position so it always appears near the top-right regardless of where it's rendered in the DOM */
     <div 
       ref={panelRef}
-      className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+      className="fixed top-16 right-4 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-200"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
@@ -103,7 +106,9 @@ const NotificationPanel = ({
                 icon={getNotificationIcon(notification.type)}
                 onMarkAsRead={() => onMarkAsRead(notification.id)}
                 onDelete={() => onDelete(notification.id)}
-                onAction={() => onAction(notification)}
+                onAction={onAction}
+                onAccept={onAccept}
+                onReject={onReject}
               />
             ))}
           </div>
@@ -113,12 +118,9 @@ const NotificationPanel = ({
       {/* Footer */}
       {notifications.length > 0 && (
         <div className="px-4 py-3 border-t border-slate-100 bg-slate-50">
-          <button
-            onClick={() => {/* Could link to all notifications */}}
-            className="w-full text-center text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors"
-          >
-            View all notifications
-          </button>
+          <p className="text-center text-xs text-slate-400">
+            {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : 'All caught up!'}
+          </p>
         </div>
       )}
     </div>
