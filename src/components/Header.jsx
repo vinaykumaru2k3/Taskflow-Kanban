@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { 
   Layers, User, LogOut, BarChart3, Search, Calendar, CheckCircle2, AlertCircle, 
   Filter, ArrowUpDown, X, PanelLeftClose, PanelLeft, Folder, Archive, 
-  MoreHorizontal, Settings, ChevronDown, Tag, Bell, Share2
+  MoreHorizontal, Settings, ChevronDown, Tag, Bell, Share2, Users
 } from 'lucide-react';
 import { PRIORITIES, COLUMNS, TAG_COLORS, DEFAULT_TAGS } from '../utils/constants';
 
@@ -27,6 +27,8 @@ const Header = ({
   setShowArchived,
   allTags,
   onShareBoard,
+  onShowTeam,
+  teamMemberCount = 0,
   onShowNotifications,
   unreadNotificationsCount = 0
 }) => {
@@ -154,6 +156,22 @@ const Header = ({
               title="Share board"
             >
               <Share2 size={18} />
+            </button>
+          )}
+
+          {/* Team Members Button */}
+          {currentBoard && (
+            <button
+              onClick={onShowTeam}
+              className="relative p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white transition-all"
+              title="View team members"
+            >
+              <Users size={18} />
+              {teamMemberCount >= 2 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {teamMemberCount > 9 ? '9+' : teamMemberCount}
+                </span>
+              )}
             </button>
           )}
 

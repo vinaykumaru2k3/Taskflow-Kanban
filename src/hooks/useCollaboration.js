@@ -22,6 +22,7 @@ import { ROLES } from '../utils/constants';
 export const useCollaboration = (user, currentBoard) => {
   const [collaborators, setCollaborators] = useState([]);
   const [sharedBoards, setSharedBoards] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch collaborators for current board
@@ -44,14 +45,26 @@ export const useCollaboration = (user, currentBoard) => {
         if (ownedBoardSnap.exists()) {
           // User owns this board
           const ownerCollaborator = {
-            uid: user.uid,
-            id: user.uid,
+            uid: user.uid, id: user.uid,
             displayName: user.displayName || 'You',
-            photoURL: user.photoURL,
-            email: user.email,
+            photoURL: user.photoURL, email: user.email,
             role: ROLES.OWNER
           };
           setCollaborators([ownerCollaborator]);
+
+          // ── Backfill ── ensure owner entry exists in boards/{boardId}/members
+          const ownerMemberRef = doc(db, 'boards', currentBoard.id, 'members', user.uid);
+          const ownerMemberSnap = await getDoc(ownerMemberRef);
+          if (!ownerMemberSnap.exists()) {
+            await setDoc(ownerMemberRef, {
+              uid: user.uid,
+              displayName: user.displayName || user.email || 'Unknown',
+              email: user.email || '',
+              photoURL: user.photoURL || null,
+              role: ROLES.OWNER,
+              joinedAt: serverTimestamp()
+            });
+          }
         } else {
           // Check if this is a shared board
           const sharedBoardRef = doc(db, 'users', user.uid, 'sharedBoards', currentBoard.id);
@@ -60,32 +73,37 @@ export const useCollaboration = (user, currentBoard) => {
           if (sharedSnap.exists()) {
             const sharedData = sharedSnap.data();
             const currentUserCollaborator = {
-              uid: user.uid,
-              id: user.uid,
-              displayName: user.displayName || 'You',
-              photoURL: user.photoURL,
-              email: user.email,
-              role: sharedData.role || ROLES.EDITOR
+              uid: user.uid, id: user.uid,
+              displayName: user.displayName || 'You', photoURL: user.photoURL,
+              email: user.email, role: sharedData.role || ROLES.EDITOR
             };
             const boardOwnerCollaborator = {
-              uid: sharedData.ownerId,
-              id: sharedData.ownerId,
+              uid: sharedData.ownerId, id: sharedData.ownerId,
               displayName: sharedData.ownerName || 'Board Owner',
-              email: sharedData.ownerEmail || '',
-              photoURL: null,
-              role: ROLES.OWNER,
-              isOwner: true
+              email: sharedData.ownerEmail || '', photoURL: null,
+              role: ROLES.OWNER, isOwner: true
             };
             setCollaborators([boardOwnerCollaborator, currentUserCollaborator]);
+
+            // ── Backfill ── ensure this member's entry exists in boards/{boardId}/members
+            const memberRef = doc(db, 'boards', currentBoard.id, 'members', user.uid);
+            const memberSnap = await getDoc(memberRef);
+            if (!memberSnap.exists()) {
+              await setDoc(memberRef, {
+                uid: user.uid,
+                displayName: user.displayName || user.email || 'Unknown',
+                email: user.email || '',
+                photoURL: user.photoURL || null,
+                role: sharedData.role || ROLES.EDITOR,
+                joinedAt: serverTimestamp()
+              });
+            }
           } else {
             // Fallback: treat as owner
             const ownerCollaborator = {
-              uid: user.uid,
-              id: user.uid,
-              displayName: user.displayName || 'You',
-              photoURL: user.photoURL,
-              email: user.email,
-              role: ROLES.OWNER
+              uid: user.uid, id: user.uid,
+              displayName: user.displayName || 'You', photoURL: user.photoURL,
+              email: user.email, role: ROLES.OWNER
             };
             setCollaborators([ownerCollaborator]);
           }
@@ -100,6 +118,30 @@ export const useCollaboration = (user, currentBoard) => {
 
     checkBoardAndCollaborators();
   }, [user, currentBoard?.id]);
+
+  // Real-time team members listener: boards/{boardId}/members
+  // This is populated when owner shares (owner entry) and when invitees accept (member entry)
+  useEffect(() => {
+    if (!currentBoard?.id) {
+      setTeamMembers([]);
+      return;
+    }
+
+    const membersRef = collection(db, 'boards', currentBoard.id, 'members');
+    const unsubscribe = onSnapshot(membersRef, (snapshot) => {
+      const members = [];
+      snapshot.forEach(d => members.push({ id: d.id, ...d.data() }));
+      // Sort: owner first, then by role weight
+      const roleOrder = { owner: 0, admin: 1, editor: 2, viewer: 3 };
+      members.sort((a, b) => (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9));
+      setTeamMembers(members);
+    }, (err) => {
+      console.error('Error fetching team members:', err);
+      setTeamMembers([]);
+    });
+
+    return () => unsubscribe();
+  }, [currentBoard?.id]);
 
   // Fetch all shared boards (boards shared with this user)
   useEffect(() => {
@@ -265,6 +307,20 @@ export const useCollaboration = (user, currentBoard) => {
         createdAt: serverTimestamp()
       });
 
+      // Write the owner into boards/{boardId}/members (creates the collection for team view)
+      const ownerMemberRef = doc(db, 'boards', boardId, 'members', user.uid);
+      const ownerMemberSnap = await getDoc(ownerMemberRef);
+      if (!ownerMemberSnap.exists()) {
+        await setDoc(ownerMemberRef, {
+          uid: user.uid,
+          displayName: user.displayName || user.email || 'Unknown',
+          email: user.email || '',
+          photoURL: user.photoURL || null,
+          role: ROLES.OWNER,
+          joinedAt: serverTimestamp()
+        });
+      }
+
       return { success: true, message: `Invitation sent to ${email}!` };
     } catch (err) {
       console.error('Error sending board invitation:', err);
@@ -292,7 +348,18 @@ export const useCollaboration = (user, currentBoard) => {
         acceptedAt: serverTimestamp()
       });
 
-      // 2. Mark notification as accepted
+      // 2. Write member entry to boards/{boardId}/members for team view
+      const memberRef = doc(db, 'boards', boardId, 'members', user.uid);
+      await setDoc(memberRef, {
+        uid: user.uid,
+        displayName: user.displayName || user.email || 'Unknown',
+        email: user.email || '',
+        photoURL: user.photoURL || null,
+        role: role || ROLES.EDITOR,
+        joinedAt: serverTimestamp()
+      });
+
+      // 3. Mark notification as accepted
       await updateDoc(doc(db, 'users', user.uid, 'notifications', notification.id), {
         status: 'accepted',
         read: true,
@@ -337,6 +404,10 @@ export const useCollaboration = (user, currentBoard) => {
       // Delete the sharedBoards entry from the target user's subcollection
       const sharedRef = doc(db, 'users', collaboratorUid, 'sharedBoards', boardId);
       await deleteDoc(sharedRef);
+
+      // Also remove from boards/{boardId}/members
+      const memberRef = doc(db, 'boards', boardId, 'members', collaboratorUid);
+      await deleteDoc(memberRef);
       
       return { success: true };
     } catch (err) {
@@ -364,6 +435,7 @@ export const useCollaboration = (user, currentBoard) => {
 
   return {
     collaborators,
+    teamMembers,
     sharedBoards,
     loading,
     shareBoard,

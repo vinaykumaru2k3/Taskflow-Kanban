@@ -8,6 +8,7 @@ import KanbanBoard from './components/KanbanBoard';
 import Modal from './components/Modal';
 import ArchivedTasksModal from './components/ArchivedTasksModal';
 import ShareBoardModal from './components/collaboration/ShareBoardModal';
+import TeamPanel from './components/collaboration/TeamPanel';
 import NotificationPanel from './components/notifications/NotificationPanel';
 import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS, ROLES } from './utils/constants';
 import { canCreateTasks, canEditTask } from './lib/permissions';
@@ -34,7 +35,8 @@ export default function App() {
   
   // Collaboration hooks
   const { 
-    collaborators, 
+    collaborators,
+    teamMembers,
     sharedBoards, 
     shareBoard,
     acceptInvite,
@@ -73,6 +75,7 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showTeamPanel, setShowTeamPanel] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingTask, setEditingTask] = useState(null);
   const [showStats, setShowStats] = useState(false);
@@ -385,6 +388,8 @@ export default function App() {
         setShowArchived={setShowArchived}
         allTags={allTags}
         onShareBoard={() => setShowShareModal(true)}
+        onShowTeam={() => setShowTeamPanel(true)}
+        teamMemberCount={teamMembers.length}
         onShowNotifications={() => setShowNotifications(true)}
         unreadNotificationsCount={unreadCount}
       />
@@ -652,6 +657,18 @@ export default function App() {
         tasks={archivedTasks}
         onRestore={restoreTask}
         onDelete={deleteTask}
+      />
+
+      {/* Team Panel */}
+      <TeamPanel
+        isOpen={showTeamPanel}
+        onClose={() => setShowTeamPanel(false)}
+        board={currentBoard}
+        teamMembers={teamMembers}
+        currentUser={user}
+        userRole={userRole}
+        onInvite={(email, role) => shareBoard(currentBoard?.id, email, role)}
+        onRemove={(uid) => removeCollaborator(currentBoard?.id, uid)}
       />
 
       {/* Share Board Modal */}
