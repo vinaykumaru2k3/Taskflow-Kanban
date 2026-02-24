@@ -2,6 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ── Helper: get a collaborator's role from their sharedBoards entry ──
+    function collaboratorRole(uid, boardId) {
+      return get(/databases/$(database)/documents/users/$(uid)/sharedBoards/$(boardId)).data.role;
+    }
+
     // ── User profile ──
     // Any signed-in user can read profiles (needed for findUserByEmail lookup).
     // Only the owner can write their own profile.
@@ -17,13 +22,19 @@ service cloud.firestore {
 
     // ── User's own tasks ──
     // Owner has full access.
-    // A collaborator can read/write tasks when they have a sharedBoards entry for that boardId.
+    // Collaborator READ: any role (viewer, editor, admin) can read.
+    // Collaborator WRITE: only editor or admin — NOT viewer.
     match /users/{userId}/tasks/{taskId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Any collaborator can read
       allow read: if request.auth != null &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)/sharedBoards/$(resource.data.boardId));
+
+      // Only editor / admin collaborators can write tasks
       allow write: if request.auth != null &&
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)/sharedBoards/$(request.resource.data.boardId));
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/sharedBoards/$(request.resource.data.boardId)) &&
+        collaboratorRole(request.auth.uid, request.resource.data.boardId) in ['admin', 'editor'];
     }
 
     // ── sharedBoards subcollection ──
@@ -37,7 +48,7 @@ service cloud.firestore {
 
     // ── Notifications subcollection ──
     // Only the recipient reads/updates/deletes their own notifications.
-    // Any signed-in user can CREATE a notification (needed to deliver invites to other users).
+    // Any signed-in user can CREATE a notification (needed to deliver invites).
     // NOTE: Reading another user's notifications from the client is intentionally blocked —
     // the app handles this via try/catch in shareBoard for the duplicate-check.
     match /users/{userId}/notifications/{notifId} {
@@ -46,9 +57,9 @@ service cloud.firestore {
       allow create:       if request.auth != null;
     }
 
-    // ── Global boards/{boardId}/members collection ──
-    // Used for the Team Panel real-time listener.
-    // Any signed-in user can read/write (the app logic gates who can mutate via the UI).
+    // ── Global boards/{boardId}/members collection (Team Panel) ──
+    // Any signed-in user can read (all board members can see the team list).
+    // Writes are gated by UI role checks; keep open here so backfill works.
     match /boards/{boardId}/{document=**} {
       allow read, write: if request.auth != null;
     }

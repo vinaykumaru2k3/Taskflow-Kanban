@@ -1,8 +1,8 @@
 import React from 'react';
-import { Trash2, AlertCircle, CheckSquare, Calendar, Archive, Tag } from 'lucide-react';
+import { Trash2, AlertCircle, CheckSquare, Calendar, Archive, Tag, Eye } from 'lucide-react';
 import { PRIORITIES, TAG_COLORS } from '../utils/constants';
 
-const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive }) => {
+const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = false }) => {
   const priority = PRIORITIES[task.priority] || PRIORITIES.low;
   const subtasksCount = task.subtasks?.length || 0;
   const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0;
@@ -17,10 +17,10 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive }) => {
 
   return (
     <div
-      draggable
-      onDragStart={(e) => onDragStart(e, task.id)}
+      draggable={!readOnly}
+      onDragStart={readOnly ? undefined : (e) => onDragStart(e, task.id)}
       onClick={() => onEdit(task)}
-      className={`group relative bg-gradient-to-br from-white to-slate-50 border-2 ${priority.border} rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden`}
+      className={`group relative bg-gradient-to-br from-white to-slate-50 border-2 ${priority.border} rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all overflow-hidden ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}
     >
       <div className="flex justify-between items-start mb-3">
         <div className="flex flex-wrap gap-1.5">
@@ -35,18 +35,28 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive }) => {
           )}
         </div>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {task.status === 'done' && onArchive && (
-            <button 
-              onClick={(e) => { e.stopPropagation(); onArchive(task.id); }} 
-              className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all"
-              title="Archive task"
-            >
-              <Archive size={14} />
-            </button>
+          {readOnly ? (
+            <span className="flex items-center gap-1 text-[9px] font-bold text-slate-300 px-2 py-1">
+              <Eye size={10} /> View Only
+            </span>
+          ) : (
+            <>
+              {task.status === 'done' && onArchive && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onArchive(task.id); }}
+                  className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all"
+                  title="Archive task"
+                >
+                  <Archive size={14} />
+                </button>
+              )}
+              {onDelete && (
+                <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-all">
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </>
           )}
-          <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-all">
-            <Trash2 size={14} />
-          </button>
         </div>
       </div>
       <h4 className="text-sm font-bold text-slate-800 mb-1.5 line-clamp-2 leading-snug">{task.title}</h4>

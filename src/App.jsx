@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers, Archive, X, Tag } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers, Archive, X, Tag, Eye } from 'lucide-react';
 import Landing from './Landing';
 import CalendarView from './CalendarView';
 import Sidebar from './components/Sidebar';
@@ -161,6 +161,7 @@ export default function App() {
 
   const handleSaveTask = async (e) => {
     e.preventDefault();
+    if (!canEdit) return; // viewers cannot save
     if (!taskForm.title.trim()) return;
     try {
       if (editingTask) {
@@ -443,27 +444,34 @@ export default function App() {
       </div>
 
       {/* Task Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTask(null); }} title={editingTask ? "Update Entry" : "New Entry"}>
+      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTask(null); }} title={editingTask ? (canEdit ? 'Update Entry' : 'View Entry') : 'New Entry'}>
         <form onSubmit={handleSaveTask} className="space-y-5">
+          {/* Read-only notice for viewers */}
+          {!canEdit && (
+            <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <Eye size={14} className="text-slate-400 flex-shrink-0" />
+              <p className="text-xs font-bold text-slate-400">You have <span className="text-slate-600">Viewer</span> access — this board is read-only.</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Title</label>
-              <input required className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-slate-900/10 outline-none transition-all" placeholder="Task title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} />
+              <input required disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-slate-900/10 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Task title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} />
             </div>
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Priority</label>
-              <select className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 focus:border-slate-900/10 outline-none transition-all cursor-pointer" value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value})}>
+              <select disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 focus:border-slate-900/10 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value})}>
                 {Object.keys(PRIORITIES).map(p => (<option key={p} value={p}>{PRIORITIES[p].label}</option>))}
               </select>
             </div>
           </div>
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Description</label>
-            <textarea className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-medium text-slate-600 focus:bg-white focus:border-slate-900/10 outline-none transition-all min-h-[100px] resize-none" placeholder="Contextual details..." value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} />
+            <textarea disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-medium text-slate-600 focus:bg-white focus:border-slate-900/10 outline-none transition-all min-h-[100px] resize-none disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Contextual details..." value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} />
           </div>
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Deadline</label>
-            <input type="date" className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 focus:border-slate-900/10 outline-none transition-all" value={taskForm.dueDate} onChange={e => setTaskForm({...taskForm, dueDate: e.target.value})} />
+            <input type="date" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 focus:border-slate-900/10 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.dueDate} onChange={e => setTaskForm({...taskForm, dueDate: e.target.value})} />
           </div>
           
           {/* Tags Section */}
@@ -498,90 +506,104 @@ export default function App() {
               </div>
             )}
             
-            {/* Tag Selector */}
-            <div className="flex flex-wrap gap-2 mb-3">
-              {DEFAULT_TAGS.map((tag) => {
-                const color = TAG_COLORS.find(c => c.id === tag.colorId) || TAG_COLORS[0];
-                const isSelected = taskForm.tags?.some(t => t.id === tag.id);
-                return (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    onClick={() => isSelected ? handleRemoveTag(tag.id) : handleAddTag(tag)}
-                    className={`text-[10px] font-bold px-2.5 py-1 rounded-md border transition-all ${
-                      isSelected 
-                        ? `${color.bg} ${color.text} ${color.border} ring-2 ring-offset-1 ring-slate-400` 
-                        : `bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300`
-                    }`}
-                  >
-                    {tag.label}
-                  </button>
-                );
-              })}
-            </div>
-            
-            {/* Custom Tag Creator */}
-            <div className="border-t border-slate-100 pt-3 mt-3">
-              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">Create Custom Label</p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Label name..."
-                  value={customTagInput}
-                  onChange={(e) => setCustomTagInput(e.target.value)}
-                  className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:border-slate-400 outline-none transition-all"
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleCreateCustomTag())}
-                />
-                <div className="flex gap-1">
-                  {TAG_COLORS.slice(0, 5).map((color) => (
+            {/* Tag Selector — hidden for viewers */}
+            {canEdit && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {DEFAULT_TAGS.map((tag) => {
+                  const color = TAG_COLORS.find(c => c.id === tag.colorId) || TAG_COLORS[0];
+                  const isSelected = taskForm.tags?.some(t => t.id === tag.id);
+                  return (
                     <button
-                      key={color.id}
+                      key={tag.id}
                       type="button"
-                      onClick={() => setCustomTagColor(color.id)}
-                      className={`w-6 h-6 rounded-md ${color.bg} border-2 transition-all ${
-                        customTagColor === color.id ? color.border : 'border-transparent'
+                      onClick={() => isSelected ? handleRemoveTag(tag.id) : handleAddTag(tag)}
+                      className={`text-[10px] font-bold px-2.5 py-1 rounded-md border transition-all ${
+                        isSelected 
+                          ? `${color.bg} ${color.text} ${color.border} ring-2 ring-offset-1 ring-slate-400` 
+                          : `bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300`
                       }`}
-                      title={color.id}
-                    />
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCreateCustomTag}
-                  disabled={!customTagInput.trim()}
-                  className="px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Plus size={14} />
-                </button>
+                    >
+                      {tag.label}
+                    </button>
+                  );
+                })}
               </div>
-            </div>
+            )}
+            
+            {/* Custom Tag Creator — hidden for viewers */}
+            {canEdit && (
+              <div className="border-t border-slate-100 pt-3 mt-3">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">Create Custom Label</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Label name..."
+                    value={customTagInput}
+                    onChange={(e) => setCustomTagInput(e.target.value)}
+                    className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:border-slate-400 outline-none transition-all"
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleCreateCustomTag())}
+                  />
+                  <div className="flex gap-1">
+                    {TAG_COLORS.slice(0, 5).map((color) => (
+                      <button
+                        key={color.id}
+                        type="button"
+                        onClick={() => setCustomTagColor(color.id)}
+                        className={`w-6 h-6 rounded-md ${color.bg} border-2 transition-all ${
+                          customTagColor === color.id ? color.border : 'border-transparent'
+                        }`}
+                        title={color.id}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCreateCustomTag}
+                    disabled={!customTagInput.trim()}
+                    className="px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           
           <div>
             <div className="flex items-center justify-between mb-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Checklist</label>
-              <button type="button" onClick={handleAddSubtask} className="text-[10px] font-black text-slate-900 hover:opacity-70 flex items-center gap-1">
-                <Plus size={12} /> Add Item
-              </button>
+              {canEdit && (
+                <button type="button" onClick={handleAddSubtask} className="text-[10px] font-black text-slate-900 hover:opacity-70 flex items-center gap-1">
+                  <Plus size={12} /> Add Item
+                </button>
+              )}
             </div>
             <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
               {taskForm.subtasks?.map((sub, idx) => (
                 <div key={sub.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl group/sub border border-transparent hover:border-slate-200 transition-all">
-                  <button type="button" onClick={() => toggleSubtask(sub.id)} className={`transition-colors ${sub.completed ? 'text-slate-900' : 'text-slate-300'}`}>
+                  <button type="button" disabled={!canEdit} onClick={() => canEdit && toggleSubtask(sub.id)} className={`transition-colors ${sub.completed ? 'text-slate-900' : 'text-slate-300'} ${!canEdit ? 'cursor-default' : ''}`}>
                     {sub.completed ? <CheckCircle2 size={18} strokeWidth={2.5} /> : <Circle size={18} strokeWidth={2.5} />}
                   </button>
-                  <input className={`flex-1 bg-transparent border-none text-xs font-bold outline-none ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700'}`} value={sub.text} placeholder="Item description..." onChange={(e) => { const updated = [...taskForm.subtasks]; updated[idx].text = e.target.value; setTaskForm({...taskForm, subtasks: updated}); }} />
-                  <button type="button" onClick={() => removeSubtask(sub.id)} className="opacity-0 group-hover/sub:opacity-100 text-slate-400 hover:text-rose-500 transition-all">
-                    <Trash2 size={14} />
-                  </button>
+                  <input disabled={!canEdit} className={`flex-1 bg-transparent border-none text-xs font-bold outline-none disabled:cursor-not-allowed ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700'}`} value={sub.text} placeholder="Item description..." onChange={(e) => { const updated = [...taskForm.subtasks]; updated[idx].text = e.target.value; setTaskForm({...taskForm, subtasks: updated}); }} />
+                  {canEdit && (
+                    <button type="button" onClick={() => removeSubtask(sub.id)} className="opacity-0 group-hover/sub:opacity-100 text-slate-400 hover:text-rose-500 transition-all">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
           </div>
-          <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-slate-200">
-            {editingTask ? 'Update Entry' : 'Create Entry'}
-            <ChevronRight size={16} />
-          </button>
+          {canEdit ? (
+            <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-slate-200">
+              {editingTask ? 'Update Entry' : 'Create Entry'}
+              <ChevronRight size={16} />
+            </button>
+          ) : (
+            <button type="button" onClick={() => setIsModalOpen(false)} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2">
+              Close
+            </button>
+          )}
         </form>
       </Modal>
 
