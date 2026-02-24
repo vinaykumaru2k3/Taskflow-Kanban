@@ -87,15 +87,24 @@ const Header = ({
           {/* Current Board Indicator */}
           {currentBoard && (
             <div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-slate-200">
-              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                <Folder size={16} className="text-slate-600" />
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                currentBoard.ownerId ? 'bg-blue-50' : 'bg-slate-100'
+              }`}>
+                <Folder size={16} className={currentBoard.ownerId ? 'text-blue-500' : 'text-slate-600'} />
               </div>
               <div className="flex flex-col">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none mb-0.5">Board</span>
-                <h1 className="text-sm font-bold text-slate-900 tracking-tight leading-none truncate max-w-[150px]">
-                  {currentBoard.name}
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none mb-0.5">
+                  {currentBoard.ownerId ? `Shared by ${currentBoard.ownerName || 'someone'}` : 'Board'}
+                </span>
+                <h1 className="text-sm font-bold text-slate-900 tracking-tight leading-none truncate max-w-[160px]">
+                  {currentBoard.name || currentBoard.boardName || 'Untitled'}
                 </h1>
               </div>
+              {currentBoard.ownerId && (
+                <span className="text-[9px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                  {currentBoard.role || 'Editor'}
+                </span>
+              )}
             </div>
           )}
         </div>

@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { X, UserPlus, Mail, Shield, Check, Trash2, Copy, CheckCircle2 } from 'lucide-react';
 import { ROLES, getRoleLabel, getRoleColor } from '../../lib/permissions';
-import { useCollaboration } from '../../hooks/useCollaboration';
 
-const ShareBoardModal = ({ isOpen, onClose, board, user }) => {
+const ShareBoardModal = ({ 
+  isOpen, 
+  onClose, 
+  board, 
+  user,
+  collaborators = [],
+  shareBoard,
+  removeCollaborator,
+  updateCollaboratorRole
+}) => {
   const [email, setEmail] = useState('');
   const [selectedRole, setSelectedRole] = useState(ROLES.EDITOR);
   const [isSharing, setIsSharing] = useState(false);
@@ -11,31 +19,13 @@ const ShareBoardModal = ({ isOpen, onClose, board, user }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const { 
-    collaborators, 
-    shareBoard, 
-    removeCollaborator, 
-    updateCollaboratorRole,
-    getUserRoleForBoard,
-    isBoardOwner 
-  } = useCollaboration(user, board);
+  // Determine the current user's role/ownership from the collaborators array
+  const currentUserCollab = useMemo(() => {
+    return collaborators.find(c => c.uid === user?.uid);
+  }, [collaborators, user]);
 
-  const [userRole, setUserRole] = useState(null);
-  const [isOwner, setIsOwner] = useState(false);
-
-  useEffect(() => {
-    const checkPermissions = async () => {
-      if (board && user) {
-        const role = await getUserRoleForBoard(board.id);
-        const owner = await isBoardOwner(board.id);
-        setUserRole(role);
-        setIsOwner(owner);
-      }
-    };
-    checkPermissions();
-  }, [board, user]);
-
-  const canShare = isOwner || userRole === ROLES.ADMIN;
+  const isOwner = currentUserCollab?.role === ROLES.OWNER;
+  const canShare = isOwner || currentUserCollab?.role === ROLES.ADMIN;
 
   const handleShare = async (e) => {
     e.preventDefault();
@@ -66,7 +56,7 @@ const ShareBoardModal = ({ isOpen, onClose, board, user }) => {
     try {
       await removeCollaborator(board.id, collaborator.uid);
     } catch (err) {
-      setError('Failed to remove collaborator');
+      setError(err.message || 'Failed to remove collaborator');
     }
   };
 
@@ -74,13 +64,21 @@ const ShareBoardModal = ({ isOpen, onClose, board, user }) => {
     try {
       await updateCollaboratorRole(board.id, collaborator.uid, newRole);
     } catch (err) {
-      setError('Failed to update role');
+      setError(err.message || 'Failed to update role');
     }
   };
 
   const copyInviteLink = () => {
-    const link = `${window.location.origin}/board/${board.id}`;
-    navigator.clipboard.writeText(link);
+    const link = `${window.location.origin}/board/${board?.id}`;
+    navigator.clipboard.writeText(link).catch(() => {
+      // Fallback for browsers that don't support clipboard API
+      const el = document.createElement('textarea');
+      el.value = link;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    });
     setShowCopied(true);
     setTimeout(() => setShowCopied(false), 2000);
   };
@@ -111,7 +109,7 @@ const ShareBoardModal = ({ isOpen, onClose, board, user }) => {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Share Form */}
+          {/* Share Form — only shown if user can share */}
           {canShare && (
             <div className="mb-6">
               <form onSubmit={handleShare}>
@@ -187,7 +185,7 @@ const ShareBoardModal = ({ isOpen, onClose, board, user }) => {
             {collaborators.length === 0 ? (
               <div className="text-center py-8 opacity-40">
                 <Shield size={32} strokeWidth={1} className="mx-auto mb-2 text-slate-300" />
-                <p className="text-xs font-bold">No collaborators yet</p>
+                <p className="text-xs font-bold">Only you have access</p>
                 <p className="text-[10px] text-slate-400">Invite team members to collaborate</p>
               </div>
             ) : (
@@ -210,15 +208,19 @@ const ShareBoardModal = ({ isOpen, onClose, board, user }) => {
                         </div>
                       )}
                       <div>
-                        <p className="text-sm font-bold text-slate-800">
+                        <p className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
                           {collab.displayName || 'Unknown User'}
+                          {collab.uid === user?.uid && (
+                            <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">You</span>
+                          )}
                         </p>
-                        <p className="text-xs text-slate-400">{collab.email || 'No email'}</p>
+                        <p className="text-xs text-slate-400">{collab.email || ''}</p>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      {canShare ? (
+                      {/* Only allow role changes for non-owner collaborators if current user can share */}
+                      {canShare && collab.role !== ROLES.OWNER && collab.uid !== user?.uid ? (
                         <select
                           value={collab.role}
                           onChange={(e) => handleRoleChange(collab, e.target.value)}
@@ -234,10 +236,12 @@ const ShareBoardModal = ({ isOpen, onClose, board, user }) => {
                         </span>
                       )}
                       
-                      {canShare && (
+                      {/* Remove button: only for non-owner collaborators, by users who can share */}
+                      {canShare && collab.role !== ROLES.OWNER && collab.uid !== user?.uid && (
                         <button
                           onClick={() => handleRemoveCollaborator(collab)}
                           className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"
+                          title="Remove collaborator"
                         >
                           <Trash2 size={14} />
                         </button>
