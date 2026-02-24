@@ -9,7 +9,8 @@ import Modal from './components/Modal';
 import ArchivedTasksModal from './components/ArchivedTasksModal';
 import ShareBoardModal from './components/collaboration/ShareBoardModal';
 import NotificationPanel from './components/notifications/NotificationPanel';
-import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS } from './utils/constants';
+import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS, ROLES } from './utils/constants';
+import { canCreateTasks, canEditTask } from './lib/permissions';
 import { useAuth } from './hooks/useAuth';
 import { useBoards } from './hooks/useBoards';
 import { useTasks } from './hooks/useTasks';
@@ -35,7 +36,9 @@ export default function App() {
   const { 
     collaborators, 
     sharedBoards, 
-    shareBoard, 
+    shareBoard,
+    acceptInvite,
+    rejectInvite,
     removeCollaborator, 
     updateCollaboratorRole,
     getUserRoleForBoard,
@@ -50,6 +53,21 @@ export default function App() {
     markAllAsRead, 
     deleteNotification 
   } = useNotifications(user);
+
+  // Derive the current user's role for the selected board
+  // — OWNER for own boards, the shared role for shared boards, null if no board
+  const userRole = useMemo(() => {
+    if (!user || !currentBoard) return null;
+    // If it's a shared board, the role is stored in the board object itself
+    if (currentBoard.ownerId && currentBoard.ownerId !== user.uid) {
+      return currentBoard.role || ROLES.VIEWER;
+    }
+    // Own board → OWNER
+    return ROLES.OWNER;
+  }, [user, currentBoard]);
+
+  const canCreate = canCreateTasks(userRole);
+  const canEdit   = userRole === ROLES.OWNER || userRole === ROLES.ADMIN || userRole === ROLES.EDITOR;
 
   // UI State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -280,6 +298,47 @@ export default function App() {
     return Array.from(tagMap.values());
   }, [tasks]);
 
+  // Handle accepting an invite — grant access then navigate to that board
+  const handleAcceptInvite = async (notification) => {
+    try {
+      await acceptInvite(notification);
+      // The sharedBoards listener will update, but we can navigate immediately
+      // Build a minimal shared board object from the notification data
+      const sharedBoardObj = {
+        id: notification.boardId,
+        boardName: notification.boardName,
+        boardColor: notification.boardColor,
+        ownerId: notification.fromUserId,
+        ownerName: notification.fromUserName,
+        ownerEmail: notification.fromUserEmail,
+        role: notification.role
+      };
+      setCurrentBoard(sharedBoardObj);
+      setShowNotifications(false);
+    } catch (err) {
+      console.error('Failed to accept invite:', err);
+      alert('Failed to accept invite: ' + (err.message || 'Unknown error'));
+    }
+  };
+
+  // Handle clicking on a notification — e.g., navigate to shared board on invite
+  const handleNotificationAction = (notification) => {
+    if (notification.boardId) {
+      // Try to find in sharedBoards first, then own boards
+      const sharedBoard = sharedBoards.find(b => b.id === notification.boardId);
+      if (sharedBoard) {
+        setCurrentBoard(sharedBoard);
+        setShowNotifications(false);
+        return;
+      }
+      const ownBoard = boards.find(b => b.id === notification.boardId);
+      if (ownBoard) {
+        setCurrentBoard(ownBoard);
+        setShowNotifications(false);
+      }
+    }
+  };
+
   const stats = useMemo(() => {
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === 'done').length;
@@ -335,6 +394,7 @@ export default function App() {
         <Sidebar 
           showSidebar={showSidebar}
           boards={boards}
+          sharedBoards={sharedBoards}
           currentBoard={currentBoard}
           setCurrentBoard={setCurrentBoard}
           onAddBoard={() => { setEditingBoard(null); setBoardForm({ name: '', color: '#1e293b' }); setShowBoardModal(true); }}
@@ -354,12 +414,13 @@ export default function App() {
                 ) : (
                   <KanbanBoard 
                     tasks={filteredTasks}
-                    onDragStart={handleDragStart}
-                    onDrop={handleDrop}
+                    onDragStart={canEdit ? handleDragStart : () => {}}
+                    onDrop={canEdit ? handleDrop : () => {}}
                     onEditTask={handleOpenEditTask}
-                    onDeleteTask={deleteTask}
-                    onAddTask={handleAddTaskToColumn}
-                    onArchiveTask={archiveTask}
+                    onDeleteTask={canEdit ? deleteTask : null}
+                    onAddTask={canCreate ? handleAddTaskToColumn : null}
+                    onArchiveTask={canEdit ? archiveTask : null}
+                    readOnly={!canEdit}
                   />
                 )}
               </div>
@@ -610,9 +671,13 @@ export default function App() {
         isOpen={showNotifications}
         onClose={() => setShowNotifications(false)}
         notifications={notifications}
+        unreadCount={unreadCount}
         onMarkAsRead={markAsRead}
         onMarkAllAsRead={markAllAsRead}
         onDelete={deleteNotification}
+        onAction={handleNotificationAction}
+        onAccept={handleAcceptInvite}
+        onReject={rejectInvite}
       />
     </div>
   );
