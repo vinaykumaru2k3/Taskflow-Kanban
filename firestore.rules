@@ -2,7 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── User profile (public read for collaborator lookup) ──
+    // ── User profile ──
+    // Any signed-in user can read profiles (needed for findUserByEmail lookup).
+    // Only the owner can write their own profile.
     match /users/{userId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
@@ -15,39 +17,41 @@ service cloud.firestore {
 
     // ── User's own tasks ──
     // Owner has full access.
-    // A collaborator can read/write if they have a sharedBoards entry for that boardId.
+    // A collaborator can read/write tasks when they have a sharedBoards entry for that boardId.
     match /users/{userId}/tasks/{taskId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      // Collaborator read access
       allow read: if request.auth != null &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)/sharedBoards/$(resource.data.boardId));
-      // Collaborator write access (editors/admins)
       allow write: if request.auth != null &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)/sharedBoards/$(request.resource.data.boardId));
     }
 
     // ── sharedBoards subcollection ──
-    // Owner reads their own. Any authenticated user can write (accept invite creates the doc).
+    // The owner reads their own shared boards list.
+    // Any signed-in user can write (needed for acceptInvite to create the entry
+    // and removeCollaborator to delete it on behalf of the board owner).
     match /users/{userId}/sharedBoards/{boardId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      // Any authenticated user can create/delete a sharedBoards entry for this user
-      // (needed for accept/reject invite flow)
       allow write: if request.auth != null;
     }
 
     // ── Notifications subcollection ──
-    // Owner reads/deletes their own. Any authenticated user can create (to deliver invites).
+    // Only the recipient reads/updates/deletes their own notifications.
+    // Any signed-in user can CREATE a notification (needed to deliver invites to other users).
+    // NOTE: Reading another user's notifications from the client is intentionally blocked —
+    // the app handles this via try/catch in shareBoard for the duplicate-check.
     match /users/{userId}/notifications/{notifId} {
       allow read, delete: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+      allow update:       if request.auth != null && request.auth.uid == userId;
+      allow create:       if request.auth != null;
     }
 
-    // ── Global boards collection (for comments, activity) ──
+    // ── Global boards/{boardId}/members collection ──
+    // Used for the Team Panel real-time listener.
+    // Any signed-in user can read/write (the app logic gates who can mutate via the UI).
     match /boards/{boardId}/{document=**} {
       allow read, write: if request.auth != null;
     }
 
   }
 }
-

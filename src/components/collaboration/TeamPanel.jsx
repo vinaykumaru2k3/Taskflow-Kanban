@@ -18,7 +18,6 @@ const INVITABLE_ROLES = [
 /* ── Avatar ─────────────────────────────────────── */
 const Avatar = ({ member }) => {
   const initial = (member.displayName || member.email || '?').charAt(0).toUpperCase();
-  // Consistent hue from uid chars
   const hue = (member.uid || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
 
   if (member.photoURL) {
@@ -50,25 +49,28 @@ const TeamPanel = ({
   userRole,
   onInvite,
   onRemove,
+  onUpdateRole,
 }) => {
-  const [email, setEmail]         = useState('');
-  const [role, setRole]           = useState(ROLES.EDITOR);
-  const [sending, setSending]     = useState(false);
-  const [sendMsg, setSendMsg]     = useState(null); // { ok, text }
+  const [email, setEmail]           = useState('');
+  const [inviteRole, setInviteRole] = useState(ROLES.EDITOR);
+  const [sending, setSending]       = useState(false);
+  const [sendMsg, setSendMsg]       = useState(null);
   const [removingId, setRemovingId] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
 
   if (!isOpen) return null;
 
-  const boardName  = board?.name || board?.boardName || 'This Board';
-  const canManage  = userRole === ROLES.OWNER || userRole === ROLES.ADMIN;
+  const boardName = board?.name || board?.boardName || 'This Board';
+  const canManage = userRole === ROLES.OWNER || userRole === ROLES.ADMIN;
 
+  /* ── Invite ── */
   const handleInvite = async (e) => {
     e.preventDefault();
     if (!email.trim() || !onInvite) return;
     setSending(true);
     setSendMsg(null);
     try {
-      const result = await onInvite(email.trim(), role);
+      const result = await onInvite(email.trim(), inviteRole);
       setSendMsg({ ok: true, text: result?.message || 'Invitation sent!' });
       setEmail('');
     } catch (err) {
@@ -78,13 +80,29 @@ const TeamPanel = ({
     }
   };
 
+  /* ── Remove ── */
   const handleRemove = async (member) => {
     if (!onRemove) return;
     setRemovingId(member.uid);
     try {
       await onRemove(member.uid);
+    } catch (err) {
+      console.error(err);
     } finally {
       setRemovingId(null);
+    }
+  };
+
+  /* ── Role change ── */
+  const handleRoleChange = async (member, newRole) => {
+    if (!onUpdateRole || newRole === member.role) return;
+    setUpdatingId(member.uid);
+    try {
+      await onUpdateRole(member.uid, newRole);
+    } catch (err) {
+      console.error('Role update failed:', err);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -127,7 +145,6 @@ const TeamPanel = ({
               Invite Member
             </p>
             <form onSubmit={handleInvite} className="flex gap-2">
-              {/* Email */}
               <div className="relative flex-1">
                 <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
@@ -139,12 +156,10 @@ const TeamPanel = ({
                   className="w-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium placeholder-slate-300 text-slate-800 focus:outline-none focus:border-slate-900 transition-colors"
                 />
               </div>
-
-              {/* Role picker */}
               <div className="relative">
                 <select
-                  value={role}
-                  onChange={e => setRole(e.target.value)}
+                  value={inviteRole}
+                  onChange={e => setInviteRole(e.target.value)}
                   className="appearance-none pl-3 pr-7 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:border-slate-900 transition-colors cursor-pointer"
                 >
                   {INVITABLE_ROLES.map(r => (
@@ -153,22 +168,15 @@ const TeamPanel = ({
                 </select>
                 <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
-
-              {/* Send */}
               <button
                 type="submit"
                 disabled={sending || !email.trim()}
                 className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
-                {sending
-                  ? <Loader2 size={12} className="animate-spin" />
-                  : <UserPlus size={12} />
-                }
+                {sending ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />}
                 {sending ? '' : 'Invite'}
               </button>
             </form>
-
-            {/* Feedback */}
             {sendMsg && (
               <p className={`mt-2 text-[11px] font-semibold ${sendMsg.ok ? 'text-emerald-600' : 'text-red-500'}`}>
                 {sendMsg.text}
@@ -178,7 +186,7 @@ const TeamPanel = ({
         )}
 
         {/* ── Member List ── */}
-        <div className="overflow-y-auto max-h-[60vh]">
+        <div className="overflow-y-auto max-h-[55vh]">
           {teamMembers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-slate-300">
               <Users size={36} strokeWidth={1.5} className="mb-3" />
@@ -190,11 +198,17 @@ const TeamPanel = ({
           ) : (
             <ul className="divide-y divide-slate-50 px-2 py-2">
               {teamMembers.map((member) => {
-                const rc  = ROLE_CONFIG[member.role] || ROLE_CONFIG[ROLES.VIEWER];
-                const RI  = rc.icon;
-                const isYou       = member.uid === currentUser?.uid;
-                const isOwnerRow  = member.role === ROLES.OWNER;
-                const removing    = removingId === member.uid;
+                const rc         = ROLE_CONFIG[member.role] || ROLE_CONFIG[ROLES.VIEWER];
+                const RI         = rc.icon;
+                const isYou      = member.uid === currentUser?.uid;
+                const isOwnerRow = member.role === ROLES.OWNER;
+                const removing   = removingId === member.uid;
+                const updating   = updatingId === member.uid;
+
+                // Can we change this member's role?
+                const canChangeRole = canManage && !isOwnerRow && !isYou;
+                // Can we remove this member?
+                const canRemove     = canManage && !isOwnerRow && !isYou;
 
                 return (
                   <li
@@ -221,14 +235,39 @@ const TeamPanel = ({
                       <p className="text-[11px] text-slate-400 truncate">{member.email}</p>
                     </div>
 
-                    {/* Role Badge */}
-                    <span className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black flex-shrink-0 ${rc.cls}`}>
-                      <RI size={10} />
-                      {rc.label}
-                    </span>
+                    {/* Role: inline dropdown for owner/admin on changeable rows, badge otherwise */}
+                    {canChangeRole ? (
+                      <div className="relative flex-shrink-0">
+                        {updating ? (
+                          <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black ${rc.cls}`}>
+                            <Loader2 size={10} className="animate-spin" />
+                            {rc.label}
+                          </div>
+                        ) : (
+                          <>
+                            <select
+                              value={member.role}
+                              onChange={e => handleRoleChange(member, e.target.value)}
+                              className={`appearance-none pl-2.5 pr-6 py-1.5 rounded-lg text-[10px] font-black cursor-pointer border-0 focus:outline-none focus:ring-2 focus:ring-slate-900/20 transition-all ${rc.cls}`}
+                              title="Change role"
+                            >
+                              {INVITABLE_ROLES.map(r => (
+                                <option key={r.value} value={r.value}>{r.label}</option>
+                              ))}
+                            </select>
+                            <ChevronDown size={9} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-60" />
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <span className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black flex-shrink-0 ${rc.cls}`}>
+                        <RI size={10} />
+                        {rc.label}
+                      </span>
+                    )}
 
-                    {/* Remove Button (owner/admin only, can't remove self or another owner) */}
-                    {canManage && !isOwnerRow && !isYou && (
+                    {/* Remove */}
+                    {canRemove && (
                       <button
                         onClick={() => handleRemove(member)}
                         disabled={removing}

@@ -271,23 +271,35 @@ export const useCollaboration = (user, currentBoard) => {
       }
 
       // Check if already accepted (board already in their sharedBoards)
-      const existingSharedRef = doc(db, 'users', targetUser.uid, 'sharedBoards', boardId);
-      const existingShared = await getDoc(existingSharedRef);
-      if (existingShared.exists()) {
-        throw new Error('This board is already shared with this user.');
+      // Note: wrapped in try/catch — Firestore rules block reading another user's subcollections,
+      // so a permission error here just means we can't verify; we proceed optimistically.
+      try {
+        const existingSharedRef = doc(db, 'users', targetUser.uid, 'sharedBoards', boardId);
+        const existingShared = await getDoc(existingSharedRef);
+        if (existingShared.exists()) {
+          throw new Error('This board is already shared with this user.');
+        }
+      } catch (err) {
+        if (err.message === 'This board is already shared with this user.') throw err;
+        // Permission denied reading target's sharedBoards — skip check, proceed
       }
 
-      // Check if there's already a pending invite notification for this board+user
-      const pendingInviteQuery = query(
-        collection(db, 'users', targetUser.uid, 'notifications'),
-        where('type', '==', 'invite'),
-        where('boardId', '==', boardId),
-        where('status', '==', 'pending'),
-        limit(1)
-      );
-      const pendingSnap = await getDocs(pendingInviteQuery);
-      if (!pendingSnap.empty) {
-        throw new Error('An invitation is already pending for this user.');
+      // Check if there's already a pending invite (skip gracefully if permission denied)
+      try {
+        const pendingInviteQuery = query(
+          collection(db, 'users', targetUser.uid, 'notifications'),
+          where('type', '==', 'invite'),
+          where('boardId', '==', boardId),
+          where('status', '==', 'pending'),
+          limit(1)
+        );
+        const pendingSnap = await getDocs(pendingInviteQuery);
+        if (!pendingSnap.empty) {
+          throw new Error('An invitation is already pending for this user.');
+        }
+      } catch (err) {
+        if (err.message === 'An invitation is already pending for this user.') throw err;
+        // Permission denied reading target's notifications — skip check, proceed
       }
 
       // Create the invite notification (board is NOT added to sharedBoards yet)
@@ -416,16 +428,19 @@ export const useCollaboration = (user, currentBoard) => {
     }
   };
 
-  // Update collaborator role (updates their sharedBoards entry)
+  // Update collaborator role (updates both sharedBoards entry AND boards/{boardId}/members)
   const updateCollaboratorRole = async (boardId, collaboratorUid, newRole) => {
     if (!user || !boardId || !collaboratorUid) return;
 
     try {
+      // 1. Update the invitee's sharedBoards entry
       const sharedRef = doc(db, 'users', collaboratorUid, 'sharedBoards', boardId);
-      await updateDoc(sharedRef, {
-        role: newRole,
-        updatedAt: serverTimestamp()
-      });
+      await updateDoc(sharedRef, { role: newRole, updatedAt: serverTimestamp() });
+
+      // 2. Also update boards/{boardId}/members so team view reflects the change live
+      const memberRef = doc(db, 'boards', boardId, 'members', collaboratorUid);
+      await updateDoc(memberRef, { role: newRole, updatedAt: serverTimestamp() });
+
       return { success: true };
     } catch (err) {
       console.error('Error updating collaborator role:', err);

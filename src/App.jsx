@@ -669,6 +669,7 @@ export default function App() {
         userRole={userRole}
         onInvite={(email, role) => shareBoard(currentBoard?.id, email, role)}
         onRemove={(uid) => removeCollaborator(currentBoard?.id, uid)}
+        onUpdateRole={(uid, newRole) => updateCollaboratorRole(currentBoard?.id, uid, newRole)}
       />
 
       {/* Share Board Modal */}
