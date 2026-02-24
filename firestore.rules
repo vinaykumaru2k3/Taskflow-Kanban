@@ -1,11 +1,53 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // User's private data - only the owner can read/write
-    match /users/{userId}/{document=**} {
+
+    // ── User profile (public read for collaborator lookup) ──
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── User's own boards (private) ──
+    match /users/{userId}/boards/{boardId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-    
+
+    // ── User's own tasks ──
+    // Owner has full access.
+    // A collaborator can read/write if they have a sharedBoards entry for that boardId.
+    match /users/{userId}/tasks/{taskId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Collaborator read access
+      allow read: if request.auth != null &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/sharedBoards/$(resource.data.boardId));
+      // Collaborator write access (editors/admins)
+      allow write: if request.auth != null &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/sharedBoards/$(request.resource.data.boardId));
+    }
+
+    // ── sharedBoards subcollection ──
+    // Owner reads their own. Any authenticated user can write (accept invite creates the doc).
+    match /users/{userId}/sharedBoards/{boardId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Any authenticated user can create/delete a sharedBoards entry for this user
+      // (needed for accept/reject invite flow)
+      allow write: if request.auth != null;
+    }
+
+    // ── Notifications subcollection ──
+    // Owner reads/deletes their own. Any authenticated user can create (to deliver invites).
+    match /users/{userId}/notifications/{notifId} {
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+    }
+
+    // ── Global boards collection (for comments, activity) ──
+    match /boards/{boardId}/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
   }
 }
+
