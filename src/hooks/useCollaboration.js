@@ -1,0 +1,464 @@
+import { useState, useEffect, useCallback } from 'react';
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  serverTimestamp,
+  getDoc,
+  getDocs,
+  setDoc,
+  writeBatch,
+  limit
+} from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { ROLES } from '../utils/constants';
+
+export const useCollaboration = (user, currentBoard) => {
+  const [collaborators, setCollaborators] = useState([]);
+  const [sharedBoards, setSharedBoards] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch collaborators for current board
+  useEffect(() => {
+    if (!user || !currentBoard) {
+      setCollaborators([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    
+    // Check if this is an owned board or a shared board
+    const checkBoardAndCollaborators = async () => {
+      try {
+        // First check if user owns this board
+        const ownedBoardRef = doc(db, 'users', user.uid, 'boards', currentBoard.id);
+        const ownedBoardSnap = await getDoc(ownedBoardRef);
+
+        if (ownedBoardSnap.exists()) {
+          // User owns this board
+          const ownerCollaborator = {
+            uid: user.uid, id: user.uid,
+            displayName: user.displayName || 'You',
+            photoURL: user.photoURL, email: user.email,
+            role: ROLES.OWNER
+          };
+          setCollaborators([ownerCollaborator]);
+
+          // ── Backfill ── ensure owner entry exists in boards/{boardId}/members
+          const ownerMemberRef = doc(db, 'boards', currentBoard.id, 'members', user.uid);
+          const ownerMemberSnap = await getDoc(ownerMemberRef);
+          if (!ownerMemberSnap.exists()) {
+            await setDoc(ownerMemberRef, {
+              uid: user.uid,
+              displayName: user.displayName || user.email || 'Unknown',
+              email: user.email || '',
+              photoURL: user.photoURL || null,
+              role: ROLES.OWNER,
+              joinedAt: serverTimestamp()
+            });
+          }
+        } else {
+          // Check if this is a shared board
+          const sharedBoardRef = doc(db, 'users', user.uid, 'sharedBoards', currentBoard.id);
+          const sharedSnap = await getDoc(sharedBoardRef);
+
+          if (sharedSnap.exists()) {
+            const sharedData = sharedSnap.data();
+            const currentUserCollaborator = {
+              uid: user.uid, id: user.uid,
+              displayName: user.displayName || 'You', photoURL: user.photoURL,
+              email: user.email, role: sharedData.role || ROLES.EDITOR
+            };
+            const boardOwnerCollaborator = {
+              uid: sharedData.ownerId, id: sharedData.ownerId,
+              displayName: sharedData.ownerName || 'Board Owner',
+              email: sharedData.ownerEmail || '', photoURL: null,
+              role: ROLES.OWNER, isOwner: true
+            };
+            setCollaborators([boardOwnerCollaborator, currentUserCollaborator]);
+
+            // ── Backfill ── ensure this member's entry exists in boards/{boardId}/members
+            const memberRef = doc(db, 'boards', currentBoard.id, 'members', user.uid);
+            const memberSnap = await getDoc(memberRef);
+            if (!memberSnap.exists()) {
+              await setDoc(memberRef, {
+                uid: user.uid,
+                displayName: user.displayName || user.email || 'Unknown',
+                email: user.email || '',
+                photoURL: user.photoURL || null,
+                role: sharedData.role || ROLES.EDITOR,
+                joinedAt: serverTimestamp()
+              });
+            }
+          } else {
+            // Fallback: treat as owner
+            const ownerCollaborator = {
+              uid: user.uid, id: user.uid,
+              displayName: user.displayName || 'You', photoURL: user.photoURL,
+              email: user.email, role: ROLES.OWNER
+            };
+            setCollaborators([ownerCollaborator]);
+          }
+        }
+        setLoading(false);
+      } catch (err) {
+        console.error('Error checking board collaborators:', err);
+        setCollaborators([]);
+        setLoading(false);
+      }
+    };
+
+    checkBoardAndCollaborators();
+  }, [user, currentBoard?.id]);
+
+  // Real-time team members listener: boards/{boardId}/members
+  // This is populated when owner shares (owner entry) and when invitees accept (member entry)
+  useEffect(() => {
+    if (!currentBoard?.id) {
+      setTeamMembers([]);
+      return;
+    }
+
+    const membersRef = collection(db, 'boards', currentBoard.id, 'members');
+    const unsubscribe = onSnapshot(membersRef, (snapshot) => {
+      const members = [];
+      snapshot.forEach(d => members.push({ id: d.id, ...d.data() }));
+      // Sort: owner first, then by role weight
+      const roleOrder = { owner: 0, admin: 1, editor: 2, viewer: 3 };
+      members.sort((a, b) => (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9));
+      setTeamMembers(members);
+    }, (err) => {
+      console.error('Error fetching team members:', err);
+      setTeamMembers([]);
+    });
+
+    return () => unsubscribe();
+  }, [currentBoard?.id]);
+
+  // Fetch all shared boards (boards shared with this user)
+  useEffect(() => {
+    if (!user) {
+      setSharedBoards([]);
+      return;
+    }
+
+    setLoading(true);
+    
+    // Listen to sharedBoards subcollection
+    const q = query(
+      collection(db, 'users', user.uid, 'sharedBoards'),
+      orderBy('sharedAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = [];
+      snapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() });
+      });
+      setSharedBoards(items);
+      setLoading(false);
+    }, (err) => {
+      console.error('Error fetching shared boards:', err);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  // Get user's role for a specific board
+  const getUserRoleForBoard = useCallback(async (boardId) => {
+    if (!user || !boardId) return ROLES.VIEWER;
+
+    try {
+      // First check if user owns the board
+      const boardRef = doc(db, 'users', user.uid, 'boards', boardId);
+      const boardSnap = await getDoc(boardRef);
+      
+      if (boardSnap.exists()) {
+        return ROLES.OWNER;
+      }
+
+      // Check if board is shared with user
+      const sharedRef = doc(db, 'users', user.uid, 'sharedBoards', boardId);
+      const sharedSnap = await getDoc(sharedRef);
+      
+      if (sharedSnap.exists()) {
+        return sharedSnap.data().role || ROLES.EDITOR;
+      }
+
+      return ROLES.VIEWER;
+    } catch (err) {
+      console.error('Error getting user role:', err);
+      return ROLES.VIEWER;
+    }
+  }, [user]);
+
+  // Check if user is owner of a board
+  const isBoardOwner = useCallback(async (boardId) => {
+    if (!user || !boardId) return false;
+    
+    try {
+      const boardRef = doc(db, 'users', user.uid, 'boards', boardId);
+      const boardSnap = await getDoc(boardRef);
+      return boardSnap.exists();
+    } catch (err) {
+      console.error('Error checking board ownership:', err);
+      return false;
+    }
+  }, [user]);
+
+  // Look up user by email from users collection
+  const findUserByEmail = async (email) => {
+    try {
+      // Query the users collection - requires an index on email
+      // For now, we'll try a simple approach
+      const q = query(
+        collection(db, 'users'),
+        where('email', '==', email.toLowerCase()),
+        limit(1)
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        return { id: doc.id, ...doc.data() };
+      }
+      
+      return null;
+    } catch (err) {
+      console.error('Error finding user by email:', err);
+      // If query fails (e.g., no index), return null
+      return null;
+    }
+  };
+
+  // Send an invite — only creates the notification, board is NOT shared until accepted
+  const shareBoard = async (boardId, email, role = ROLES.EDITOR) => {
+    if (!user || !boardId || !email) {
+      throw new Error('Missing required parameters');
+    }
+
+    try {
+      // Get the board details first
+      const boardRef = doc(db, 'users', user.uid, 'boards', boardId);
+      const boardSnap = await getDoc(boardRef);
+      
+      if (!boardSnap.exists()) {
+        throw new Error('Board not found');
+      }
+
+      const boardData = boardSnap.data();
+
+      // Find the invitee by email
+      const targetUser = await findUserByEmail(email);
+      
+      if (!targetUser) {
+        throw new Error('User not found. They must sign up for TaskFlow first before you can invite them.');
+      }
+
+      // Prevent inviting yourself
+      if (targetUser.uid === user.uid) {
+        throw new Error('You cannot invite yourself to your own board.');
+      }
+
+      // Check if already accepted (board already in their sharedBoards)
+      // Note: wrapped in try/catch — Firestore rules block reading another user's subcollections,
+      // so a permission error here just means we can't verify; we proceed optimistically.
+      try {
+        const existingSharedRef = doc(db, 'users', targetUser.uid, 'sharedBoards', boardId);
+        const existingShared = await getDoc(existingSharedRef);
+        if (existingShared.exists()) {
+          throw new Error('This board is already shared with this user.');
+        }
+      } catch (err) {
+        if (err.message === 'This board is already shared with this user.') throw err;
+        // Permission denied reading target's sharedBoards — skip check, proceed
+      }
+
+      // Check if there's already a pending invite (skip gracefully if permission denied)
+      try {
+        const pendingInviteQuery = query(
+          collection(db, 'users', targetUser.uid, 'notifications'),
+          where('type', '==', 'invite'),
+          where('boardId', '==', boardId),
+          where('status', '==', 'pending'),
+          limit(1)
+        );
+        const pendingSnap = await getDocs(pendingInviteQuery);
+        if (!pendingSnap.empty) {
+          throw new Error('An invitation is already pending for this user.');
+        }
+      } catch (err) {
+        if (err.message === 'An invitation is already pending for this user.') throw err;
+        // Permission denied reading target's notifications — skip check, proceed
+      }
+
+      // Create the invite notification (board is NOT added to sharedBoards yet)
+      await addDoc(collection(db, 'users', targetUser.uid, 'notifications'), {
+        type: 'invite',
+        status: 'pending',
+        title: 'Board Invitation',
+        message: `${user.displayName || user.email || 'Someone'} invited you to "${boardData.name}"`,
+        boardId: boardId,
+        boardName: boardData.name,
+        boardColor: boardData.color || null,
+        fromUserId: user.uid,
+        fromUserName: user.displayName || user.email,
+        fromUserEmail: user.email,
+        role: role,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+
+      // Write the owner into boards/{boardId}/members (creates the collection for team view)
+      const ownerMemberRef = doc(db, 'boards', boardId, 'members', user.uid);
+      const ownerMemberSnap = await getDoc(ownerMemberRef);
+      if (!ownerMemberSnap.exists()) {
+        await setDoc(ownerMemberRef, {
+          uid: user.uid,
+          displayName: user.displayName || user.email || 'Unknown',
+          email: user.email || '',
+          photoURL: user.photoURL || null,
+          role: ROLES.OWNER,
+          joinedAt: serverTimestamp()
+        });
+      }
+
+      return { success: true, message: `Invitation sent to ${email}!` };
+    } catch (err) {
+      console.error('Error sending board invitation:', err);
+      throw err;
+    }
+  };
+
+  // Accept an invite — adds the board to sharedBoards and marks notification accepted
+  const acceptInvite = async (notification) => {
+    if (!user || !notification) return;
+
+    const { boardId, boardName, boardColor, fromUserId, fromUserName, fromUserEmail, role } = notification;
+
+    try {
+      // 1. Write to sharedBoards — this grants access
+      const sharedRef = doc(db, 'users', user.uid, 'sharedBoards', boardId);
+      await setDoc(sharedRef, {
+        ownerId: fromUserId,
+        ownerName: fromUserName || 'Board Owner',
+        ownerEmail: fromUserEmail || '',
+        boardName: boardName,
+        boardColor: boardColor || null,
+        role: role || ROLES.EDITOR,
+        sharedAt: serverTimestamp(),
+        acceptedAt: serverTimestamp()
+      });
+
+      // 2. Write member entry to boards/{boardId}/members for team view
+      const memberRef = doc(db, 'boards', boardId, 'members', user.uid);
+      await setDoc(memberRef, {
+        uid: user.uid,
+        displayName: user.displayName || user.email || 'Unknown',
+        email: user.email || '',
+        photoURL: user.photoURL || null,
+        role: role || ROLES.EDITOR,
+        joinedAt: serverTimestamp()
+      });
+
+      // 3. Mark notification as accepted
+      await updateDoc(doc(db, 'users', user.uid, 'notifications', notification.id), {
+        status: 'accepted',
+        read: true,
+        readAt: serverTimestamp()
+      });
+
+      return { success: true };
+    } catch (err) {
+      console.error('Error accepting invite:', err);
+      throw err;
+    }
+  };
+
+  // Reject an invite — simply deletes the notification, board is never added
+  const rejectInvite = async (notificationId) => {
+    if (!user || !notificationId) return;
+
+    try {
+      await updateDoc(doc(db, 'users', user.uid, 'notifications', notificationId), {
+        status: 'rejected',
+        read: true,
+        readAt: serverTimestamp()
+      });
+      return { success: true };
+    } catch (err) {
+      console.error('Error rejecting invite:', err);
+      throw err;
+    }
+  };
+
+
+  // Remove a collaborator (deletes their sharedBoards entry)
+  const removeCollaborator = async (boardId, collaboratorUid) => {
+    if (!user || !boardId || !collaboratorUid) return;
+
+    try {
+      // Cannot remove the board owner
+      if (collaboratorUid === user.uid) {
+        throw new Error('Cannot remove yourself as board owner');
+      }
+
+      // Delete the sharedBoards entry from the target user's subcollection
+      const sharedRef = doc(db, 'users', collaboratorUid, 'sharedBoards', boardId);
+      await deleteDoc(sharedRef);
+
+      // Also remove from boards/{boardId}/members
+      const memberRef = doc(db, 'boards', boardId, 'members', collaboratorUid);
+      await deleteDoc(memberRef);
+      
+      return { success: true };
+    } catch (err) {
+      console.error('Error removing collaborator:', err);
+      throw err;
+    }
+  };
+
+  // Update collaborator role (updates both sharedBoards entry AND boards/{boardId}/members)
+  const updateCollaboratorRole = async (boardId, collaboratorUid, newRole) => {
+    if (!user || !boardId || !collaboratorUid) return;
+
+    try {
+      // 1. Update the invitee's sharedBoards entry
+      const sharedRef = doc(db, 'users', collaboratorUid, 'sharedBoards', boardId);
+      await updateDoc(sharedRef, { role: newRole, updatedAt: serverTimestamp() });
+
+      // 2. Also update boards/{boardId}/members so team view reflects the change live
+      const memberRef = doc(db, 'boards', boardId, 'members', collaboratorUid);
+      await updateDoc(memberRef, { role: newRole, updatedAt: serverTimestamp() });
+
+      return { success: true };
+    } catch (err) {
+      console.error('Error updating collaborator role:', err);
+      throw err;
+    }
+  };
+
+  return {
+    collaborators,
+    teamMembers,
+    sharedBoards,
+    loading,
+    shareBoard,
+    acceptInvite,
+    rejectInvite,
+    removeCollaborator,
+    updateCollaboratorRole,
+    getUserRoleForBoard,
+    isBoardOwner
+  };
+};

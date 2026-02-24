@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { 
   Layers, User, LogOut, BarChart3, Search, Calendar, CheckCircle2, AlertCircle, 
   Filter, ArrowUpDown, X, PanelLeftClose, PanelLeft, Folder, Archive, 
-  MoreHorizontal, Settings, ChevronDown, Tag
+  MoreHorizontal, Settings, ChevronDown, Tag, Bell, Share2, Users
 } from 'lucide-react';
 import { PRIORITIES, COLUMNS, TAG_COLORS, DEFAULT_TAGS } from '../utils/constants';
 
@@ -25,7 +25,12 @@ const Header = ({
   setFilters,
   archivedCount,
   setShowArchived,
-  allTags
+  allTags,
+  onShareBoard,
+  onShowTeam,
+  teamMemberCount = 0,
+  onShowNotifications,
+  unreadNotificationsCount = 0
 }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -84,15 +89,24 @@ const Header = ({
           {/* Current Board Indicator */}
           {currentBoard && (
             <div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-slate-200">
-              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                <Folder size={16} className="text-slate-600" />
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                currentBoard.ownerId ? 'bg-blue-50' : 'bg-slate-100'
+              }`}>
+                <Folder size={16} className={currentBoard.ownerId ? 'text-blue-500' : 'text-slate-600'} />
               </div>
               <div className="flex flex-col">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none mb-0.5">Board</span>
-                <h1 className="text-sm font-bold text-slate-900 tracking-tight leading-none truncate max-w-[150px]">
-                  {currentBoard.name}
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none mb-0.5">
+                  {currentBoard.ownerId ? `Shared by ${currentBoard.ownerName || 'someone'}` : 'Board'}
+                </span>
+                <h1 className="text-sm font-bold text-slate-900 tracking-tight leading-none truncate max-w-[160px]">
+                  {currentBoard.name || currentBoard.boardName || 'Untitled'}
                 </h1>
               </div>
+              {currentBoard.ownerId && (
+                <span className="text-[9px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                  {currentBoard.role || 'Editor'}
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -134,6 +148,47 @@ const Header = ({
 
         {/* Right Section: Actions + User */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Share Board Button */}
+          {currentBoard && (
+            <button 
+              onClick={onShareBoard}
+              className="p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-900 hover:text-white transition-all"
+              title="Share board"
+            >
+              <Share2 size={18} />
+            </button>
+          )}
+
+          {/* Team Members Button */}
+          {currentBoard && (
+            <button
+              onClick={onShowTeam}
+              className="relative p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white transition-all"
+              title="View team members"
+            >
+              <Users size={18} />
+              {teamMemberCount >= 2 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {teamMemberCount > 9 ? '9+' : teamMemberCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Notifications Bell */}
+          <button 
+            onClick={onShowNotifications}
+            className="p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all relative"
+            title="Notifications"
+          >
+            <Bell size={18} />
+            {unreadNotificationsCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+              </span>
+            )}
+          </button>
+
           {/* Filter Button */}
           <button 
             onClick={() => setShowFilters(!showFilters)} 
