@@ -37,17 +37,23 @@ export const useBoards = (user) => {
 
   // Effect to ensure currentBoard is valid or set to default
   useEffect(() => {
-    if (loading) return; 
+    if (loading) return;
+
+    // IMPORTANT: If the current board belongs to another user (shared board),
+    // don't override it — useTasks handles fetching from the owner's collection.
+    if (currentBoard?.ownerId && currentBoard.ownerId !== user?.uid) {
+      return;
+    }
 
     if (boards.length > 0) {
-      // If no board selected, or selected board no longer exists
+      // If no board selected, or selected own board no longer exists
       if (!currentBoard || !boards.find(b => b.id === currentBoard.id)) {
         setCurrentBoard(boards[0]);
       }
     } else {
       setCurrentBoard(null);
     }
-  }, [boards, currentBoard, loading]);
+  }, [boards, currentBoard, loading, user]);
 
   const createBoard = async (boardData) => {
     if (!user) return;
