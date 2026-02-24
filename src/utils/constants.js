@@ -31,3 +31,25 @@ export const DEFAULT_TAGS = [
   { id: 'urgent', label: 'Urgent', colorId: 'orange' },
   { id: 'wontfix', label: 'Wont Fix', colorId: 'slate' },
 ];
+
+// Collaboration roles
+export const ROLES = {
+  OWNER: 'owner',
+  ADMIN: 'admin',
+  EDITOR: 'editor',
+  VIEWER: 'viewer'
+};
+
+export const ROLE_LABELS = {
+  owner: 'Owner',
+  admin: 'Admin',
+  editor: 'Editor',
+  viewer: 'Viewer'
+};
+
+export const ROLE_COLORS = {
+  owner: 'bg-purple-100 text-purple-700 border-purple-300',
+  admin: 'bg-blue-100 text-blue-700 border-blue-300',
+  editor: 'bg-green-100 text-green-700 border-green-300',
+  viewer: 'bg-slate-100 text-slate-600 border-slate-300'
+};

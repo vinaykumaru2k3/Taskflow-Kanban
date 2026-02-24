@@ -7,10 +7,14 @@ import Header from './components/Header';
 import KanbanBoard from './components/KanbanBoard';
 import Modal from './components/Modal';
 import ArchivedTasksModal from './components/ArchivedTasksModal';
+import ShareBoardModal from './components/collaboration/ShareBoardModal';
+import NotificationPanel from './components/notifications/NotificationPanel';
 import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS } from './utils/constants';
 import { useAuth } from './hooks/useAuth';
 import { useBoards } from './hooks/useBoards';
 import { useTasks } from './hooks/useTasks';
+import { useCollaboration } from './hooks/useCollaboration';
+import { useNotifications } from './hooks/useNotifications';
 
 // Default filter/sort state
 const defaultFilters = {
@@ -26,9 +30,31 @@ export default function App() {
   const { user, loading: authLoading, signInWithGoogle, signInWithEmail, signOut } = useAuth();
   const { boards, currentBoard, setCurrentBoard, createBoard, updateBoard, deleteBoard } = useBoards(user);
   const { tasks, createTask, updateTask, deleteTask, archiveTask, restoreTask } = useTasks(user, currentBoard);
+  
+  // Collaboration hooks
+  const { 
+    collaborators, 
+    sharedBoards, 
+    shareBoard, 
+    removeCollaborator, 
+    updateCollaboratorRole,
+    getUserRoleForBoard,
+    isBoardOwner 
+  } = useCollaboration(user, currentBoard);
+
+  // Notifications hook
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead, 
+    deleteNotification 
+  } = useNotifications(user);
 
   // UI State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingTask, setEditingTask] = useState(null);
   const [showStats, setShowStats] = useState(false);
@@ -299,6 +325,9 @@ export default function App() {
         archivedCount={archivedTasks.length}
         setShowArchived={setShowArchived}
         allTags={allTags}
+        onShareBoard={() => setShowShareModal(true)}
+        onShowNotifications={() => setShowNotifications(true)}
+        unreadNotificationsCount={unreadCount}
       />
 
       {/* Main Area - Sidebar + Content */}
@@ -562,6 +591,28 @@ export default function App() {
         tasks={archivedTasks}
         onRestore={restoreTask}
         onDelete={deleteTask}
+      />
+
+      {/* Share Board Modal */}
+      <ShareBoardModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        board={currentBoard}
+        collaborators={collaborators}
+        shareBoard={shareBoard}
+        removeCollaborator={removeCollaborator}
+        updateCollaboratorRole={updateCollaboratorRole}
+        user={user}
+      />
+
+      {/* Notification Panel */}
+      <NotificationPanel
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        notifications={notifications}
+        onMarkAsRead={markAsRead}
+        onMarkAllAsRead={markAllAsRead}
+        onDelete={deleteNotification}
       />
     </div>
   );

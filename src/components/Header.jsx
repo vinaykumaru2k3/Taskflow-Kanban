@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { 
   Layers, User, LogOut, BarChart3, Search, Calendar, CheckCircle2, AlertCircle, 
   Filter, ArrowUpDown, X, PanelLeftClose, PanelLeft, Folder, Archive, 
-  MoreHorizontal, Settings, ChevronDown, Tag
+  MoreHorizontal, Settings, ChevronDown, Tag, Bell, Share2
 } from 'lucide-react';
 import { PRIORITIES, COLUMNS, TAG_COLORS, DEFAULT_TAGS } from '../utils/constants';
 
@@ -25,7 +25,10 @@ const Header = ({
   setFilters,
   archivedCount,
   setShowArchived,
-  allTags
+  allTags,
+  onShareBoard,
+  onShowNotifications,
+  unreadNotificationsCount = 0
 }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -134,6 +137,31 @@ const Header = ({
 
         {/* Right Section: Actions + User */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Share Board Button */}
+          {currentBoard && (
+            <button 
+              onClick={onShareBoard}
+              className="p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-900 hover:text-white transition-all"
+              title="Share board"
+            >
+              <Share2 size={18} />
+            </button>
+          )}
+
+          {/* Notifications Bell */}
+          <button 
+            onClick={onShowNotifications}
+            className="p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all relative"
+            title="Notifications"
+          >
+            <Bell size={18} />
+            {unreadNotificationsCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+              </span>
+            )}
+          </button>
+
           {/* Filter Button */}
           <button 
             onClick={() => setShowFilters(!showFilters)} 
