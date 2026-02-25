@@ -250,7 +250,12 @@ DON'T:
 - Report vulnerabilities privately to maintainers
 
 ## 📄 License
-[
+This project is licensed under the GNU GPL-3.0 License © 2026 Vinay Kumar
+
+You may use, modify, and distribute this software under GPL-3.0 terms.
+Any derivative work must also be open source under GPL-3.0.
+
+See the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 - [Firebase](https://firebase.google.com) - Backend services
@@ -335,4 +340,4 @@ dist/
 
 ***
 
-**Ready for contributors!** 🚀 **Start with Option 1** - works instantly!
+**Ready for contributors!** **Start with Option 1** - works instantly!
