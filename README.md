@@ -1,25 +1,24 @@
 # TaskFlow - Kanban Task Management App
 
+> A modern, beautiful Kanban task management app built with **React + Firebase**. Features drag-and-drop, subtasks, priorities, and real-time sync.
+
 <div align="center">
   <img src="https://github.com/user-attachments/assets/7ef17f9f-690b-433c-8001-29aa5db4326f" alt="TaskFlow Kanban Board" width="800"/>
   <br><br>
   <img src="https://github.com/user-attachments/assets/473c6465-5ea5-446f-9a29-bb4c6118b4a2" alt="TaskFlow Dashboard" width="800"/>
 </div>
 
-> A modern, beautiful Kanban task management app built with **React + Firebase**. Features drag-and-drop, subtasks, priorities, and real-time sync.
-> 
-## ✨ [Live Demo](#live-demo) | [Quick Start](#quick-start) | [Contributing](#contributing)
 
-## 🚀 Live Demo
+## Live Demo
 
 | Environment | URL |
 |-------------|-----|
-| **Production** | [ |
-| **Staging** | [ |
+| **Production** | https://taskflow-app-f6474.web.app/ |
+| **Staging** | https://taskflow-app-f6474.firebaseapp.app/ |
 
-## ✨ Features
+## Features
 
-### 🎯 Core Functionality
+### Core Functionality
 - **Kanban Board** - 4 columns: To Do → In Progress → Review → Done
 - **Drag & Drop** - Smooth reordering powered by [dnd-kit](https://dndkit.com)
 - **Task CRUD** - Create, edit, delete with inline editing
@@ -28,13 +27,13 @@
 - **Due Dates** - Date picker with overdue highlighting
 - **Search** - Real-time filtering by title/description
 
-### 🎨 User Experience
+### User Experience
 - **Dark/Light Mode** - Auto-detect + manual toggle
 - **Real-time Sync** - Instant updates across devices
 - **Statistics** - Completion rates, productivity trends
 - **Google Auth** - Secure OAuth2 login
 
-### 📱 Modern UI/UX
+### Modern UI/UX
 - Gradient glassmorphism design
 - Framer Motion animations
 - Fully responsive (mobile-first)
@@ -53,9 +52,9 @@
 | Testing | Vitest + Playwright |
 | Deployment | Firebase Hosting + GitHub Actions |
 
-## 🏁 Quick Start for Contributors
+## Quick Start for Contributors
 
-### Option 1: UI/UX Only (No Firebase needed - 2 minutes) ⭐ **RECOMMENDED**
+### Option 1: UI/UX Only (No Firebase needed - 2 minutes) **RECOMMENDED**
 
 Perfect for design, components, animations, bug fixes.
 
@@ -68,7 +67,7 @@ echo "VITE_USE_MOCK_DATA=true" >> .env
 npm run dev
 ```
 
-✅ **Mock data loads instantly. No accounts needed!**
+**Mock data loads instantly. No accounts needed!**
 
 ### Option 2: Full Firebase Setup (Backend features)
 
@@ -89,7 +88,7 @@ VITE_USE_MOCK_DATA=false
 ```
 5. `npm run dev`
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 taskflow-kanban/
@@ -111,7 +110,7 @@ taskflow-kanban/
 └── playwright.config.js
 ```
 
-## 🔥 Firebase Schema
+## Firebase Schema
 
 ```
 users/{userId}/
@@ -137,7 +136,7 @@ service cloud.firestore {
 }
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Unit tests (Vitest)
@@ -162,21 +161,43 @@ npm run build
 npm run deploy
 ```
 
-## 🤝 Contributing
+## Contributing
 
 ⭐ **Star this repo** if you find it helpful!
 
-### 🎯 Good First Issues
-- [
-- [
-
 ### Contribution Workflow
 ```bash
-git checkout -b feat/add-task-analytics  # or fix/bug-description
-# Make changes
+# 1️⃣ Fork the repository on GitHub
+# https://github.com/vinaykumaru2k3/Taskflow-Kanban → Click "Fork"
+
+# 2️⃣ Clone your fork
+git clone https://github.com/<your-username>/Taskflow-Kanban.git
+cd Taskflow-Kanban
+
+# 3️⃣ Add upstream (original repo)
+git remote add upstream https://github.com/vinaykumaru2k3/Taskflow-Kanban.git
+
+# 4️⃣ Sync with upstream main
+git fetch upstream
+git checkout main
+git merge upstream/main
+
+# 5️⃣ Create a feature branch
+git checkout -b feat/add-task-analytics   # or fix/bug-description
+
+# 6️⃣ Install + test
+npm install
 npm test && npm run test:e2e
+
+# 7️⃣ Commit
 git commit -m "feat: add task analytics dashboard"
+
+# 8️⃣ Push to your fork
 git push origin feat/add-task-analytics
+
+# 9️⃣ Open Pull Request
+# https://github.com/vinaykumaru2k3/Taskflow-Kanban
+# Base: vinaykumaru2k3/main ← Compare: your-username/feat/add-task-analytics
 ```
 
 **PR Requirements**:
@@ -187,19 +208,19 @@ git push origin feat/add-task-analytics
 
 ### Code Standards
 ```
-✅ DO:
+DO:
 - Tailwind utility classes only
 - Functional components + hooks
 - Conventional Commits (feat:, fix:, docs:)
 - >70% test coverage for new features
 
-❌ DON'T:
+DON'T:
 - Custom CSS (use Tailwind)
 - Console.logs in commits
 - Breaking changes without tests
 ```
 
-## 📋 Available Scripts
+## Available Scripts
 
 | Command | Description |
 |---------|-------------|
@@ -213,7 +234,7 @@ git push origin feat/add-task-analytics
 | `npm run format` | Prettier format |
 | `npm run deploy` | Build + Firebase deploy |
 
-## ❓ FAQ / Troubleshooting
+## FAQ / Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
@@ -223,25 +244,20 @@ git push origin feat/add-task-analytics
 | E2E tests fail | `npx playwright install` |
 | `npm run dev` slow | Disable browser extensions, check `vite.config.js` |
 
-## 🔒 Security
-- ✅ `.env` in `.gitignore`
-- ✅ Firebase client keys safe for web apps
-- 🔒 Report vulnerabilities privately to maintainers
+## Security
+- `.env` in `.gitignore`
+- Firebase client keys safe for web apps
+- Report vulnerabilities privately to maintainers
 
 ## 📄 License
 [
 
-## 🙏 Acknowledgments
+## Acknowledgments
 - [Firebase](https://firebase.google.com) - Backend services
 - [Tailwind CSS](https://tailwindcss.com) - Styling
 - [dnd-kit](https://dndkit.com) - Drag & drop
 - [Lucide React](https://lucide.dev) - Icons
 - [Vite](https://vitejs.dev) - Build tool
-
-<div align="center">
-Built with ❤️ by <a href="https://github.com/vinaykumaru2k3"><b>Vinay Kumar U</b></a><br>
-<img src="https://img.shields.io/badge/Happy_Contributing%21-FF6B6B?style=for-the-badge&logo=heart" alt="Happy Contributing">
-</div>
 
 ***
 
