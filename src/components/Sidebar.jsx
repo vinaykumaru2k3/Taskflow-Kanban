@@ -12,16 +12,16 @@ const Sidebar = ({
   onDeleteBoard 
 }) => {
   return (
-    <aside className={`${showSidebar ? 'w-64' : 'w-0'} h-full bg-white border-r border-slate-200 transition-all duration-300 overflow-hidden flex-shrink-0`}>
+    <aside className={`${showSidebar ? 'w-64' : 'w-0'} h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 overflow-hidden flex-shrink-0`}>
       <div className="w-64 h-full flex flex-col overflow-y-auto">
 
         {/* ── MY BOARDS ── */}
-        <div className="p-6 border-b border-slate-100">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">My Boards</h2>
+            <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">My Boards</h2>
             <button 
               onClick={onAddBoard} 
-              className="p-1.5 hover:bg-slate-900 hover:text-white rounded-lg text-slate-400 transition-all" 
+              className="p-1.5 hover:bg-slate-900 dark:hover:bg-slate-700 hover:text-white rounded-lg text-slate-400 dark:text-slate-500 transition-all" 
               title="Create new board"
             >
               <FolderPlus size={16} />
@@ -36,33 +36,33 @@ const Sidebar = ({
                   key={board.id} 
                   className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${
                     isActive 
-                      ? 'bg-slate-100 text-slate-900' 
-                      : 'hover:bg-slate-50 text-slate-600'
+                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50' 
+                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400'
                   }`} 
                   onClick={() => setCurrentBoard(board)}
                 >
                   {/* Active Indicator */}
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${
                     isActive 
-                      ? 'bg-slate-900 text-white' 
-                      : 'border-2 border-slate-200 group-hover:border-slate-300'
+                      ? 'bg-slate-900 dark:bg-slate-600 text-white' 
+                      : 'border-2 border-slate-200 dark:border-slate-700 group-hover:border-slate-300 dark:group-hover:border-slate-600'
                   }`}>
                     {isActive && <Check size={12} strokeWidth={3} />}
                   </div>
 
                   <span className="flex-1 text-sm font-bold truncate tracking-tight">{board.name}</span>
                   
-                  <div className={`hidden group-hover:flex items-center gap-1 text-slate-400`}>
+                  <div className={`hidden group-hover:flex items-center gap-1 text-slate-400 dark:text-slate-500`}>
                     <button 
                       onClick={(e) => { e.stopPropagation(); onEditBoard(board); }} 
-                      className="p-1 rounded hover:bg-slate-200 transition-colors"
+                      className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                       title="Edit board"
                     >
                       <Edit2 size={12} />
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); onDeleteBoard(board); }} 
-                      className="p-1 rounded hover:bg-rose-50 hover:text-rose-500 transition-colors"
+                      className="p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
                       title="Delete board"
                     >
                       <Trash2 size={12} />
@@ -85,8 +85,8 @@ const Sidebar = ({
         {/* ── SHARED WITH ME ── */}
         <div className="p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Users size={12} className="text-slate-400" />
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Shared with Me</h2>
+            <Users size={12} className="text-slate-400 dark:text-slate-500" />
+            <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Shared with Me</h2>
           </div>
           
           <div className="space-y-1">
@@ -98,8 +98,8 @@ const Sidebar = ({
                   key={sharedBoard.id} 
                   className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${
                     isActive 
-                      ? 'bg-blue-50 text-blue-900' 
-                      : 'hover:bg-slate-50 text-slate-600'
+                      ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-900 dark:text-blue-200' 
+                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400'
                   }`} 
                   onClick={() => setCurrentBoard(sharedBoard)}
                   title={`Shared by ${sharedBoard.ownerName || 'someone'}`}
@@ -108,16 +108,16 @@ const Sidebar = ({
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${
                     isActive 
                       ? 'bg-blue-600 text-white' 
-                      : 'border-2 border-slate-200 group-hover:border-blue-300'
+                      : 'border-2 border-slate-200 dark:border-slate-700 group-hover:border-blue-300'
                   }`}>
-                    {isActive ? <Check size={12} strokeWidth={3} /> : <Share2 size={10} className="text-slate-300 group-hover:text-blue-400" />}
+                    {isActive ? <Check size={12} strokeWidth={3} /> : <Share2 size={10} className="text-slate-300 dark:text-slate-600 group-hover:text-blue-400" />}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold truncate tracking-tight">
                       {sharedBoard.boardName || sharedBoard.name || 'Shared Board'}
                     </p>
-                    <p className="text-[9px] text-slate-400 truncate">
+                    <p className="text-[9px] text-slate-400 dark:text-slate-500 truncate">
                       by {sharedBoard.ownerName || 'someone'} · {ROLE_LABELS[sharedBoard.role] || sharedBoard.role}
                     </p>
                   </div>

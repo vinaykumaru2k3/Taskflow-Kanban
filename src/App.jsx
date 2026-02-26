@@ -17,6 +17,7 @@ import { useBoards } from './hooks/useBoards';
 import { useTasks } from './hooks/useTasks';
 import { useCollaboration } from './hooks/useCollaboration';
 import { useNotifications } from './hooks/useNotifications';
+import { useTheme } from './hooks/useTheme';
 
 // Default filter/sort state
 const defaultFilters = {
@@ -29,6 +30,7 @@ const defaultFilters = {
 
 export default function App() {
   // Custom Hooks
+  const { theme, toggleTheme } = useTheme();
   const { user, loading: authLoading, signInWithGoogle, signInWithEmail, signOut } = useAuth();
   const { boards, currentBoard, setCurrentBoard, createBoard, updateBoard, deleteBoard } = useBoards(user);
   const { tasks, createTask, updateTask, deleteTask, archiveTask, restoreTask } = useTasks(user, currentBoard);
@@ -352,10 +354,10 @@ export default function App() {
   }, [tasks]);
 
   if (authLoading) return (
-    <div className="flex items-center justify-center min-h-screen bg-white text-slate-900">
+    <div className="flex items-center justify-center min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50">
       <div className="flex flex-col items-center gap-6" style={{ fontFamily: "'Poppins', sans-serif" }}>
-        <div className="w-12 h-12 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
-        <p className="font-black tracking-[0.3em] text-[10px] uppercase text-slate-400">Syncing</p>
+        <div className="w-12 h-12 border-4 border-slate-900 dark:border-slate-50 border-t-transparent rounded-full animate-spin"></div>
+        <p className="font-black tracking-[0.3em] text-[10px] uppercase text-slate-400 dark:text-slate-500">Syncing</p>
       </div>
     </div>
   );
@@ -365,7 +367,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-white text-slate-900 overflow-hidden" style={{ fontFamily: "'Poppins', sans-serif" }}>
+    <div className="h-screen flex flex-col bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 overflow-hidden" style={{ fontFamily: "'Poppins', sans-serif" }}>
       {/* Header - Full Width */}
       <Header 
         user={user}
@@ -393,6 +395,8 @@ export default function App() {
         teamMemberCount={teamMembers.length}
         onShowNotifications={() => setShowNotifications(true)}
         unreadNotificationsCount={unreadCount}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
 
       {/* Main Area - Sidebar + Content */}
@@ -410,11 +414,11 @@ export default function App() {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30"> 
+          <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30 dark:bg-slate-900/50"> 
             <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar">
               <div className="max-w-7xl mx-auto h-full flex flex-col">
                 {viewMode === 'calendar' ? (
-                  <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="flex-1 min-h-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                     <CalendarView tasks={filteredTasks} onTaskClick={handleOpenEditTask} />
                   </div>
                 ) : (
@@ -433,8 +437,8 @@ export default function App() {
             </main>
 
             {/* Fixed Footer */}
-            <footer className="px-8 py-3 text-center border-t border-slate-200 bg-white flex-shrink-0">
-              <div className="flex items-center justify-center gap-2 opacity-40">
+            <footer className="px-8 py-3 text-center border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
+              <div className="flex items-center justify-center gap-2 opacity-40 dark:opacity-30">
                 <Layers size={12} />
                 <p className="text-[9px] font-black uppercase tracking-[0.3em]">TaskFlow Protocol © 2026</p>
               </div>
@@ -448,36 +452,36 @@ export default function App() {
         <form onSubmit={handleSaveTask} className="space-y-5">
           {/* Read-only notice for viewers */}
           {!canEdit && (
-            <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl">
-              <Eye size={14} className="text-slate-400 flex-shrink-0" />
-              <p className="text-xs font-bold text-slate-400">You have <span className="text-slate-600">Viewer</span> access — this board is read-only.</p>
+            <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
+              <Eye size={14} className="text-slate-400 dark:text-slate-500 flex-shrink-0" />
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-400">You have <span className="text-slate-600 dark:text-slate-300">Viewer</span> access — this board is read-only.</p>
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Title</label>
-              <input required disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-slate-900/10 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Task title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} />
+              <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Title</label>
+              <input required disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-600 focus:border-slate-900/10 dark:focus:border-slate-500 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Task title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Priority</label>
-              <select disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 focus:border-slate-900/10 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value})}>
+              <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Priority</label>
+              <select disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-500 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value})}>
                 {Object.keys(PRIORITIES).map(p => (<option key={p} value={p}>{PRIORITIES[p].label}</option>))}
               </select>
             </div>
           </div>
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Description</label>
-            <textarea disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-medium text-slate-600 focus:bg-white focus:border-slate-900/10 outline-none transition-all min-h-[100px] resize-none disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Contextual details..." value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} />
+            <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Description</label>
+            <textarea disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border-2 border-transparent rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 focus:bg-white dark:focus:bg-slate-600 focus:border-slate-900/10 dark:focus:border-slate-500 outline-none transition-all min-h-[100px] resize-none disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Contextual details..." value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} />
           </div>
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Deadline</label>
-            <input type="date" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 focus:border-slate-900/10 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.dueDate} onChange={e => setTaskForm({...taskForm, dueDate: e.target.value})} />
+            <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Deadline</label>
+            <input type="date" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-500 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.dueDate} onChange={e => setTaskForm({...taskForm, dueDate: e.target.value})} />
           </div>
           
           {/* Tags Section */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
                 <Tag size={12} /> Labels
               </label>
             </div>
@@ -490,7 +494,7 @@ export default function App() {
                   return (
                     <span 
                       key={idx} 
-                      className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md border ${color.bg} ${color.text} ${color.border}`}
+                      className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md border ${color.bg} ${color.text} ${color.border} dark:${color.darkBg} dark:${color.darkText} dark:${color.darkBorder}`}
                     >
                       {tag.label}
                       <button 
@@ -519,8 +523,8 @@ export default function App() {
                       onClick={() => isSelected ? handleRemoveTag(tag.id) : handleAddTag(tag)}
                       className={`text-[10px] font-bold px-2.5 py-1 rounded-md border transition-all ${
                         isSelected 
-                          ? `${color.bg} ${color.text} ${color.border} ring-2 ring-offset-1 ring-slate-400` 
-                          : `bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300`
+                          ? `${color.bg} ${color.text} ${color.border} dark:${color.darkBg} dark:${color.darkText} dark:${color.darkBorder} ring-2 ring-offset-1 ring-slate-400` 
+                          : `bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500`
                       }`}
                     >
                       {tag.label}
@@ -532,15 +536,15 @@ export default function App() {
             
             {/* Custom Tag Creator — hidden for viewers */}
             {canEdit && (
-              <div className="border-t border-slate-100 pt-3 mt-3">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">Create Custom Label</p>
+              <div className="border-t border-slate-100 dark:border-slate-700 pt-3 mt-3">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">Create Custom Label</p>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     placeholder="Label name..."
                     value={customTagInput}
                     onChange={(e) => setCustomTagInput(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:border-slate-400 outline-none transition-all"
+                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-100 focus:border-slate-400 dark:focus:border-slate-500 outline-none transition-all"
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleCreateCustomTag())}
                   />
                   <div className="flex gap-1">
@@ -560,7 +564,7 @@ export default function App() {
                     type="button"
                     onClick={handleCreateCustomTag}
                     disabled={!customTagInput.trim()}
-                    className="px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Plus size={14} />
                   </button>
@@ -571,22 +575,22 @@ export default function App() {
           
           <div>
             <div className="flex items-center justify-between mb-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Checklist</label>
+              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Checklist</label>
               {canEdit && (
-                <button type="button" onClick={handleAddSubtask} className="text-[10px] font-black text-slate-900 hover:opacity-70 flex items-center gap-1">
+                <button type="button" onClick={handleAddSubtask} className="text-[10px] font-black text-slate-900 dark:text-slate-100 hover:opacity-70 flex items-center gap-1">
                   <Plus size={12} /> Add Item
                 </button>
               )}
             </div>
             <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
               {taskForm.subtasks?.map((sub, idx) => (
-                <div key={sub.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl group/sub border border-transparent hover:border-slate-200 transition-all">
-                  <button type="button" disabled={!canEdit} onClick={() => canEdit && toggleSubtask(sub.id)} className={`transition-colors ${sub.completed ? 'text-slate-900' : 'text-slate-300'} ${!canEdit ? 'cursor-default' : ''}`}>
+                <div key={sub.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl group/sub border border-transparent hover:border-slate-200 dark:hover:border-slate-600 transition-all">
+                  <button type="button" disabled={!canEdit} onClick={() => canEdit && toggleSubtask(sub.id)} className={`transition-colors ${sub.completed ? 'text-slate-900 dark:text-slate-400' : 'text-slate-300 dark:text-slate-600'} ${!canEdit ? 'cursor-default' : ''}`}>
                     {sub.completed ? <CheckCircle2 size={18} strokeWidth={2.5} /> : <Circle size={18} strokeWidth={2.5} />}
                   </button>
-                  <input disabled={!canEdit} className={`flex-1 bg-transparent border-none text-xs font-bold outline-none disabled:cursor-not-allowed ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700'}`} value={sub.text} placeholder="Item description..." onChange={(e) => { const updated = [...taskForm.subtasks]; updated[idx].text = e.target.value; setTaskForm({...taskForm, subtasks: updated}); }} />
+                  <input disabled={!canEdit} className={`flex-1 bg-transparent border-none text-xs font-bold outline-none disabled:cursor-not-allowed ${sub.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'}`} value={sub.text} placeholder="Item description..." onChange={(e) => { const updated = [...taskForm.subtasks]; updated[idx].text = e.target.value; setTaskForm({...taskForm, subtasks: updated}); }} />
                   {canEdit && (
-                    <button type="button" onClick={() => removeSubtask(sub.id)} className="opacity-0 group-hover/sub:opacity-100 text-slate-400 hover:text-rose-500 transition-all">
+                    <button type="button" onClick={() => removeSubtask(sub.id)} className="opacity-0 group-hover/sub:opacity-100 text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 transition-all">
                       <Trash2 size={14} />
                     </button>
                   )}
@@ -595,12 +599,12 @@ export default function App() {
             </div>
           </div>
           {canEdit ? (
-            <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-slate-200">
+            <button type="submit" className="w-full bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 font-bold py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-slate-200 dark:shadow-slate-900/50">
               {editingTask ? 'Update Entry' : 'Create Entry'}
               <ChevronRight size={16} />
             </button>
           ) : (
-            <button type="button" onClick={() => setIsModalOpen(false)} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2">
+            <button type="button" onClick={() => setIsModalOpen(false)} className="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-200 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2">
               Close
             </button>
           )}
@@ -616,23 +620,23 @@ export default function App() {
         <form onSubmit={onSaveBoard} className="space-y-8">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Board Name</label>
-              <Layers size={14} className="text-slate-300" />
+              <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Board Name</label>
+              <Layers size={14} className="text-slate-300 dark:text-slate-600" />
             </div>
             <input 
               required 
               autoFocus
-              className="w-full px-4 py-4 bg-slate-50 border-2 border-transparent rounded-xl text-base font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-slate-900/10 outline-none transition-all" 
+              className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-700 border-2 border-transparent rounded-xl text-base font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-600 focus:border-slate-900/10 dark:focus:border-slate-500 outline-none transition-all" 
               placeholder="e.g., Sprint Planning" 
               value={boardForm.name} 
               onChange={e => setBoardForm({...boardForm, name: e.target.value})} 
             />
-            <p className="mt-3 text-[10px] text-slate-400 font-medium leading-relaxed">
-              This board will follow the default <span className="text-slate-900 font-bold">Monochrome Protocol</span>.
+            <p className="mt-3 text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-relaxed">
+              This board will follow the default <span className="text-slate-900 dark:text-slate-100 font-bold">Monochrome Protocol</span>.
             </p>
           </div>
           <div className="pt-2">
-            <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-slate-200">
+            <button type="submit" className="w-full bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 font-bold py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-slate-200 dark:shadow-slate-900/50">
               {editingBoard ? 'Apply Changes' : 'Initialize Board'}
               <ChevronRight size={16} />
             </button>
@@ -647,24 +651,24 @@ export default function App() {
         title="Delete Protocol"
       >
         <div className="text-center py-2">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200">
-            <Trash2 size={28} className="text-slate-900" strokeWidth={2.5} />
+          <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center border border-slate-200 dark:border-slate-600">
+            <Trash2 size={28} className="text-slate-900 dark:text-slate-200" strokeWidth={2.5} />
           </div>
-          <h3 className="text-xl font-black text-slate-900 mb-2 tracking-tight">Permanently Remove Board?</h3>
-          <p className="text-sm text-slate-500 mb-8 max-w-[260px] mx-auto leading-relaxed">
-            This will erase <span className="text-slate-900 font-bold">"{deleteConfirm.boardName}"</span> and all associated data.
+          <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 mb-2 tracking-tight">Permanently Remove Board?</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-[260px] mx-auto leading-relaxed">
+            This will erase <span className="text-slate-900 dark:text-slate-100 font-bold">"{deleteConfirm.boardName}"</span> and all associated data.
           </p>
           <div className="flex flex-col gap-3">
             <button 
               onClick={onConfirmDeleteBoard}
-              className="w-full px-4 py-4 bg-slate-900 hover:bg-rose-600 text-white font-bold rounded-xl transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2 group"
+              className="w-full px-4 py-4 bg-slate-900 hover:bg-rose-600 text-white font-bold rounded-xl transition-all shadow-xl shadow-slate-200 dark:shadow-slate-900/50 flex items-center justify-center gap-2 group"
             >
               Confirm Deletion
               <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </button>
             <button 
               onClick={() => setDeleteConfirm({ show: false, boardId: null, boardName: '' })}
-              className="w-full px-4 py-3 text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest transition-colors"
+              className="w-full px-4 py-3 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white font-bold text-xs uppercase tracking-widest transition-colors"
             >
               Cancel
             </button>

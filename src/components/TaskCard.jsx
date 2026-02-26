@@ -20,23 +20,23 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
       draggable={!readOnly}
       onDragStart={readOnly ? undefined : (e) => onDragStart(e, task.id)}
       onClick={() => onEdit(task)}
-      className={`group relative bg-gradient-to-br from-white to-slate-50 border-2 ${priority.border} rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all overflow-hidden ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}
+      className={`group relative bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-800/50 border-2 ${priority.border} dark:${priority.darkBorder} rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all overflow-hidden ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}
     >
       <div className="flex justify-between items-start mb-3">
         <div className="flex flex-wrap gap-1.5">
-          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1.5 ${priority.color}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${priority.dot}`} />
+          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1.5 ${priority.color} dark:${priority.darkColor}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${priority.dot} dark:${priority.darkDot}`} />
             {priority.label}
           </span>
           {isOverdue && (
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 flex items-center gap-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1">
               <AlertCircle size={10} /> Overdue
             </span>
           )}
         </div>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {readOnly ? (
-            <span className="flex items-center gap-1 text-[9px] font-bold text-slate-300 px-2 py-1">
+            <span className="flex items-center gap-1 text-[9px] font-bold text-slate-300 dark:text-slate-600 px-2 py-1">
               <Eye size={10} /> View Only
             </span>
           ) : (
@@ -44,14 +44,14 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
               {task.status === 'done' && onArchive && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onArchive(task.id); }}
-                  className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all"
+                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg transition-all"
                   title="Archive task"
                 >
                   <Archive size={14} />
                 </button>
               )}
               {onDelete && (
-                <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-all">
+                <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg transition-all">
                   <Trash2 size={14} />
                 </button>
               )}
@@ -59,8 +59,8 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
           )}
         </div>
       </div>
-      <h4 className="text-sm font-bold text-slate-800 mb-1.5 line-clamp-2 leading-snug">{task.title}</h4>
-      {task.description && <p className="text-xs text-slate-500 line-clamp-2 mb-3 leading-relaxed font-normal">{task.description}</p>}
+      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1.5 line-clamp-2 leading-snug">{task.title}</h4>
+      {task.description && <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 leading-relaxed font-normal">{task.description}</p>}
       
       {/* Tags */}
       {task.tags && task.tags.length > 0 && (
@@ -70,7 +70,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
             return (
               <span 
                 key={idx} 
-                className={`text-[9px] font-bold px-2 py-0.5 rounded-md border ${color.bg} ${color.text} ${color.border}`}
+                className={`text-[9px] font-bold px-2 py-0.5 rounded-md border ${color.bg} ${color.text} ${color.border} dark:${color.darkBg} dark:${color.darkText} dark:${color.darkBorder}`}
               >
                 {tag.label}
               </span>
@@ -82,18 +82,18 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
       {subtasksCount > 0 && (
         <div className="mb-3">
           <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
               <CheckSquare size={10} /> {completedSubtasks}/{subtasksCount} Tasks
             </span>
-            <span className="text-[10px] font-bold text-slate-400">{Math.round(progress)}%</span>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{Math.round(progress)}%</span>
           </div>
-          <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+          <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
             <div className={`h-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${progress}%` }} />
           </div>
         </div>
       )}
-      <div className="flex items-center pt-3 border-t border-slate-50 mt-auto">
-        <div className={`flex items-center gap-1.5 text-[10px] font-bold ${isOverdue ? 'text-rose-500' : 'text-slate-400'}`}>
+      <div className="flex items-center pt-3 border-t border-slate-50 dark:border-slate-700/50 mt-auto">
+        <div className={`flex items-center gap-1.5 text-[10px] font-bold ${isOverdue ? 'text-rose-500 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500'}`}>
           <Calendar size={11} />
           <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}</span>
         </div>
