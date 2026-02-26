@@ -11,7 +11,7 @@ import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS } from './utils/constants';
 import { useAuth } from './hooks/useAuth';
 import { useBoards } from './hooks/useBoards';
 import { useTasks } from './hooks/useTasks';
-
+import ChatBot from './components/ChatBot';
 // Default filter/sort state
 const defaultFilters = {
   priority: 'all', // 'all', 'urgent', 'high', 'medium', 'low'
@@ -332,7 +332,9 @@ export default function App() {
                     onAddTask={handleAddTaskToColumn}
                     onArchiveTask={archiveTask}
                   />
+                  
                 )}
+                <ChatBot/>
               </div>
             </main>
 
@@ -563,6 +565,7 @@ export default function App() {
         onRestore={restoreTask}
         onDelete={deleteTask}
       />
+     
     </div>
   );
 }

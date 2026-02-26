@@ -46,3 +46,4 @@ ui-debug.log
 
 # Vite
 *.local
+.env
