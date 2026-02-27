@@ -52,7 +52,7 @@ export const useTasks = (user, currentBoard) => {
       // Always create tasks in the current user's own collection
       // (shared-board viewers/editors create tasks in the owner's board, 
       //  but for now we create in user's own namespace for simplicity and security)
-      await addDoc(collection(db, 'users', user.uid, 'tasks'), { 
+      await addDoc(collection(db, 'users', taskOwnerId, 'tasks'), { 
         ...taskData, 
         boardId: currentBoard.id,
         createdBy: user.uid,
