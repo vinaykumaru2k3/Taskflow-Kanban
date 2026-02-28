@@ -78,37 +78,37 @@ const CalendarView = ({ tasks, onTaskClick }) => {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col h-full w-full select-none shadow-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col h-full w-full select-none shadow-sm">
         
         {/* Compact Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-white">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-900">
+            <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-900 dark:text-slate-100">
               <CalendarIcon size={16} strokeWidth={2.5} />
             </div>
-            <h2 className="text-lg font-black text-slate-900 tracking-tighter uppercase">
+            <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tighter uppercase">
               {monthNames[month]} <span className="text-slate-400 font-light">{year}</span>
             </h2>
           </div>
 
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-            <button onClick={prevMonth} className="p-1 hover:bg-white rounded-md text-slate-600 transition-all"><ChevronLeft size={16} /></button>
-            <button onClick={goToToday} className="px-3 py-1 text-[9px] font-black uppercase tracking-widest text-slate-600 hover:bg-white rounded-md transition-all">Today</button>
-            <button onClick={nextMonth} className="p-1 hover:bg-white rounded-md text-slate-600 transition-all"><ChevronRight size={16} /></button>
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+            <button onClick={prevMonth} className="p-1 hover:bg-white dark:bg-slate-900 rounded-md text-slate-600 dark:text-slate-300 transition-all"><ChevronLeft size={16} /></button>
+            <button onClick={goToToday} className="px-3 py-1 text-[9px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-white dark:bg-slate-900 rounded-md transition-all">Today</button>
+            <button onClick={nextMonth} className="p-1 hover:bg-white dark:bg-slate-900 rounded-md text-slate-600 dark:text-slate-300 transition-all"><ChevronRight size={16} /></button>
           </div>
         </div>
 
         {/* Week header */}
-        <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
+        <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
           {daysInWeek.map((d) => (
-            <div key={d} className="py-2 text-center border-r border-slate-100 last:border-0">
+            <div key={d} className="py-2 text-center border-r border-slate-100 dark:border-slate-800 last:border-0">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{d}</span>
             </div>
           ))}
         </div>
 
         {/* Calendar grid */}
-        <div className="grid grid-cols-7 auto-rows-fr flex-1 bg-slate-200 gap-[1px] overflow-hidden">
+        <div className="grid grid-cols-7 auto-rows-fr flex-1 bg-slate-200 dark:bg-slate-700 gap-[1px] overflow-hidden">
           {calendarDays.map((cell) => {
             if (cell.type === 'empty') {
               return <div key={cell.key} className="bg-slate-50/50" />;
@@ -118,8 +118,8 @@ const CalendarView = ({ tasks, onTaskClick }) => {
               <div
                 key={cell.key}
                 onClick={() => handleDayClick(cell)}
-                className={`bg-white p-2 flex flex-col gap-1 min-h-0 hover:bg-slate-50 cursor-pointer transition-colors ${
-                  cell.isToday ? 'bg-slate-50' : ''
+                className={`bg-white dark:bg-slate-900 p-2 flex flex-col gap-1 min-h-0 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 cursor-pointer transition-colors ${
+                  cell.isToday ? 'bg-slate-50 dark:bg-slate-800' : ''
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -127,7 +127,7 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                     className={`w-6 h-6 flex items-center justify-center rounded-md text-[11px] font-black ${
                       cell.isToday
                         ? 'bg-slate-900 text-white shadow-sm'
-                        : 'text-slate-700'
+                        : 'text-slate-700 dark:text-slate-300'
                     }`}
                   >
                     {cell.day}
@@ -151,10 +151,10 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                           e.stopPropagation();
                           onTaskClick(task);
                         }}
-                        className={`px-1.5 py-0.5 rounded border-l-2 ${priority.border} bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer`}
+                        className={`px-1.5 py-0.5 rounded border-l-2 ${priority.border} bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 transition-colors cursor-pointer`}
                       >
                         <p className={`text-[9px] font-semibold truncate ${
-                            task.status === 'done' ? 'text-slate-300 line-through' : 'text-slate-600'
+                            task.status === 'done' ? 'text-slate-300 line-through' : 'text-slate-600 dark:text-slate-300'
                           }`}>
                           {task.title}
                         </p>
@@ -190,7 +190,7 @@ const CalendarView = ({ tasks, onTaskClick }) => {
         <div className="space-y-3">
           {selectedDay?.tasks.length === 0 ? (
             <div className="text-center py-12 opacity-30">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300 border border-slate-100 dark:border-slate-800">
                 <CalendarIcon size={32} />
               </div>
               <p className="text-[10px] font-black uppercase tracking-widest">
@@ -233,10 +233,10 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                     </div>
                   </div>
                   
-                  <h4 className="text-sm font-bold text-slate-800 mb-1.5 line-clamp-2 leading-snug">{task.title}</h4>
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1.5 line-clamp-2 leading-snug">{task.title}</h4>
                   
                   {task.description && (
-                    <p className="text-xs text-slate-500 line-clamp-2 mb-3 leading-relaxed font-normal">{task.description}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 leading-relaxed font-normal">{task.description}</p>
                   )}
                   
                   {subtasksCount > 0 && (
@@ -247,7 +247,7 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                         </span>
                         <span className="text-[10px] font-bold text-slate-400">{Math.round(progress)}%</span>
                       </div>
-                      <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div className={`h-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${progress}%` }} />
                       </div>
                     </div>
