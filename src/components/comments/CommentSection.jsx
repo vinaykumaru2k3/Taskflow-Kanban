@@ -110,7 +110,7 @@ const CommentSection = ({
   };
 
   return (
-    <div className="border-t border-slate-100 pt-4 mt-4">
+    <div className="border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
       <div className="flex items-center gap-2 mb-4">
         <MessageSquare size={14} className="text-slate-400" />
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -130,7 +130,7 @@ const CommentSection = ({
                 className="w-8 h-8 rounded-full flex-shrink-0"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-slate-500 font-bold text-xs">
+              <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-xs">
                 {comment.userName?.charAt(0) || '?'}
               </div>
             )}
@@ -138,7 +138,7 @@ const CommentSection = ({
             <div className="flex-1 min-w-0">
               {/* Header */}
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-bold text-slate-800">
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
                   {comment.userName || 'Unknown'}
                 </span>
                 <span className="text-[10px] text-slate-400">
@@ -150,7 +150,7 @@ const CommentSection = ({
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => startEditing(comment)}
-                      className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600"
+                      className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 rounded text-slate-400 hover:text-slate-600 dark:text-slate-300"
                     >
                       <Edit2 size={12} />
                     </button>
@@ -171,7 +171,7 @@ const CommentSection = ({
                     type="text"
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
-                    className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-slate-400"
+                    className="flex-1 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-slate-400"
                     autoFocus
                   />
                   <button
@@ -182,13 +182,13 @@ const CommentSection = ({
                   </button>
                   <button
                     onClick={cancelEditing}
-                    className="p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"
+                    className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:bg-slate-700"
                   >
                     <X size={14} />
                   </button>
                 </div>
               ) : (
-                <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
                   {comment.text}
                 </p>
               )}
@@ -215,7 +215,7 @@ const CommentSection = ({
                 className="w-8 h-8 rounded-full flex-shrink-0"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-slate-500 font-bold text-xs">
+              <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-xs">
                 {currentUser?.displayName?.charAt(0) || '?'}
               </div>
             )}
@@ -227,19 +227,19 @@ const CommentSection = ({
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Add a comment... (@mention to notify)"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 transition-colors"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-slate-400 transition-colors"
               />
               
               {/* Mention dropdown */}
               {showMentions && filteredCollaborators.length > 0 && (
-                <div className="absolute bottom-full left-0 mb-1 w-64 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
-                  <div className="p-2 border-b border-slate-100">
+                <div className="absolute bottom-full left-0 mb-1 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg overflow-hidden">
+                  <div className="p-2 border-b border-slate-100 dark:border-slate-800">
                     <input
                       type="text"
                       placeholder="Search..."
                       value={mentionSearch}
                       onChange={(e) => setMentionSearch(e.target.value)}
-                      className="w-full px-2 py-1 bg-slate-50 rounded text-xs focus:outline-none"
+                      className="w-full px-2 py-1 bg-slate-50 dark:bg-slate-800 rounded text-xs focus:outline-none"
                       autoFocus
                     />
                   </div>
@@ -249,14 +249,14 @@ const CommentSection = ({
                         key={user.uid}
                         type="button"
                         onClick={() => insertMention(user)}
-                        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-left"
+                        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 text-left"
                       >
                         {user.photoURL ? (
                           <img src={user.photoURL} alt="" className="w-5 h-5 rounded-full" />
                         ) : (
-                          <div className="w-5 h-5 rounded-full bg-slate-200" />
+                          <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700" />
                         )}
-                        <span className="text-sm text-slate-700">{user.displayName || user.email}</span>
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{user.displayName || user.email}</span>
                       </button>
                     ))}
                   </div>

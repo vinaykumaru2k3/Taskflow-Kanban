@@ -54,13 +54,13 @@ const NotificationPanel = ({
     /* Fixed position so it always appears near the top-right regardless of where it's rendered in the DOM */
     <div 
       ref={panelRef}
-      className="fixed top-16 right-4 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-200"
+      className="fixed top-16 right-4 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-200"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800">
         <div className="flex items-center gap-2">
-          <Bell size={16} className="text-slate-600" />
-          <span className="text-sm font-bold text-slate-800">Notifications</span>
+          <Bell size={16} className="text-slate-600 dark:text-slate-300" />
+          <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Notifications</span>
           {unreadCount > 0 && (
             <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full">
               {unreadCount}
@@ -72,7 +72,7 @@ const NotificationPanel = ({
           {unreadCount > 0 && (
             <button
               onClick={onMarkAllAsRead}
-              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-500 transition-colors"
+              className="p-1.5 hover:bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
               title="Mark all as read"
             >
               <Check size={14} />
@@ -80,7 +80,7 @@ const NotificationPanel = ({
           )}
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-500 transition-colors"
+            className="p-1.5 hover:bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
           >
             <X size={14} />
           </button>
@@ -117,7 +117,7 @@ const NotificationPanel = ({
 
       {/* Footer */}
       {notifications.length > 0 && (
-        <div className="px-4 py-3 border-t border-slate-100 bg-slate-50">
+        <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800">
           <p className="text-center text-xs text-slate-400">
             {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : 'All caught up!'}
           </p>

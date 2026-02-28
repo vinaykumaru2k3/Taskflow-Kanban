@@ -7,7 +7,6 @@ import Header from './components/Header';
 import KanbanBoard from './components/KanbanBoard';
 import Modal from './components/Modal';
 import ArchivedTasksModal from './components/ArchivedTasksModal';
-import ShareBoardModal from './components/collaboration/ShareBoardModal';
 import TeamPanel from './components/collaboration/TeamPanel';
 import NotificationPanel from './components/notifications/NotificationPanel';
 import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS, ROLES } from './utils/constants';
@@ -17,6 +16,7 @@ import { useBoards } from './hooks/useBoards';
 import { useTasks } from './hooks/useTasks';
 import { useCollaboration } from './hooks/useCollaboration';
 import { useNotifications } from './hooks/useNotifications';
+import { useTheme } from './hooks/useTheme';
 
 // Default filter/sort state
 const defaultFilters = {
@@ -32,6 +32,7 @@ export default function App() {
   const { user, loading: authLoading, signInWithGoogle, signInWithEmail, signOut } = useAuth();
   const { boards, currentBoard, setCurrentBoard, createBoard, updateBoard, deleteBoard } = useBoards(user);
   const { tasks, createTask, updateTask, deleteTask, archiveTask, restoreTask } = useTasks(user, currentBoard);
+  const { theme, toggleTheme } = useTheme();
   
   // Collaboration hooks
   const { 
@@ -73,7 +74,6 @@ export default function App() {
 
   // UI State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showTeamPanel, setShowTeamPanel] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -352,7 +352,7 @@ export default function App() {
   }, [tasks]);
 
   if (authLoading) return (
-    <div className="flex items-center justify-center min-h-screen bg-white text-slate-900">
+    <div className="flex items-center justify-center min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
       <div className="flex flex-col items-center gap-6" style={{ fontFamily: "'Poppins', sans-serif" }}>
         <div className="w-12 h-12 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
         <p className="font-black tracking-[0.3em] text-[10px] uppercase text-slate-400">Syncing</p>
@@ -365,7 +365,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-white text-slate-900 overflow-hidden" style={{ fontFamily: "'Poppins', sans-serif" }}>
+    <div className="h-screen flex flex-col bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 overflow-hidden" style={{ fontFamily: "'Poppins', sans-serif" }}>
       {/* Header - Full Width */}
       <Header 
         user={user}
@@ -380,6 +380,7 @@ export default function App() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         handleOpenCreateTask={handleOpenCreateTask}
+        canCreate={canCreate}
         stats={stats}
         showFilters={showFilters}
         setShowFilters={setShowFilters}
@@ -388,11 +389,12 @@ export default function App() {
         archivedCount={archivedTasks.length}
         setShowArchived={setShowArchived}
         allTags={allTags}
-        onShareBoard={() => setShowShareModal(true)}
         onShowTeam={() => setShowTeamPanel(true)}
         teamMemberCount={teamMembers.length}
         onShowNotifications={() => setShowNotifications(true)}
         unreadNotificationsCount={unreadCount}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
 
       {/* Main Area - Sidebar + Content */}
@@ -410,11 +412,28 @@ export default function App() {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30"> 
+          <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30 dark:bg-transparent"> 
             <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar">
               <div className="max-w-7xl mx-auto h-full flex flex-col">
-                {viewMode === 'calendar' ? (
-                  <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                {!currentBoard ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-center">
+                    <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6">
+                      <Layers size={32} className="text-blue-500 dark:text-blue-400 border-2 border-transparent" />
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 mb-3 tracking-tight">Welcome to TaskFlow</h2>
+                    <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm leading-relaxed text-sm">
+                      To get started with tracking and prioritizing your tasks, you'll need to create your first board.
+                    </p>
+                    <button
+                      onClick={() => { setEditingBoard(null); setBoardForm({ name: '', color: '#1e293b' }); setShowBoardModal(true); }}
+                      className="px-8 py-4 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-bold rounded-xl transition-all shadow-xl shadow-slate-200 dark:shadow-none hover:-translate-y-1 active:scale-95 flex items-center gap-2"
+                    >
+                      <Plus size={18} strokeWidth={3} />
+                      Initialize First Board
+                    </button>
+                  </div>
+                ) : viewMode === 'calendar' ? (
+                  <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                     <CalendarView tasks={filteredTasks} onTaskClick={handleOpenEditTask} />
                   </div>
                 ) : (
@@ -433,7 +452,7 @@ export default function App() {
             </main>
 
             {/* Fixed Footer */}
-            <footer className="px-8 py-3 text-center border-t border-slate-200 bg-white flex-shrink-0">
+            <footer className="px-8 py-3 text-center border-t border-slate-200 dark:border-slate-700 dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
               <div className="flex items-center justify-center gap-2 opacity-40">
                 <Layers size={12} />
                 <p className="text-[9px] font-black uppercase tracking-[0.3em]">TaskFlow Protocol © 2026</p>
@@ -448,30 +467,30 @@ export default function App() {
         <form onSubmit={handleSaveTask} className="space-y-5">
           {/* Read-only notice for viewers */}
           {!canEdit && (
-            <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl">
+            <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
               <Eye size={14} className="text-slate-400 flex-shrink-0" />
-              <p className="text-xs font-bold text-slate-400">You have <span className="text-slate-600">Viewer</span> access — this board is read-only.</p>
+              <p className="text-xs font-bold text-slate-400">You have <span className="text-slate-600 dark:text-slate-300">Viewer</span> access — this board is read-only.</p>
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Title</label>
-              <input required disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-slate-900/10 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Task title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} />
+              <input required disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Task title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} />
             </div>
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Priority</label>
-              <select disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 focus:border-slate-900/10 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value})}>
+              <select disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value})}>
                 {Object.keys(PRIORITIES).map(p => (<option key={p} value={p}>{PRIORITIES[p].label}</option>))}
               </select>
             </div>
           </div>
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Description</label>
-            <textarea disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-medium text-slate-600 focus:bg-white focus:border-slate-900/10 outline-none transition-all min-h-[100px] resize-none disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Contextual details..." value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} />
+            <textarea disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all min-h-[100px] resize-none disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Contextual details..." value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} />
           </div>
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Deadline</label>
-            <input type="date" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 focus:border-slate-900/10 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.dueDate} onChange={e => setTaskForm({...taskForm, dueDate: e.target.value})} />
+            <input type="date" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.dueDate} onChange={e => setTaskForm({...taskForm, dueDate: e.target.value})} />
           </div>
           
           {/* Tags Section */}
@@ -520,7 +539,7 @@ export default function App() {
                       className={`text-[10px] font-bold px-2.5 py-1 rounded-md border transition-all ${
                         isSelected 
                           ? `${color.bg} ${color.text} ${color.border} ring-2 ring-offset-1 ring-slate-400` 
-                          : `bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300`
+                          : `bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:border-slate-600`
                       }`}
                     >
                       {tag.label}
@@ -532,7 +551,7 @@ export default function App() {
             
             {/* Custom Tag Creator — hidden for viewers */}
             {canEdit && (
-              <div className="border-t border-slate-100 pt-3 mt-3">
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-3 mt-3">
                 <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">Create Custom Label</p>
                 <div className="flex gap-2">
                   <input
@@ -540,7 +559,7 @@ export default function App() {
                     placeholder="Label name..."
                     value={customTagInput}
                     onChange={(e) => setCustomTagInput(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:border-slate-400 outline-none transition-all"
+                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-100 focus:border-slate-400 outline-none transition-all"
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleCreateCustomTag())}
                   />
                   <div className="flex gap-1">
@@ -573,18 +592,18 @@ export default function App() {
             <div className="flex items-center justify-between mb-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Checklist</label>
               {canEdit && (
-                <button type="button" onClick={handleAddSubtask} className="text-[10px] font-black text-slate-900 hover:opacity-70 flex items-center gap-1">
+                <button type="button" onClick={handleAddSubtask} className="text-[10px] font-black text-slate-900 dark:text-slate-100 hover:opacity-70 flex items-center gap-1">
                   <Plus size={12} /> Add Item
                 </button>
               )}
             </div>
             <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
               {taskForm.subtasks?.map((sub, idx) => (
-                <div key={sub.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl group/sub border border-transparent hover:border-slate-200 transition-all">
-                  <button type="button" disabled={!canEdit} onClick={() => canEdit && toggleSubtask(sub.id)} className={`transition-colors ${sub.completed ? 'text-slate-900' : 'text-slate-300'} ${!canEdit ? 'cursor-default' : ''}`}>
+                <div key={sub.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl group/sub border border-transparent hover:border-slate-200 dark:border-slate-700 transition-all">
+                  <button type="button" disabled={!canEdit} onClick={() => canEdit && toggleSubtask(sub.id)} className={`transition-colors ${sub.completed ? 'text-slate-900 dark:text-slate-100' : 'text-slate-300'} ${!canEdit ? 'cursor-default' : ''}`}>
                     {sub.completed ? <CheckCircle2 size={18} strokeWidth={2.5} /> : <Circle size={18} strokeWidth={2.5} />}
                   </button>
-                  <input disabled={!canEdit} className={`flex-1 bg-transparent border-none text-xs font-bold outline-none disabled:cursor-not-allowed ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700'}`} value={sub.text} placeholder="Item description..." onChange={(e) => { const updated = [...taskForm.subtasks]; updated[idx].text = e.target.value; setTaskForm({...taskForm, subtasks: updated}); }} />
+                  <input disabled={!canEdit} className={`flex-1 bg-transparent border-none text-xs font-bold outline-none disabled:cursor-not-allowed ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'}`} value={sub.text} placeholder="Item description..." onChange={(e) => { const updated = [...taskForm.subtasks]; updated[idx].text = e.target.value; setTaskForm({...taskForm, subtasks: updated}); }} />
                   {canEdit && (
                     <button type="button" onClick={() => removeSubtask(sub.id)} className="opacity-0 group-hover/sub:opacity-100 text-slate-400 hover:text-rose-500 transition-all">
                       <Trash2 size={14} />
@@ -600,7 +619,7 @@ export default function App() {
               <ChevronRight size={16} />
             </button>
           ) : (
-            <button type="button" onClick={() => setIsModalOpen(false)} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2">
+            <button type="button" onClick={() => setIsModalOpen(false)} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2">
               Close
             </button>
           )}
@@ -622,13 +641,13 @@ export default function App() {
             <input 
               required 
               autoFocus
-              className="w-full px-4 py-4 bg-slate-50 border-2 border-transparent rounded-xl text-base font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-slate-900/10 outline-none transition-all" 
+              className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-base font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-300 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all" 
               placeholder="e.g., Sprint Planning" 
               value={boardForm.name} 
               onChange={e => setBoardForm({...boardForm, name: e.target.value})} 
             />
             <p className="mt-3 text-[10px] text-slate-400 font-medium leading-relaxed">
-              This board will follow the default <span className="text-slate-900 font-bold">Monochrome Protocol</span>.
+              This board will follow the default <span className="text-slate-900 dark:text-slate-100 font-bold">Monochrome Protocol</span>.
             </p>
           </div>
           <div className="pt-2">
@@ -647,12 +666,12 @@ export default function App() {
         title="Delete Protocol"
       >
         <div className="text-center py-2">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200">
-            <Trash2 size={28} className="text-slate-900" strokeWidth={2.5} />
+          <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
+            <Trash2 size={28} className="text-slate-900 dark:text-slate-100" strokeWidth={2.5} />
           </div>
-          <h3 className="text-xl font-black text-slate-900 mb-2 tracking-tight">Permanently Remove Board?</h3>
-          <p className="text-sm text-slate-500 mb-8 max-w-[260px] mx-auto leading-relaxed">
-            This will erase <span className="text-slate-900 font-bold">"{deleteConfirm.boardName}"</span> and all associated data.
+          <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 mb-2 tracking-tight">Permanently Remove Board?</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-[260px] mx-auto leading-relaxed">
+            This will erase <span className="text-slate-900 dark:text-slate-100 font-bold">"{deleteConfirm.boardName}"</span> and all associated data.
           </p>
           <div className="flex flex-col gap-3">
             <button 
@@ -664,7 +683,7 @@ export default function App() {
             </button>
             <button 
               onClick={() => setDeleteConfirm({ show: false, boardId: null, boardName: '' })}
-              className="w-full px-4 py-3 text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest transition-colors"
+              className="w-full px-4 py-3 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 dark:text-slate-100 font-bold text-xs uppercase tracking-widest transition-colors"
             >
               Cancel
             </button>
@@ -681,7 +700,6 @@ export default function App() {
         onDelete={deleteTask}
       />
 
-      {/* Team Panel */}
       <TeamPanel
         isOpen={showTeamPanel}
         onClose={() => setShowTeamPanel(false)}
@@ -692,18 +710,6 @@ export default function App() {
         onInvite={(email, role) => shareBoard(currentBoard?.id, email, role)}
         onRemove={(uid) => removeCollaborator(currentBoard?.id, uid)}
         onUpdateRole={(uid, newRole) => updateCollaboratorRole(currentBoard?.id, uid, newRole)}
-      />
-
-      {/* Share Board Modal */}
-      <ShareBoardModal
-        isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
-        board={currentBoard}
-        collaborators={collaborators}
-        shareBoard={shareBoard}
-        removeCollaborator={removeCollaborator}
-        updateCollaboratorRole={updateCollaboratorRole}
-        user={user}
       />
 
       {/* Notification Panel */}

@@ -44,21 +44,21 @@ const InviteUserModal = ({ isOpen, onClose, onInvite, boardName }) => {
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-300">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-300">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-              <Mail size={20} className="text-slate-600" />
+            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <Mail size={20} className="text-slate-600 dark:text-slate-300" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-800">Invite Collaborator</h3>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Invite Collaborator</h3>
               <p className="text-xs text-slate-400">{boardName}</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 rounded-lg text-slate-400 transition-colors"
           >
             <X size={20} />
           </button>
@@ -71,8 +71,8 @@ const InviteUserModal = ({ isOpen, onClose, onInvite, boardName }) => {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 flex items-center justify-center">
                 <CheckCircle2 size={32} className="text-emerald-600" />
               </div>
-              <h4 className="text-lg font-bold text-slate-800 mb-2">Invitation Sent!</h4>
-              <p className="text-sm text-slate-500">Your colleague will receive an email invitation.</p>
+              <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Invitation Sent!</h4>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Your colleague will receive an email invitation.</p>
             </div>
           ) : (
             <>
@@ -85,7 +85,7 @@ const InviteUserModal = ({ isOpen, onClose, onInvite, boardName }) => {
                   placeholder="colleague@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-slate-300 outline-none transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-300 dark:border-slate-600 outline-none transition-all"
                   autoFocus
                 />
               </div>
@@ -106,11 +106,11 @@ const InviteUserModal = ({ isOpen, onClose, onInvite, boardName }) => {
                       onClick={() => setRole(option.value)}
                       className={`p-3 rounded-xl border-2 text-left transition-all ${
                         role === option.value
-                          ? 'border-slate-900 bg-slate-50'
-                          : 'border-slate-100 hover:border-slate-200'
+                          ? 'border-slate-900 bg-slate-50 dark:bg-slate-800'
+                          : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:border-slate-700'
                       }`}
                     >
-                      <p className="text-sm font-bold text-slate-800">{option.label}</p>
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{option.label}</p>
                       <p className="text-[10px] text-slate-400">{option.desc}</p>
                     </button>
                   ))}

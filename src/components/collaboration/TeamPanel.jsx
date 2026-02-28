@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { X, Crown, Trash2, UserPlus, Mail, ChevronDown, Users, Shield, Pencil, Eye, Loader2 } from 'lucide-react';
+import { X, Crown, Trash2, UserPlus, Mail, ChevronDown, Users, Shield, Pencil, Eye, Loader2, Copy, Check } from 'lucide-react';
 import { ROLES } from '../../utils/constants';
 
 const ROLE_CONFIG = {
   [ROLES.OWNER]:  { label: 'Owner',  icon: Crown,   cls: 'bg-slate-900 text-white' },
   [ROLES.ADMIN]:  { label: 'Admin',  icon: Shield,  cls: 'bg-slate-700 text-white' },
-  [ROLES.EDITOR]: { label: 'Editor', icon: Pencil,  cls: 'bg-slate-200 text-slate-700' },
-  [ROLES.VIEWER]: { label: 'Viewer', icon: Eye,     cls: 'bg-slate-100 text-slate-500' },
+  [ROLES.EDITOR]: { label: 'Editor', icon: Pencil,  cls: 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300' },
+  [ROLES.VIEWER]: { label: 'Viewer', icon: Eye,     cls: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' },
 };
 
 const INVITABLE_ROLES = [
@@ -25,13 +25,13 @@ const Avatar = ({ member }) => {
       <img
         src={member.photoURL}
         alt={member.displayName}
-        className="w-9 h-9 rounded-full object-cover border border-slate-200 flex-shrink-0"
+        className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700 flex-shrink-0"
       />
     );
   }
   return (
     <div
-      className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-black flex-shrink-0 border border-slate-200"
+      className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-black flex-shrink-0 border border-slate-200 dark:border-slate-700"
       style={{ backgroundColor: `hsl(${hue},40%,40%)` }}
     >
       {initial}
@@ -57,6 +57,7 @@ const TeamPanel = ({
   const [sendMsg, setSendMsg]       = useState(null);
   const [removingId, setRemovingId] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
+  const [showCopied, setShowCopied] = useState(false);
 
   if (!isOpen) return null;
 
@@ -106,32 +107,48 @@ const TeamPanel = ({
     }
   };
 
+  /* ── Copy Link ── */
+  const copyInviteLink = () => {
+    const link = `${window.location.origin}/board/${board?.id}`;
+    navigator.clipboard.writeText(link).catch(() => {
+      // Fallback
+      const el = document.createElement('textarea');
+      el.value = link;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    });
+    setShowCopied(true);
+    setTimeout(() => setShowCopied(false), 2000);
+  };
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden">
 
         {/* ── Header ── */}
-        <div className="px-6 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="px-6 pt-5 pb-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
-              <Users size={18} className="text-slate-700" />
+            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <Users size={18} className="text-slate-700 dark:text-slate-300" />
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none mb-0.5">
                 Board Team
               </p>
-              <h2 className="text-sm font-black text-slate-900 tracking-tight leading-none truncate max-w-[220px]">
+              <h2 className="text-sm font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none truncate max-w-[220px]">
                 {boardName}
               </h2>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full">
+            <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2.5 py-1 rounded-full">
               {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
             </span>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 transition-colors"
             >
               <X size={16} />
             </button>
@@ -140,48 +157,61 @@ const TeamPanel = ({
 
         {/* ── Invite Form (owner / admin only) ── */}
         {canManage && (
-          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/60">
+          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">
-              Invite Member
+              Invite by Email
             </p>
             <form onSubmit={handleInvite} className="flex gap-2">
               <div className="relative flex-1">
-                <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="colleague@email.com"
-                  className="w-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium placeholder-slate-300 text-slate-800 focus:outline-none focus:border-slate-900 transition-colors"
+                  placeholder="colleague@example.com"
+                  className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold placeholder-slate-400 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-slate-400 dark:focus:border-slate-500 transition-colors shadow-sm"
                 />
               </div>
-              <div className="relative">
+              <div className="relative group">
                 <select
                   value={inviteRole}
                   onChange={e => setInviteRole(e.target.value)}
-                  className="appearance-none pl-3 pr-7 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:border-slate-900 transition-colors cursor-pointer"
+                  className="appearance-none pl-3 pr-8 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-slate-400 dark:focus:border-slate-500 transition-colors cursor-pointer shadow-sm group-hover:bg-slate-50 dark:group-hover:bg-slate-800"
                 >
                   {INVITABLE_ROLES.map(r => (
                     <option key={r.value} value={r.value}>{r.label}</option>
                   ))}
                 </select>
-                <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
               <button
                 type="submit"
                 disabled={sending || !email.trim()}
-                className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 dark:hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
               >
-                {sending ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />}
+                {sending ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
                 {sending ? '' : 'Invite'}
               </button>
             </form>
             {sendMsg && (
-              <p className={`mt-2 text-[11px] font-semibold ${sendMsg.ok ? 'text-emerald-600' : 'text-red-500'}`}>
+              <p className={`mt-2 text-[11px] font-semibold ${sendMsg.ok ? 'text-emerald-600' : 'text-rose-500'}`}>
                 {sendMsg.text}
               </p>
             )}
+
+            {/* Copy Link Snippet */}
+            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-400">Or share via link</span>
+              <button
+                onClick={copyInviteLink}
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                title="Copy Board Link"
+              >
+                {showCopied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                {showCopied ? 'Copied!' : 'Copy link'}
+              </button>
+            </div>
           </div>
         )}
 
@@ -214,7 +244,7 @@ const TeamPanel = ({
                   <li
                     key={member.id}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                      isYou ? 'bg-slate-50' : 'hover:bg-slate-50/70'
+                      isYou ? 'bg-slate-50 dark:bg-slate-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800/70'
                     }`}
                   >
                     {/* Avatar */}
@@ -223,7 +253,7 @@ const TeamPanel = ({
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-slate-800 truncate">
+                        <span className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
                           {member.displayName || 'Unknown'}
                         </span>
                         {isYou && (
@@ -288,10 +318,10 @@ const TeamPanel = ({
         </div>
 
         {/* ── Footer ── */}
-        <div className="px-6 py-4 border-t border-slate-100">
+        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800">
           <button
             onClick={onClose}
-            className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-all"
+            className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-sm transition-all"
           >
             Done
           </button>
