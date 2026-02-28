@@ -614,7 +614,7 @@ export default function App() {
             </div>
           </div>
           {canEdit ? (
-            <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-slate-200">
+            <button type="submit" className="w-full bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
               {editingTask ? 'Update Entry' : 'Create Entry'}
               <ChevronRight size={16} />
             </button>
@@ -651,7 +651,7 @@ export default function App() {
             </p>
           </div>
           <div className="pt-2">
-            <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-slate-200">
+            <button type="submit" className="w-full bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
               {editingBoard ? 'Apply Changes' : 'Initialize Board'}
               <ChevronRight size={16} />
             </button>
@@ -676,7 +676,7 @@ export default function App() {
           <div className="flex flex-col gap-3">
             <button 
               onClick={onConfirmDeleteBoard}
-              className="w-full px-4 py-4 bg-slate-900 hover:bg-rose-600 text-white font-bold rounded-xl transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2 group"
+              className="w-full px-4 py-3.5 bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-rose-600 dark:hover:bg-rose-500 hover:text-white dark:hover:text-white text-white font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 group"
             >
               Confirm Deletion
               <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />

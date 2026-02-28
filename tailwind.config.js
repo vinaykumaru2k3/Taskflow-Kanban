@@ -1,3 +1,5 @@
+import colors from 'tailwindcss/colors';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -10,6 +12,9 @@ export default {
       fontFamily: {
         sans: ['Poppins', 'sans-serif'],
       },
+      colors: {
+        slate: colors.neutral,
+      }
     },
   },
   plugins: [],
