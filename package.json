@@ -5,6 +5,7 @@
   "private": true,
   "dependencies": {
     "firebase": "^10.7.1",
+    "framer-motion": "^12.34.3",
     "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-calendar": "^6.0.0",
