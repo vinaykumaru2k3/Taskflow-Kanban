@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers, Archive, X, Tag, Eye } from 'lucide-react';
 import Landing from './Landing';
 import CalendarView from './CalendarView';
+import WorkflowTree from './WorkflowTree';
 import Documentation from './Documentation';
 import Support from './Support';
 import Sidebar from './components/Sidebar';
@@ -518,6 +519,8 @@ export default function App() {
                   <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                     <CalendarView tasks={filteredTasks} onTaskClick={handleOpenEditTask} />
                   </div>
+                ) : viewMode === 'workflow' ? (
+                  <WorkflowTree tasks={filteredTasks} />
                 ) : viewMode === 'docs' ? (
                   <Documentation onBack={() => setViewMode('kanban')} />
                 ) : viewMode === 'support' ? (
