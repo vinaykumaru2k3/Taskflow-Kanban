@@ -2,14 +2,8 @@
 
 > A modern, beautiful Kanban task management app built with **React + Firebase**. Features drag-and-drop, subtasks, priorities, and real-time sync.
 
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/7ef17f9f-690b-433c-8001-29aa5db4326f" alt="TaskFlow Kanban Board" width="800"/>
-  <br><br>
-  <img src="https://github.com/user-attachments/assets/473c6465-5ea5-446f-9a29-bb4c6118b4a2" alt="TaskFlow Dashboard" width="800"/>
-</div>
 
-
-## Live Demo
+## Live Site
 
 | Environment | URL |
 |-------------|-----|
