@@ -11,9 +11,6 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Poppins', 'sans-serif'],
-      },
-      colors: {
-        slate: colors.neutral,
       }
     },
   },
