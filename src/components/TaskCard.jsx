@@ -20,16 +20,36 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
       draggable={!readOnly}
       onDragStart={readOnly ? undefined : (e) => onDragStart(e, task.id)}
       onClick={() => onEdit(task)}
-      className={`group relative bg-gradient-to-br from-white dark:from-slate-800 to-slate-50 dark:to-slate-800/80 border-2 ${priority.border} rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all overflow-hidden ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}
+      className={`group border-t-2 bg-white/95 dark:bg-white/[0.04] backdrop-blur-lg border border-slate-200/50 dark:border-slate-700/50 rounded-xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}
+      style={{
+        borderTopColor: priority.label === 'Urgent' ? '#f43f5e' :
+                        priority.label === 'High' ? '#f59e0b' :
+                        priority.label === 'Medium' ? '#3b82f6' : 'transparent',
+      }}
     >
       <div className="flex justify-between items-start mb-3">
-        <div className="flex flex-wrap gap-1.5">
-          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1.5 ${priority.color}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${priority.dot}`} />
-            {priority.label}
+        <div className="flex items-center gap-2 flex-wrap">
+          {(priority.label === 'Urgent' || priority.label === 'High') && (
+            <div className="relative flex h-2 w-2" title={`Priority: ${priority.label}`}>
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${priority.label === 'Urgent' ? 'bg-rose-400' : 'bg-orange-400'}`}></span>
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${priority.label === 'Urgent' ? 'bg-rose-500' : 'bg-orange-500'}`}></span>
+            </div>
+          )}
+          
+          <span 
+            className={`text-[10px] font-black uppercase tracking-[0.2em] bg-clip-text text-transparent bg-gradient-to-r ${
+              priority.label === 'Urgent' ? 'from-rose-500 to-rose-600 dark:from-rose-400 dark:to-rose-500' :
+              priority.label === 'High' ? 'from-orange-500 to-amber-600 dark:from-orange-400 dark:to-amber-500' :
+              priority.label === 'Medium' ? 'from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500' :
+              'from-slate-400 to-slate-500 dark:from-slate-400 dark:to-slate-500'
+            }`}
+            title={`Priority: ${priority.label}`}
+          >
+            TSK-{task.id.slice(0, 4).toUpperCase()}
           </span>
+
           {isOverdue && (
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 flex items-center gap-1">
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-1 bg-rose-500/10 text-rose-500 dark:text-rose-400 ml-1">
               <AlertCircle size={10} /> Overdue
             </span>
           )}

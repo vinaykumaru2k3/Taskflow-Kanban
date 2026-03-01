@@ -68,7 +68,7 @@ const Header = ({
   }, []);
 
   return (
-    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 dark:border-slate-800 px-4 md:px-6 lg:px-8 py-3 sticky top-0 z-40 shadow-sm transition-colors duration-300">
+    <header className="bg-white/80 dark:bg-[#0a0f1c]/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/60 px-4 md:px-6 lg:px-8 py-3 sticky top-0 z-40 transition-colors duration-300">
       <div className="flex items-center justify-between gap-4">
         {/* Left Section: Toggle + Logo + Board */}
         <div className="flex items-center gap-3 flex-shrink-0">

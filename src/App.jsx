@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers, Archive, X, Tag, Eye } from 'lucide-react';
 import Landing from './Landing';
 import CalendarView from './CalendarView';
+import Documentation from './Documentation';
+import Support from './Support';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import KanbanBoard from './components/KanbanBoard';
@@ -484,8 +486,15 @@ export default function App() {
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30 dark:bg-transparent"> 
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative bg-slate-50/30 dark:bg-[#0a0f1c]">
+          {/* Ambient Background Glow (Dark Mode only) */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none hidden dark:block">
+             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] mix-blend-screen" />
+             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-teal-500/10 rounded-full blur-[120px] mix-blend-screen" />
+             <div className="absolute top-[40%] left-[60%] w-[30%] h-[30%] bg-blue-600/5 rounded-full blur-[100px] mix-blend-screen" />
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-0 relative z-10">  
             <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar">
               <div className="max-w-7xl mx-auto h-full flex flex-col">
                 {!currentBoard ? (
@@ -509,6 +518,10 @@ export default function App() {
                   <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                     <CalendarView tasks={filteredTasks} onTaskClick={handleOpenEditTask} />
                   </div>
+                ) : viewMode === 'docs' ? (
+                  <Documentation onBack={() => setViewMode('kanban')} />
+                ) : viewMode === 'support' ? (
+                  <Support onBack={() => setViewMode('kanban')} />
                 ) : (
                   <KanbanBoard 
                     tasks={filteredTasks}
@@ -524,11 +537,20 @@ export default function App() {
               </div>
             </main>
 
-            {/* Fixed Footer */}
-            <footer className="px-8 py-3 text-center border-t border-slate-200 dark:border-slate-700 dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
-              <div className="flex items-center justify-center gap-2 opacity-40">
-                <Layers size={12} />
-                <p className="text-[9px] font-black uppercase tracking-[0.3em]">TaskFlow Protocol © 2026</p>
+            {/* Premium SaaS Footer */}
+            <footer className="px-6 py-4 flex items-center justify-between border-t border-slate-200/50 dark:border-slate-800/50 bg-white/40 dark:bg-transparent backdrop-blur-md flex-shrink-0 z-20 transition-colors">
+              <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-default">
+                <Layers size={14} />
+                <p className="text-[10px] font-black uppercase tracking-[0.2em]">TaskFlow © 2026</p>
+              </div>
+              
+              <div className="hidden md:flex items-center gap-6 text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                <a href="#" onClick={e => { e.preventDefault(); setViewMode('docs'); }} className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors">Documentation</a>
+                <a href="#" onClick={e => { e.preventDefault(); setViewMode('support'); }} className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors">Support</a>
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-slate-600 dark:text-slate-400">System Normal</span>
+                </div>
               </div>
             </footer>
           </div>
