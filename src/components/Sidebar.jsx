@@ -12,26 +12,26 @@ const Sidebar = ({
   onDeleteBoard 
 }) => {
   return (
-    <aside className={`${showSidebar ? 'w-64' : 'w-0'} h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 overflow-hidden flex-shrink-0`}>
-      <div className="w-64 h-full flex flex-col overflow-y-auto">
+    <aside className={`${showSidebar ? 'w-64' : 'w-0'} h-full bg-slate-50/80 dark:bg-white/[0.02] backdrop-blur-2xl border-r border-slate-200/50 dark:border-slate-800/50 transition-all duration-300 overflow-hidden flex-shrink-0 relative z-20`}>
+      <div className="w-64 h-full flex flex-col overflow-y-auto custom-scrollbar">
 
         {/* ── MY BOARDS ── */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center justify-between mb-4">
+        <div className="p-5 border-b border-slate-200/50 dark:border-slate-800/50">
+          <div className="flex items-center justify-between mb-5 px-1">
             <div className="flex items-center gap-2">
-              <Folder size={12} strokeWidth={3} className="text-slate-400" />
-              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">My Boards</h2>
+              <Folder size={14} strokeWidth={2.5} className="text-slate-400" />
+              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">My Boards</h2>
             </div>
             <button 
               onClick={onAddBoard} 
-              className="p-1.5 hover:bg-slate-900 dark:hover:bg-slate-100 hover:text-white dark:hover:text-slate-900 rounded-lg text-slate-400 transition-all" 
+              className="p-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 transition-all shadow-sm active:scale-95" 
               title="Create new board"
             >
-              <FolderPlus size={16} />
+              <FolderPlus size={14} />
             </button>
           </div>
           
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {boards.map(board => {
               const isActive = currentBoard?.id === board.id && !currentBoard?.ownerId;
               const initials = board.name ? board.name.substring(0, 2).toUpperCase() : 'B';
@@ -39,27 +39,27 @@ const Sidebar = ({
               return (
                 <div 
                   key={board.id} 
-                  className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${
+                  className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all border ${
                     isActive 
-                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' 
-                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400'
+                      ? 'bg-white dark:bg-white/10 border-slate-200/60 dark:border-slate-700/60 shadow-sm text-slate-900 dark:text-white' 
+                      : 'border-transparent hover:bg-white/60 dark:hover:bg-white/5 hover:border-slate-200/40 dark:hover:border-slate-800/60 text-slate-600 dark:text-slate-400'
                   }`} 
                   onClick={() => setCurrentBoard(board)}
                 >
                   {/* Avatar/Badge */}
-                  <div className={`relative w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-[9px] font-black transition-colors ${
+                  <div className={`relative w-8 h-8 flex-shrink-0 rounded-xl flex items-center justify-center text-[10px] font-black transition-all ${
                     isActive
-                      ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
-                      : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-300 dark:group-hover:bg-slate-700'
+                      ? 'bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-100 dark:to-slate-300 text-white dark:text-slate-900 shadow-md ring-1 ring-black/5 dark:ring-white/10'
+                      : 'bg-slate-200/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 group-hover:text-slate-700 dark:group-hover:text-slate-200'
                   }`}>
                     {initials}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate tracking-tight mb-0.5">
+                    <p className={`text-sm font-bold truncate tracking-tight mb-0.5 ${isActive ? 'text-slate-900 dark:text-white' : 'group-hover:text-slate-900 dark:group-hover:text-slate-200'}`}>
                       {board.name}
                     </p>
-                    <p className={`text-[9px] truncate ${isActive ? 'text-slate-500 dark:text-slate-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                    <p className={`text-[9px] truncate transition-colors ${isActive ? 'text-slate-500 dark:text-slate-400 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
                       Personal Board
                     </p>
                   </div>
@@ -95,13 +95,13 @@ const Sidebar = ({
         </div>
 
         {/* ── SHARED WITH ME ── */}
-        <div className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Users size={12} strokeWidth={3} className="text-slate-400" />
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Shared with Me</h2>
+        <div className="p-5">
+          <div className="flex items-center gap-2 mb-5 px-1">
+            <Users size={14} strokeWidth={2.5} className="text-slate-400" />
+            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Shared with Me</h2>
           </div>
           
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {sharedBoards.map(sharedBoard => {
               // A shared board is "active" when currentBoard has this id AND an ownerId
               const isActive = currentBoard?.id === sharedBoard.id && !!currentBoard?.ownerId;
@@ -111,25 +111,25 @@ const Sidebar = ({
               return (
                 <div 
                   key={sharedBoard.id} 
-                  className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${
+                  className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all border ${
                     isActive 
-                      ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100' 
-                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400'
+                      ? 'bg-blue-50/80 dark:bg-blue-500/10 shadow-sm border-blue-100/50 dark:border-blue-500/20 text-blue-900 dark:text-blue-100' 
+                      : 'border-transparent hover:bg-white/50 dark:hover:bg-white/5 hover:border-slate-200/40 dark:hover:border-slate-800/60 text-slate-600 dark:text-slate-400'
                   }`} 
                   onClick={() => setCurrentBoard(sharedBoard)}
                   title={`Shared by ${ownerName}`}
                 >
                   {/* Avatar/Badge */}
-                  <div className={`relative w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-[9px] font-black transition-colors ${
+                  <div className={`relative w-8 h-8 flex-shrink-0 rounded-xl flex items-center justify-center text-[10px] font-black transition-all ${
                     isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 group-hover:bg-slate-300 dark:group-hover:bg-slate-600'
+                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/20 ring-1 ring-blue-500/30'
+                      : 'bg-slate-200/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'
                   }`}>
                     {initials}
                     {/* Role indicator overlay */}
                     <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[6px] font-bold border-2 ${
                       isActive 
-                        ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 border-blue-50 dark:border-blue-900/40' 
+                        ? 'bg-white dark:bg-[#0f172a] text-blue-600 dark:text-blue-400 border-blue-50 dark:border-[#0f172a]' 
                         : 'bg-white dark:bg-slate-900 text-slate-400 border-white dark:border-slate-900'
                     }`}>
                       <Share2 size={6} />
@@ -137,10 +137,10 @@ const Sidebar = ({
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate tracking-tight mb-0.5">
+                    <p className={`text-sm font-bold truncate tracking-tight mb-0.5 ${isActive ? 'text-blue-900 dark:text-blue-100' : 'group-hover:text-slate-900 dark:group-hover:text-slate-200'}`}>
                       {sharedBoard.boardName || sharedBoard.name || 'Shared Board'}
                     </p>
-                    <p className={`text-[9px] truncate ${isActive ? 'text-blue-600/70 dark:text-blue-300' : 'text-slate-400 dark:text-slate-500'}`}>
+                    <p className={`text-[9px] truncate ${isActive ? 'text-blue-600/70 dark:text-blue-300 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
                       {ownerName.split(' ')[0]} · {ROLE_LABELS[sharedBoard.role] || sharedBoard.role}
                     </p>
                   </div>

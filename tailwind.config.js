@@ -12,9 +12,6 @@ export default {
       fontFamily: {
         sans: ['Poppins', 'sans-serif'],
       },
-      colors: {
-        slate: colors.neutral,
-      }
     },
   },
   plugins: [],
