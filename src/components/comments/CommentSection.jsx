@@ -58,6 +58,11 @@ const CommentSection = ({
   };
 
   const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent modal's outer form from submitting
+      handleSubmit(e);
+      return;
+    }
     if (e.key === '@') {
       setShowMentions(true);
       setMentionSearch('');
@@ -223,7 +228,7 @@ const CommentSection = ({
 
       {/* Add Comment Form */}
       {canComment ? (
-        <form onSubmit={handleSubmit} className="relative">
+        <div className="relative">
           <div className="flex gap-2">
             {currentUser?.photoURL ? (
               <img 
@@ -282,14 +287,15 @@ const CommentSection = ({
             </div>
             
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               disabled={!newComment.trim() || isSubmitting}
               className="p-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={16} />
             </button>
           </div>
-        </form>
+        </div>
       ) : (
         <p className="text-xs text-slate-400 text-center py-2">
           You don't have permission to comment
