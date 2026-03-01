@@ -28,6 +28,7 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
     
     const q = query(
       collection(db, 'comments'),
+      where('boardId', '==', boardId),
       where('taskId', '==', taskId),
       orderBy('createdAt', 'asc')
     );
@@ -38,6 +39,9 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
         items.push({ id: doc.id, ...doc.data() });
       });
       setComments(items);
+      setLoading(false);
+    }, (error) => {
+      console.error("Firestore onSnapshot Error:", error);
       setLoading(false);
     });
 
