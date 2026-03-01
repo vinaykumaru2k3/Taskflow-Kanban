@@ -20,7 +20,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
       draggable={!readOnly}
       onDragStart={readOnly ? undefined : (e) => onDragStart(e, task.id)}
       onClick={() => onEdit(task)}
-      className={`group relative bg-gradient-to-br from-white to-slate-50 border-2 ${priority.border} rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all overflow-hidden ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}
+      className={`group relative bg-gradient-to-br from-white dark:from-slate-800 to-slate-50 dark:to-slate-800/80 border-2 ${priority.border} rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all overflow-hidden ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}
     >
       <div className="flex justify-between items-start mb-3">
         <div className="flex flex-wrap gap-1.5">
@@ -44,7 +44,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
               {task.status === 'done' && onArchive && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onArchive(task.id); }}
-                  className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all"
+                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-300 dark:hover:text-slate-300 rounded-lg transition-all"
                   title="Archive task"
                 >
                   <Archive size={14} />
@@ -59,8 +59,8 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
           )}
         </div>
       </div>
-      <h4 className="text-sm font-bold text-slate-800 mb-1.5 line-clamp-2 leading-snug">{task.title}</h4>
-      {task.description && <p className="text-xs text-slate-500 line-clamp-2 mb-3 leading-relaxed font-normal">{task.description}</p>}
+      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1.5 line-clamp-2 leading-snug">{task.title}</h4>
+      {task.description && <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 leading-relaxed font-normal">{task.description}</p>}
       
       {/* Tags */}
       {task.tags && task.tags.length > 0 && (
@@ -87,12 +87,12 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
             </span>
             <span className="text-[10px] font-bold text-slate-400">{Math.round(progress)}%</span>
           </div>
-          <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+          <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 dark:bg-slate-700 rounded-full overflow-hidden">
             <div className={`h-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${progress}%` }} />
           </div>
         </div>
       )}
-      <div className="flex items-center pt-3 border-t border-slate-50 mt-auto">
+      <div className="flex items-center pt-3 border-t border-slate-50 dark:border-slate-700/50 mt-auto">
         <div className={`flex items-center gap-1.5 text-[10px] font-bold ${isOverdue ? 'text-rose-500' : 'text-slate-400'}`}>
           <Calendar size={11} />
           <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}</span>

@@ -3,9 +3,15 @@ import Sidebar from '../../components/Sidebar';
 
 // Mock Lucide icons
 vi.mock('lucide-react', () => ({
+  Folder: () => <div data-testid="icon-folder" />,
   FolderPlus: () => <div data-testid="icon-folder-plus" />,
   Edit2: () => <div data-testid="icon-edit" />,
   Trash2: () => <div data-testid="icon-trash" />,
+  Hash: () => <div data-testid="icon-hash" />,
+  Check: () => <div data-testid="icon-check" />,
+  Users: () => <div data-testid="icon-users" />,
+  Share2: () => <div data-testid="icon-share2" />,
+  ChevronRight: () => <div data-testid="icon-chevron-right" />,
 }));
 
 describe('Sidebar Component', () => {
@@ -30,14 +36,17 @@ describe('Sidebar Component', () => {
 
   test('renders sidebar with boards', () => {
     render(<Sidebar {...defaultProps} />);
-    expect(screen.getByText('Boards')).toBeInTheDocument();
+    expect(screen.getByText(/my boards/i)).toBeInTheDocument();
     expect(screen.getByText('Board 1')).toBeInTheDocument();
     expect(screen.getByText('Board 2')).toBeInTheDocument();
   });
 
   test('calls setCurrentBoard when a board is clicked', () => {
     render(<Sidebar {...defaultProps} />);
-    fireEvent.click(screen.getByText('Board 2'));
+    const boardItems = screen.getAllByText(/Board/);
+    // Find the one that specifically matches just 'Board 2'
+    const targetBoard = boardItems.find(el => el.textContent === 'Board 2');
+    fireEvent.click(targetBoard);
     expect(defaultProps.setCurrentBoard).toHaveBeenCalledWith(mockBoards[1]);
   });
 
@@ -75,6 +84,6 @@ describe('Sidebar Component', () => {
 
   test('renders empty state when no boards', () => {
     render(<Sidebar {...defaultProps} boards={[]} />);
-    expect(screen.getByText(/No boards yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/No Boards/i)).toBeInTheDocument();
   });
 });

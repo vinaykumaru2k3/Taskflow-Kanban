@@ -7,8 +7,8 @@
 @layer base {
   html {
     /* Remove zoom: 95%; */
-    @apply antialiased text-slate-900;
-    font-size: 15px; /* Slightly smaller than default 16px to prevent clutter */
+    @apply antialiased text-slate-900 bg-white dark:bg-slate-900 dark:text-slate-50;
+    font-size: 16px; /* Restored to browser default 16px for better accessibility */
   }
 }
 

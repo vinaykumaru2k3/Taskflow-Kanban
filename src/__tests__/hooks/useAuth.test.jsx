@@ -12,9 +12,16 @@ import {
 
 // Mock firebase modules
 vi.mock('firebase/auth');
+vi.mock('firebase/firestore', () => ({
+  doc: vi.fn(),
+  getDoc: vi.fn(() => Promise.resolve({ exists: () => true })),
+  setDoc: vi.fn(),
+  serverTimestamp: vi.fn(),
+}));
 vi.mock('../../lib/firebase', () => ({
   auth: {},
   googleProvider: {},
+  db: {},
 }));
 
 describe('useAuth Hook', () => {
@@ -30,13 +37,18 @@ describe('useAuth Hook', () => {
     expect(result.current.loading).toBe(true);
   });
 
-  it('should update user state on auth state change', () => {
+  it('should update user state on auth state change', async () => {
+    let changeCallback;
     onAuthStateChanged.mockImplementation((auth, callback) => {
-      callback(mockUser);
+      changeCallback = callback;
       return vi.fn();
     });
 
     const { result } = renderHook(() => useAuth());
+    
+    await act(async () => {
+      await changeCallback(mockUser);
+    });
     
     expect(result.current.loading).toBe(false);
     expect(result.current.user).toEqual(mockUser);

@@ -60,8 +60,8 @@ const NotificationItem = ({ notification, icon, onMarkAsRead, onDelete, onAction
   return (
     <div 
       className={`relative group px-4 py-3.5 transition-colors ${
-        !read ? 'bg-blue-50/60' : 'bg-white'
-      } ${!isPendingInvite ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+        !read ? 'bg-blue-50/60' : 'bg-white dark:bg-slate-900'
+      } ${!isPendingInvite ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800' : ''}`}
       onClick={!isPendingInvite ? handleClick : undefined}
     >
       {/* Unread indicator dot */}
@@ -76,19 +76,19 @@ const NotificationItem = ({ notification, icon, onMarkAsRead, onDelete, onAction
             ? isAccepted
               ? 'bg-emerald-100 text-emerald-600'
               : isRejected
-              ? 'bg-slate-100 text-slate-400'
+              ? 'bg-slate-100 dark:bg-slate-800 text-slate-400'
               : 'bg-purple-100 text-purple-600'
             : type === 'mention' ? 'bg-blue-100 text-blue-600'
             : type === 'assignment' ? 'bg-green-100 text-green-600'
-            : 'bg-slate-100 text-slate-600'
+            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
         }`}>
           {icon}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-slate-800 truncate">{title}</p>
-          <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">{message}</p>
+          <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{title}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">{message}</p>
           <p className="text-[10px] text-slate-400 mt-1">{formatTime(createdAt)}</p>
 
           {/* ── Accept / Reject buttons for pending invites ── */}
@@ -109,7 +109,7 @@ const NotificationItem = ({ notification, icon, onMarkAsRead, onDelete, onAction
               <button
                 onClick={handleReject}
                 disabled={isActing}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 text-xs font-bold rounded-lg transition-all border border-slate-200 hover:border-rose-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 text-slate-600 dark:text-slate-300 hover:text-rose-600 text-xs font-bold rounded-lg transition-all border border-slate-200 dark:border-slate-700 hover:border-rose-200 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <XIcon size={12} />
                 Decline
@@ -127,7 +127,7 @@ const NotificationItem = ({ notification, icon, onMarkAsRead, onDelete, onAction
             </span>
           )}
           {isRejected && (
-            <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-bold text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-full">
               Declined
             </span>
           )}
@@ -136,7 +136,7 @@ const NotificationItem = ({ notification, icon, onMarkAsRead, onDelete, onAction
         {/* Navigate arrow — only for accepted invites / non-invites */}
         {!isPendingInvite && boardId && (
           <div className="flex-shrink-0 self-center">
-            <ArrowRight size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
+            <ArrowRight size={14} className="text-slate-300 group-hover:text-slate-500 dark:text-slate-400 transition-colors" />
           </div>
         )}
       </div>
@@ -148,7 +148,7 @@ const NotificationItem = ({ notification, icon, onMarkAsRead, onDelete, onAction
             e.stopPropagation();
             onDelete();
           }}
-          className="absolute top-2 right-2 p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-all"
+          className="absolute top-2 right-2 p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-400 hover:text-slate-600 dark:text-slate-300 transition-all"
         >
           <X size={12} />
         </button>

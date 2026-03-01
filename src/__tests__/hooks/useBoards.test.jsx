@@ -9,7 +9,8 @@ import {
   addDoc, 
   updateDoc, 
   deleteDoc,
-  serverTimestamp
+  serverTimestamp,
+  doc
 } from 'firebase/firestore';
 
 // Mock firebase modules
@@ -29,6 +30,8 @@ describe('useBoards Hook', () => {
     vi.clearAllMocks();
     serverTimestamp.mockReturnValue('timestamp');
     onSnapshot.mockReturnValue(vi.fn()); // cleanup function
+    collection.mockReturnValue('mockCollection');
+    doc.mockReturnValue('mockDoc');
   });
 
   it('should initialize with empty state and loading true', () => {
@@ -71,11 +74,11 @@ describe('useBoards Hook', () => {
     });
     
     expect(addDoc).toHaveBeenCalledWith(
-      expect.anything(), // Query/Collection ref
+      'mockCollection', // Query/Collection ref
       expect.objectContaining({ 
         name: 'New Board', 
         color: '#000',
-        createdAt: expect.anything()
+        createdAt: 'timestamp'
       })
     );
   });

@@ -30,7 +30,7 @@ const CollaboratorList = ({
                 className="w-8 h-8 rounded-full border-2 border-white ring-2 ring-slate-100"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full border-2 border-white ring-2 ring-slate-100 bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs">
+              <div className="w-8 h-8 rounded-full border-2 border-white ring-2 ring-slate-100 bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-xs">
                 {collab.displayName?.charAt(0) || collab.email?.charAt(0) || '?'}
               </div>
             )}
@@ -46,7 +46,7 @@ const CollaboratorList = ({
         
         {/* Remaining count */}
         {remainingCount > 0 && (
-          <div className="w-8 h-8 rounded-full border-2 border-white ring-2 ring-slate-100 bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-[10px]">
+          <div className="w-8 h-8 rounded-full border-2 border-white ring-2 ring-slate-100 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-[10px]">
             +{remainingCount}
           </div>
         )}
@@ -56,7 +56,7 @@ const CollaboratorList = ({
       {canManage && (
         <button
           onClick={onInvite}
-          className="ml-2 p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+          className="ml-2 p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-300 transition-colors"
           title="Invite collaborators"
         >
           <UserPlus size={16} />
@@ -87,7 +87,7 @@ export const TaskCollaborators = ({ creator, assignee }) => {
               className="w-5 h-5 rounded-full border border-white"
             />
           ) : (
-            <div className="w-5 h-5 rounded-full border border-white bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-[8px]">
+            <div className="w-5 h-5 rounded-full border border-white bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-[8px]">
               {user.displayName?.charAt(0) || '?'}
             </div>
           )}

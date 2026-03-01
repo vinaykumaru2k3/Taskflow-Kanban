@@ -77,10 +77,10 @@ describe('CalendarView Component', () => {
     // But the current month day numbers are rendered in spans.
     // We can just click the one inside the cell that contains "Task 1".
     const taskElement = screen.getByText('Task 1');
-    const cell = taskElement.closest('div.bg-white'); // Target the cell div directly if possible
+    const cell = taskElement.closest('div.bg-white dark:bg-slate-900'); // Target the cell div directly if possible
     
     // Let's rely on text content of day number but restricted to the cell containing current task.
-    // We already tried closest('.bg-white'). Let's try finding the number within that scope?
+    // We already tried closest('.bg-white dark:bg-slate-900'). Let's try finding the number within that scope?
     // Or just click the day number found globally if unique enough? No.
     
     // Let's try clicking the "empty" space of the cell if possible? 
@@ -96,8 +96,8 @@ describe('CalendarView Component', () => {
     // The day number span doesn't stop propagation.
     // So let's find the day number span inside the cell.
     
-    // Find the cell container first (the one with bg-white).
-    // taskElement has bg-white. Parent (List) doesn't. Grandparent (Cell) has bg-white.
+    // Find the cell container first (the one with bg-white dark:bg-slate-900).
+    // taskElement has bg-white dark:bg-slate-900. Parent (List) doesn't. Grandparent (Cell) has bg-white dark:bg-slate-900.
     // So taskElement.parentElement.parentElement IS the cell.
     
     const listDiv = taskElement.parentElement;
