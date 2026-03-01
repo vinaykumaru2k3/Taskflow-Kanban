@@ -111,14 +111,14 @@ const CalendarView = ({ tasks, onTaskClick }) => {
         <div className="grid grid-cols-7 auto-rows-fr flex-1 bg-slate-200 dark:bg-slate-700 gap-[1px] overflow-hidden">
           {calendarDays.map((cell) => {
             if (cell.type === 'empty') {
-              return <div key={cell.key} className="bg-slate-50/50" />;
+              return <div key={cell.key} className="bg-slate-50/50 dark:bg-slate-900" />;
             }
 
             return (
               <div
                 key={cell.key}
                 onClick={() => handleDayClick(cell)}
-                className={`bg-white dark:bg-slate-900 p-2 flex flex-col gap-1 min-h-0 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 cursor-pointer transition-colors ${
+                className={`bg-white dark:bg-slate-900 p-2 flex flex-col gap-1 min-h-0 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors ${
                   cell.isToday ? 'bg-slate-50 dark:bg-slate-800' : ''
                 }`}
               >
@@ -126,7 +126,7 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                   <span
                     className={`w-6 h-6 flex items-center justify-center rounded-md text-[11px] font-black ${
                       cell.isToday
-                        ? 'bg-slate-900 text-white shadow-sm'
+                        ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
                         : 'text-slate-700 dark:text-slate-300'
                     }`}
                   >
@@ -134,7 +134,7 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                   </span>
 
                   {cell.tasks.length > 0 && (
-                    <span className="text-[9px] font-black text-white bg-slate-900 px-1.5 py-0.5 rounded-full shadow-sm">
+                    <span className="text-[9px] font-black text-white dark:text-slate-900 bg-slate-900 dark:bg-slate-100 px-1.5 py-0.5 rounded-full shadow-sm">
                       {cell.tasks.length}
                     </span>
                   )}
@@ -212,7 +212,7 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                     onTaskClick(task);
                     setSelectedDay(null);
                   }}
-                  className={`group relative bg-gradient-to-br from-white to-slate-50 border-2 ${priority.border} rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden`}
+                  className={`group relative bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border-2 ${priority.border} rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden`}
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex flex-wrap gap-1.5">
@@ -221,12 +221,12 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                         {priority.label}
                       </span>
                       {isOverdue && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 flex items-center gap-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1">
                           <AlertCircle size={10} /> Overdue
                         </span>
                       )}
                       {task.status === 'done' && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 flex items-center gap-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                           <CheckCircle2 size={10} /> Done
                         </span>
                       )}
@@ -247,13 +247,13 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                         </span>
                         <span className="text-[10px] font-bold text-slate-400">{Math.round(progress)}%</span>
                       </div>
-                      <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                         <div className={`h-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${progress}%` }} />
                       </div>
                     </div>
                   )}
                   
-                  <div className="flex items-center pt-3 border-t border-slate-50 mt-auto">
+                  <div className="flex items-center pt-3 border-t border-slate-50 dark:border-slate-800 mt-auto">
                     <div className={`flex items-center gap-1.5 text-[10px] font-bold ${isOverdue ? 'text-rose-500' : 'text-slate-400'}`}>
                       <Calendar size={11} />
                       <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}</span>

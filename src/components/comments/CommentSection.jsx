@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, AtSign, Trash2, Edit2, Check, X } from 'lucide-react';
 
 const CommentSection = ({ 
@@ -8,7 +8,9 @@ const CommentSection = ({
   onDeleteComment, 
   onUpdateComment,
   canComment = true,
-  collaborators = []
+  collaborators = [],
+  scrollToCommentId,
+  onScrollComplete
 }) => {
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,6 +18,16 @@ const CommentSection = ({
   const [editText, setEditText] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
+  const commentRefs = useRef({});
+
+  useEffect(() => {
+    if (scrollToCommentId && commentRefs.current[scrollToCommentId]) {
+      commentRefs.current[scrollToCommentId].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (onScrollComplete) {
+        setTimeout(onScrollComplete, 1000);
+      }
+    }
+  }, [scrollToCommentId, comments, onScrollComplete]);
 
   const filteredCollaborators = collaborators.filter(c => 
     c.displayName?.toLowerCase().includes(mentionSearch.toLowerCase()) ||
@@ -28,13 +40,13 @@ const CommentSection = ({
 
     setIsSubmitting(true);
     try {
-      // Parse mentions from text
-      const mentionRegex = /@(\w+)/g;
       const mentions = [];
-      let match;
-      while ((match = mentionRegex.exec(newComment)) !== null) {
-        mentions.push(match[1]);
-      }
+      collaborators.forEach(c => {
+        const name = c.displayName || c.email;
+        if (newComment.includes(`@${name}`)) {
+          mentions.push(c.uid);
+        }
+      });
       
       await onAddComment(newComment, mentions);
       setNewComment('');
@@ -46,6 +58,11 @@ const CommentSection = ({
   };
 
   const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent modal's outer form from submitting
+      handleSubmit(e);
+      return;
+    }
     if (e.key === '@') {
       setShowMentions(true);
       setMentionSearch('');
@@ -65,7 +82,7 @@ const CommentSection = ({
 
   const startEditing = (comment) => {
     setEditingId(comment.id);
-    setEditText(comment.text);
+    setEditText(comment.content);
   };
 
   const cancelEditing = () => {
@@ -77,18 +94,48 @@ const CommentSection = ({
     if (!editText.trim()) return;
     
     try {
-      const mentionRegex = /@(\w+)/g;
       const mentions = [];
-      let match;
-      while ((match = mentionRegex.exec(editText)) !== null) {
-        mentions.push(match[1]);
-      }
+      collaborators.forEach(c => {
+        const name = c.displayName || c.email;
+        if (editText.includes(`@${name}`)) {
+          mentions.push(c.uid);
+        }
+      });
       
       await onUpdateComment(commentId, editText, mentions);
       cancelEditing();
     } catch (error) {
       console.error('Error updating comment:', error);
     }
+  };
+
+  const renderCommentContent = (content) => {
+    if (!content) return null;
+    
+    // Sort collaborators by name length descending to match longest names first (e.g. "Jane Doe" before "Jane")
+    const names = collaborators
+      .map(c => c.displayName || c.email)
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length);
+
+    if (names.length === 0) return content;
+
+    const escapedNames = names.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    // Match exact collaborator names, or fallback to simple @words
+    const pattern = `(@(?:${escapedNames.join('|')})|@\\w+)`;
+    const regex = new RegExp(pattern, 'gi');
+
+    return content.split(regex).map((part, i) => {
+      if (!part) return null;
+      if (part.startsWith('@')) {
+        return (
+          <span key={i} className="text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-900/30 px-1 rounded inline-block">
+            {part}
+          </span>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
   };
 
   const formatTime = (date) => {
@@ -121,17 +168,21 @@ const CommentSection = ({
       {/* Comments List */}
       <div className="space-y-4 mb-4 max-h-64 overflow-y-auto">
         {comments.map((comment) => (
-          <div key={comment.id} className="flex gap-3 group">
+          <div 
+            key={comment.id} 
+            ref={el => commentRefs.current[comment.id] = el}
+            className={`flex gap-3 group ${scrollToCommentId === comment.id ? 'bg-blue-50/50 dark:bg-blue-900/20 p-2 rounded-lg' : ''}`}
+          >
             {/* Avatar */}
-            {comment.userPhotoURL ? (
+            {comment.authorAvatar ? (
               <img 
-                src={comment.userPhotoURL} 
-                alt={comment.userName}
+                src={comment.authorAvatar} 
+                alt={comment.authorName}
                 className="w-8 h-8 rounded-full flex-shrink-0"
               />
             ) : (
               <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-xs">
-                {comment.userName?.charAt(0) || '?'}
+                {comment.authorName?.charAt(0) || '?'}
               </div>
             )}
 
@@ -139,14 +190,14 @@ const CommentSection = ({
               {/* Header */}
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                  {comment.userName || 'Unknown'}
+                  {comment.authorName || 'Unknown'}
                 </span>
                 <span className="text-[10px] text-slate-400">
                   {formatTime(comment.createdAt)}
                 </span>
                 
                 {/* Edit/Delete buttons */}
-                {currentUser?.uid === comment.userId && (
+                {currentUser?.uid === comment.authorId && (
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => startEditing(comment)}
@@ -189,7 +240,7 @@ const CommentSection = ({
                 </div>
               ) : (
                 <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
-                  {comment.text}
+                  {renderCommentContent(comment.content)}
                 </p>
               )}
             </div>
@@ -206,7 +257,7 @@ const CommentSection = ({
 
       {/* Add Comment Form */}
       {canComment ? (
-        <form onSubmit={handleSubmit} className="relative">
+        <div className="relative">
           <div className="flex gap-2">
             {currentUser?.photoURL ? (
               <img 
@@ -265,14 +316,15 @@ const CommentSection = ({
             </div>
             
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               disabled={!newComment.trim() || isSubmitting}
               className="p-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={16} />
             </button>
           </div>
-        </form>
+        </div>
       ) : (
         <p className="text-xs text-slate-400 text-center py-2">
           You don't have permission to comment

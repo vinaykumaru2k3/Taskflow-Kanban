@@ -117,7 +117,7 @@ export const useNotifications = (user) => {
   }, []);
 
   // Notify user when they are mentioned in a comment
-  const notifyMention = useCallback(async (mentionedUserId, mentionerName, taskTitle, boardId, taskId) => {
+  const notifyMention = useCallback(async (mentionedUserId, mentionerName, taskTitle, boardId, taskId, commentId) => {
     if (!mentionedUserId) return;
 
     try {
@@ -127,6 +127,8 @@ export const useNotifications = (user) => {
         message: `${mentionerName} mentioned you in "${taskTitle}"`,
         taskId,
         boardId,
+        commentId,
+        actorName: mentionerName,
         read: false,
         createdAt: serverTimestamp()
       });

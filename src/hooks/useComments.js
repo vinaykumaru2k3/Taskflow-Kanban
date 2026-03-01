@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
-export const useComments = (user, boardId, taskId) => {
+export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -27,17 +27,23 @@ export const useComments = (user, boardId, taskId) => {
     setLoading(true);
     
     const q = query(
-      collection(db, 'boards', boardId, 'comments'),
+      collection(db, 'comments'),
+      where('boardId', '==', boardId),
       where('taskId', '==', taskId),
       orderBy('createdAt', 'asc')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log(`[useComments] fetched ${snapshot.docs.length} comments for taskId:`, taskId);
       const items = [];
       snapshot.forEach((doc) => {
         items.push({ id: doc.id, ...doc.data() });
       });
       setComments(items);
+      setLoading(false);
+    }, (error) => {
+      console.error("[useComments] Firestore onSnapshot Error:", error);
+      alert("Comments Error: " + error.message);
       setLoading(false);
     });
 
@@ -46,23 +52,43 @@ export const useComments = (user, boardId, taskId) => {
 
   // Add a new comment
   const addComment = async (text, mentions = []) => {
-    if (!user || !boardId || !taskId || !text.trim()) return;
+    console.log("[useComments] attempting to add comment:", { boardId, taskId, text, userUid: user?.uid });
+    
+    if (!user || !boardId || !taskId || !text.trim()) {
+      console.error("[useComments] EARLY RETURN - MISSING DATA:", { user: !!user, boardId, taskId, text });
+      return;
+    }
 
     try {
-      await addDoc(collection(db, 'boards', boardId, 'comments'), {
+      console.log("[useComments] Sending addDoc request out to Firestore...");
+      const docRef = await addDoc(collection(db, 'comments'), {
         taskId,
-        userId: user.uid,
-        userName: user.displayName || 'Unknown',
-        userPhotoURL: user.photoURL || null,
-        text: text.trim(),
+        boardId,
+        authorId: user.uid,
+        authorName: user.displayName || 'Unknown',
+        authorAvatar: user.photoURL || null,
+        content: text.trim(),
         mentions: mentions, // Array of mentioned user IDs
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
       
+      console.log("[useComments] Successfully added document with ID:", docRef.id);
+      
+      // Notify mentioned users (skip self)
+      if (notifyMention && mentions.length > 0) {
+        const mentionerName = user.displayName || user.email || 'Unknown';
+        mentions.forEach(mentionedUserId => {
+          if (mentionedUserId !== user.uid) {
+            notifyMention(mentionedUserId, mentionerName, taskTitle || 'Task', boardId, taskId, docRef.id);
+          }
+        });
+      }
+      
       return { success: true };
     } catch (error) {
-      console.error('Error adding comment:', error);
+      console.error('[useComments] Error adding comment:', error);
+      alert('Failed to add comment: ' + error.message);
       throw error;
     }
   };
@@ -72,8 +98,8 @@ export const useComments = (user, boardId, taskId) => {
     if (!user || !boardId || !commentId || !text.trim()) return;
 
     try {
-      await updateDoc(doc(db, 'boards', boardId, 'comments', commentId), {
-        text: text.trim(),
+      await updateDoc(doc(db, 'comments', commentId), {
+        content: text.trim(),
         mentions,
         updatedAt: serverTimestamp()
       });
@@ -90,7 +116,7 @@ export const useComments = (user, boardId, taskId) => {
     if (!user || !boardId || !commentId) return;
 
     try {
-      await deleteDoc(doc(db, 'boards', boardId, 'comments', commentId));
+      await deleteDoc(doc(db, 'comments', commentId));
       return { success: true };
     } catch (error) {
       console.error('Error deleting comment:', error);
@@ -98,25 +124,11 @@ export const useComments = (user, boardId, taskId) => {
     }
   };
 
-  // Parse mentions from text (@username format)
-  const parseMentions = (text) => {
-    const mentionRegex = /@(\w+)/g;
-    const mentions = [];
-    let match;
-    
-    while ((match = mentionRegex.exec(text)) !== null) {
-      mentions.push(match[1]);
-    }
-    
-    return mentions;
-  };
-
   return {
     comments,
     loading,
     addComment,
     updateComment,
-    deleteComment,
-    parseMentions
+    deleteComment
   };
 };

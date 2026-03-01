@@ -57,6 +57,23 @@ service cloud.firestore {
       allow create:       if request.auth != null;
     }
 
+    // ── Global comments collection ──
+    match /comments/{commentId} {
+      allow read: if request.auth != null && 
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)/boards/$(resource.data.boardId)) ||
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)/sharedBoards/$(resource.data.boardId))
+        );
+      
+      allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid &&
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)/boards/$(request.resource.data.boardId)) ||
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)/sharedBoards/$(request.resource.data.boardId))
+        );
+
+      allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+    }
+
     // ── Global boards/{boardId}/members collection (Team Panel) ──
     // Any signed-in user can read (all board members can see the team list).
     // Writes are gated by UI role checks; keep open here so backfill works.
