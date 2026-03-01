@@ -33,6 +33,20 @@ export const useTheme = () => {
     }
   }, [theme]);
 
+  // Sync theme across multiple tabs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handler = (e) => {
+      if (e.key === 'theme' && (e.newValue === 'light' || e.newValue === 'dark')) {
+        setTheme(e.newValue);
+      }
+    };
+    
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
+
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
