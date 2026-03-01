@@ -119,6 +119,20 @@ export default function App() {
     deleteComment
   } = useComments(user, currentBoard?.id, editingTask, taskForm?.title, notifyMention);
 
+  const handleAddComment = async (text, mentions) => {
+    await addComment(text, mentions);
+    const oldTask = tasks.find(t => t.id === editingTask);
+    const newCount = (oldTask?.commentCount || 0) + 1;
+    await updateTask(editingTask, { commentCount: newCount });
+  };
+
+  const handleDeleteComment = async (id) => {
+    await deleteComment(id);
+    const oldTask = tasks.find(t => t.id === editingTask);
+    const newCount = Math.max((oldTask?.commentCount || 1) - 1, 0);
+    await updateTask(editingTask, { commentCount: newCount });
+  };
+
   // --- Board Handlers ---
 
   const onSaveBoard = async (e) => {
@@ -656,8 +670,8 @@ export default function App() {
             <CommentSection 
               comments={comments}
               currentUser={user}
-              onAddComment={addComment}
-              onDeleteComment={deleteComment}
+              onAddComment={handleAddComment}
+              onDeleteComment={handleDeleteComment}
               onUpdateComment={updateComment}
               collaborators={teamMembers || []}
               canComment={!!userRole} 
