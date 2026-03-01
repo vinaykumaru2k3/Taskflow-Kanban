@@ -109,6 +109,35 @@ const CommentSection = ({
     }
   };
 
+  const renderCommentContent = (content) => {
+    if (!content) return null;
+    
+    // Sort collaborators by name length descending to match longest names first (e.g. "Jane Doe" before "Jane")
+    const names = collaborators
+      .map(c => c.displayName || c.email)
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length);
+
+    if (names.length === 0) return content;
+
+    const escapedNames = names.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    // Match exact collaborator names, or fallback to simple @words
+    const pattern = `(@(?:${escapedNames.join('|')})|@\\w+)`;
+    const regex = new RegExp(pattern, 'gi');
+
+    return content.split(regex).map((part, i) => {
+      if (!part) return null;
+      if (part.startsWith('@')) {
+        return (
+          <span key={i} className="text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-900/30 px-1 rounded inline-block">
+            {part}
+          </span>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
   const formatTime = (date) => {
     if (!date) return '';
     const now = new Date();
@@ -211,7 +240,7 @@ const CommentSection = ({
                 </div>
               ) : (
                 <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
-                  {comment.content}
+                  {renderCommentContent(comment.content)}
                 </p>
               )}
             </div>
