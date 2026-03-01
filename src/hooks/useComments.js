@@ -9,6 +9,7 @@ import {
   updateDoc, 
   deleteDoc, 
   doc, 
+  getDoc,
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -95,10 +96,23 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
 
   // Update a comment
   const updateComment = async (commentId, text, mentions = []) => {
-    if (!user || !boardId || !commentId || !text.trim()) return;
+    if (!user || !boardId || !commentId || !text.trim()) {
+      return { success: false, error: 'Missing required data' };
+    }
 
     try {
-      await updateDoc(doc(db, 'comments', commentId), {
+      const commentRef = doc(db, 'comments', commentId);
+      const commentSnap = await getDoc(commentRef);
+      
+      if (!commentSnap.exists()) {
+        throw new Error('Comment not found');
+      }
+      
+      if (commentSnap.data().authorId !== user.uid) {
+        throw new Error('Unauthorized to update this comment');
+      }
+
+      await updateDoc(commentRef, {
         content: text.trim(),
         mentions,
         updatedAt: serverTimestamp()
@@ -113,10 +127,23 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
 
   // Delete a comment
   const deleteComment = async (commentId) => {
-    if (!user || !boardId || !commentId) return;
+    if (!user || !boardId || !commentId) {
+      return { success: false, error: 'Missing required data' };
+    }
 
     try {
-      await deleteDoc(doc(db, 'comments', commentId));
+      const commentRef = doc(db, 'comments', commentId);
+      const commentSnap = await getDoc(commentRef);
+      
+      if (!commentSnap.exists()) {
+        throw new Error('Comment not found');
+      }
+      
+      if (commentSnap.data().authorId !== user.uid) {
+        throw new Error('Unauthorized to delete this comment');
+      }
+
+      await deleteDoc(commentRef);
       return { success: true };
     } catch (error) {
       console.error('Error deleting comment:', error);

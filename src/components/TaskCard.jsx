@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, AlertCircle, CheckSquare, Calendar, Archive, Tag, Eye } from 'lucide-react';
+import { Trash2, AlertCircle, CheckSquare, Calendar, Archive, Tag, Eye, MessageSquare } from 'lucide-react';
 import { PRIORITIES, TAG_COLORS } from '../utils/constants';
 
 const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = false }) => {
@@ -106,11 +106,17 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
           </div>
         </div>
       )}
-      <div className="flex items-center pt-3 border-t border-slate-50 dark:border-slate-700/50 mt-auto">
+      <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-700/50 mt-auto">
         <div className={`flex items-center gap-1.5 text-[10px] font-bold ${isOverdue ? 'text-rose-500' : 'text-slate-400'}`}>
           <Calendar size={11} />
           <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}</span>
         </div>
+        {task.commentCount > 0 && (
+          <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+            <MessageSquare size={11} />
+            <span>{task.commentCount}</span>
+          </div>
+        )}
       </div>
     </div>
   );

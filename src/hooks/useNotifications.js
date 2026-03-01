@@ -16,6 +16,20 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
+const sanitizeString = (str) => {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[<>&"']/g, (match) => {
+    const escape = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '&': '&amp;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return escape[match];
+  });
+};
+
 export const useNotifications = (user) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -134,11 +148,11 @@ export const useNotifications = (user) => {
       await addDoc(collection(db, 'users', mentionedUserId, 'notifications'), {
         type: 'mention',
         title: 'You were mentioned',
-        message: `${mentionerName} mentioned you in "${taskTitle}"`,
+        message: `${sanitizeString(mentionerName)} mentioned you in "${sanitizeString(taskTitle)}"`,
         taskId,
         boardId,
         commentId,
-        actorName: mentionerName,
+        actorName: sanitizeString(mentionerName),
         read: false,
         createdAt: serverTimestamp()
       });
@@ -155,7 +169,7 @@ export const useNotifications = (user) => {
       await addDoc(collection(db, 'users', invitedUserId, 'notifications'), {
         type: 'invite',
         title: 'Board Invitation',
-        message: `${inviterName} invited you to "${boardName}"`,
+        message: `${sanitizeString(inviterName)} invited you to "${sanitizeString(boardName)}"`,
         boardId,
         role,
         read: false,

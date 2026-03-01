@@ -117,10 +117,22 @@ export default function App() {
   // Comments hook
   const {
     comments,
+    loading: commentsLoading,
     addComment,
     updateComment,
     deleteComment
   } = useComments(user, currentBoard?.id, editingTask, taskForm?.title, notifyMention);
+
+  // Robustly sync comment limits back to tasks when reading the comments snapshot 
+  useEffect(() => {
+    if (!editingTask || commentsLoading || !comments) return;
+    const currentTask = tasks.find(t => t.id === editingTask);
+    if (currentTask && currentTask.commentCount !== comments.length) {
+      updateTask(editingTask, { commentCount: comments.length });
+    }
+  }, [comments, commentsLoading, editingTask, tasks]);
+
+
 
   // --- Board Handlers ---
 
@@ -197,6 +209,8 @@ export default function App() {
       }
 
       const finalTask = { ...taskForm, ...assigneeData };
+      // Prevent stale task form state from inadvertently wiping out active dynamic properties 
+      delete finalTask.commentCount;
 
       if (editingTask) {
         const oldTask = tasks.find(t => t.id === editingTask);
