@@ -135,6 +135,14 @@ const Header = ({
             >
               <Calendar size={14} /> Calendar
             </button>
+            <button 
+              onClick={() => setViewMode('workflow')} 
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                viewMode === 'workflow' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              <BarChart3 size={14} /> Tree
+            </button>
           </div>
 
           {/* Search Input */}
