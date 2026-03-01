@@ -49,9 +49,11 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
   const createTask = async (taskData) => {
     if (!user || !currentBoard) return;
     try {
-      // Always create tasks in the current user's own collection
-      // (shared-board viewers/editors create tasks in the owner's board, 
-      //  but for now we create in user's own namespace for simplicity and security)
+      if (taskOwnerId !== user.uid && (!currentBoard.role || currentBoard.role === 'viewer')) {
+        throw new Error('Unauthorized task creation');
+      }
+
+      // Create tasks in the owner's collection properly handling shared boards
       const docRef = await addDoc(collection(db, 'users', taskOwnerId, 'tasks'), { 
         ...taskData, 
         boardId: currentBoard.id,

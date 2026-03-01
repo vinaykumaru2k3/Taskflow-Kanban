@@ -128,10 +128,10 @@ export const useNotifications = (user) => {
       await addDoc(collection(db, 'users', assigneeId, 'notifications'), {
         type: 'assignment',
         title: 'Task Assigned',
-        message: `${assignerName} assigned you to "${taskTitle}"`,
+        message: `${sanitizeString(assignerName)} assigned you to "${sanitizeString(taskTitle)}"`,
         taskId,
         boardId,
-        actorName: assignerName,
+        actorName: sanitizeString(assignerName),
         read: false,
         createdAt: serverTimestamp()
       });
