@@ -96,7 +96,9 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
 
   // Update a comment
   const updateComment = async (commentId, text, mentions = []) => {
-    if (!user || !boardId || !commentId || !text.trim()) return;
+    if (!user || !boardId || !commentId || !text.trim()) {
+      return { success: false, error: 'Missing required data' };
+    }
 
     try {
       const commentRef = doc(db, 'comments', commentId);
@@ -125,7 +127,9 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
 
   // Delete a comment
   const deleteComment = async (commentId) => {
-    if (!user || !boardId || !commentId) return;
+    if (!user || !boardId || !commentId) {
+      return { success: false, error: 'Missing required data' };
+    }
 
     try {
       const commentRef = doc(db, 'comments', commentId);

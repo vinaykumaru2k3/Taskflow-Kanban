@@ -142,7 +142,7 @@ export const useNotifications = (user) => {
         taskId,
         boardId,
         commentId,
-        actorName: mentionerName,
+        actorName: sanitizeString(mentionerName),
         read: false,
         createdAt: serverTimestamp()
       });
