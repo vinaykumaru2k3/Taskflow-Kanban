@@ -82,13 +82,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingTask, setEditingTask] = useState(null);
 
-  // Comments hook
-  const {
-    comments,
-    addComment,
-    updateComment,
-    deleteComment
-  } = useComments(user, currentBoard?.id, editingTask?.id, editingTask?.title, notifyMention);
+
   const [showStats, setShowStats] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [showBoardModal, setShowBoardModal] = useState(false);
@@ -116,6 +110,14 @@ export default function App() {
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, boardId: null, boardName: '' });
   const initialTaskState = { title: '', description: '', priority: 'medium', status: 'todo', dueDate: '', tags: [], subtasks: [] };
   const [taskForm, setTaskForm] = useState(initialTaskState);
+
+  // Comments hook
+  const {
+    comments,
+    addComment,
+    updateComment,
+    deleteComment
+  } = useComments(user, currentBoard?.id, editingTask, taskForm?.title, notifyMention);
 
   // --- Board Handlers ---
 
