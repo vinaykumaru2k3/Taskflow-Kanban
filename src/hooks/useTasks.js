@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
-export const useTasks = (user, currentBoard) => {
+export const useTasks = (user, currentBoard, notifyAssignment) => {
   const [tasks, setTasks] = useState([]);
 
   // Determine whose task collection to read from.
@@ -49,10 +49,12 @@ export const useTasks = (user, currentBoard) => {
   const createTask = async (taskData) => {
     if (!user || !currentBoard) return;
     try {
-      // Always create tasks in the current user's own collection
-      // (shared-board viewers/editors create tasks in the owner's board, 
-      //  but for now we create in user's own namespace for simplicity and security)
-      await addDoc(collection(db, 'users', taskOwnerId, 'tasks'), { 
+      if (taskOwnerId !== user.uid && (!currentBoard.role || currentBoard.role === 'viewer')) {
+        throw new Error('Unauthorized task creation');
+      }
+
+      // Create tasks in the owner's collection properly handling shared boards
+      const docRef = await addDoc(collection(db, 'users', taskOwnerId, 'tasks'), { 
         ...taskData, 
         boardId: currentBoard.id,
         createdBy: user.uid,
@@ -60,19 +62,45 @@ export const useTasks = (user, currentBoard) => {
         archived: false,
         createdAt: serverTimestamp() 
       });
+
+      if (taskData.assigneeId && notifyAssignment && taskData.assigneeId !== user.uid) {
+        notifyAssignment(
+          taskData.assigneeId,
+          user.displayName || user.email || 'Unknown',
+          taskData.title,
+          currentBoard.id,
+          docRef.id
+        );
+      }
     } catch (err) { 
         console.error("Error creating task:", err); 
         throw err;
     }
   };
 
-  const updateTask = async (taskId, taskData) => {
+  const updateTask = async (taskId, taskData, oldTaskData) => {
     if (!user) return;
     try {
         await updateDoc(doc(db, 'users', taskOwnerId, 'tasks', taskId), {
             ...taskData,
             updatedAt: serverTimestamp()
         });
+
+        // if an assignment changed, notify new assignee
+        if (
+          taskData.assigneeId &&
+          taskData.assigneeId !== oldTaskData?.assigneeId &&
+          taskData.assigneeId !== user.uid &&
+          notifyAssignment
+        ) {
+          notifyAssignment(
+            taskData.assigneeId,
+            user.displayName || user.email || 'Unknown',
+            taskData.title || oldTaskData?.title || 'a task',
+            currentBoard.id,
+            taskId
+          );
+        }
     } catch (err) {
         console.error("Error updating task:", err);
         throw err;
