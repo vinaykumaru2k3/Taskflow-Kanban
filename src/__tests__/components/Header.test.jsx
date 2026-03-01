@@ -12,6 +12,22 @@ vi.mock('lucide-react', () => ({
   Calendar: () => <div data-testid="icon-calendar" />,
   CheckCircle2: () => <div data-testid="icon-check" />,
   AlertCircle: () => <div data-testid="icon-alert" />,
+  Filter: () => <div data-testid="icon-filter" />,
+  ArrowUpDown: () => <div data-testid="icon-arrow" />,
+  X: () => <div data-testid="icon-x" />,
+  PanelLeftClose: () => <div data-testid="icon-panel-left-close" />,
+  PanelLeft: () => <div data-testid="icon-panel-left" />,
+  Folder: () => <div data-testid="icon-folder" />,
+  Archive: () => <div data-testid="icon-archive" />,
+  MoreHorizontal: () => <div data-testid="icon-more" />,
+  Settings: () => <div data-testid="icon-settings" />,
+  ChevronDown: () => <div data-testid="icon-chevron" />,
+  Tag: () => <div data-testid="icon-tag" />,
+  Bell: () => <div data-testid="icon-bell" />,
+  Share2: () => <div data-testid="icon-share" />,
+  Users: () => <div data-testid="icon-users" />,
+  Sun: () => <div data-testid="icon-sun" />,
+  Moon: () => <div data-testid="icon-moon" />,
 }));
 
 describe('Header Component', () => {
@@ -29,21 +45,21 @@ describe('Header Component', () => {
     setSearchQuery: vi.fn(),
     handleOpenCreateTask: vi.fn(),
     stats: { total: 10, completed: 5, urgent: 2, overdue: 1 },
+    filters: { priority: 'all', status: 'all', assignees: [], tags: [] },
+    setFilters: vi.fn(),
   };
 
   test('renders header with user info and board name', () => {
     render(<Header {...defaultProps} />);
     
     expect(screen.getByText('My Project')).toBeInTheDocument();
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByAltText('John Doe')).toHaveAttribute('src', 'http://example.com/photo.jpg');
   });
 
   test('toggles sidebar when menu icon clicked (mobile)', () => {
     render(<Header {...defaultProps} />);
     
-    // The sidebar toggle is the first Layers icon (in DOM order)
-    const menuIcon = screen.getAllByTestId('icon-layers')[0];
+    const menuIcon = screen.getByTestId('icon-panel-left-close');
     fireEvent.click(menuIcon.parentElement);
     
     expect(defaultProps.setShowSidebar).toHaveBeenCalledWith(!defaultProps.showSidebar); // Expected false-ish
@@ -52,7 +68,10 @@ describe('Header Component', () => {
   test('toggles stats view', () => {
     render(<Header {...defaultProps} />);
     
-    fireEvent.click(screen.getByText(/Stats/i));
+    const moreMenuBtn = screen.getByTestId('icon-more').parentElement;
+    fireEvent.click(moreMenuBtn);
+
+    fireEvent.click(screen.getByText(/Show Statistics/i));
     
     expect(defaultProps.setShowStats).toHaveBeenCalledWith(!defaultProps.showStats); // Expected true
   });
@@ -69,17 +88,17 @@ describe('Header Component', () => {
   test('changes view mode between Kanban and Calendar', () => {
     render(<Header {...defaultProps} />);
     
-    fireEvent.click(screen.getByText(/Calendar/i));
+    fireEvent.click(screen.getByRole('button', { name: /Calendar/i }));
     expect(defaultProps.setViewMode).toHaveBeenCalledWith('calendar');
     
-    fireEvent.click(screen.getByText(/Board/i));
+    fireEvent.click(screen.getByRole('button', { name: /Board/i }));
     expect(defaultProps.setViewMode).toHaveBeenCalledWith('kanban');
   });
 
   test('updates search query', () => {
     render(<Header {...defaultProps} />);
     
-    const input = screen.getByPlaceholderText('Search...');
+    const input = screen.getByPlaceholderText('Search tasks...');
     fireEvent.change(input, { target: { value: 'bug fix' } });
     
     expect(defaultProps.setSearchQuery).toHaveBeenCalled();
@@ -88,19 +107,17 @@ describe('Header Component', () => {
   test('calls handleSignOut when logout button is clicked', () => {
     render(<Header {...defaultProps} />);
     
-    const logoutBtn = screen.getByTitle('Sign out');
+    const userMenuBtn = screen.getByTestId('icon-chevron').parentElement;
+    fireEvent.click(userMenuBtn);
+
+    const logoutBtn = screen.getByText('Sign out').closest('button');
     fireEvent.click(logoutBtn);
     
     expect(defaultProps.handleSignOut).toHaveBeenCalled();
   });
 
-  test('renders Create Task button if board exists (disabled logic removed in latest version but checking existence)', () => {
-    // Note: In latest iteration, the "New" button was REMOVED.
-    // So this test should check for its ABSENCE if we rely on my edit history.
-    // Wait, step 170 removed the "New" button.
-    // So I should expect `screen.queryByText('New')` to be null.
-    
-    render(<Header {...defaultProps} />);
-    expect(screen.queryByText(/New Task/i)).not.toBeInTheDocument();
+  test('renders Create Task button if board exists and user can create', () => {
+    render(<Header {...defaultProps} canCreate={true} />);
+    expect(screen.getByText(/New Task/i)).toBeInTheDocument();
   });
 });
