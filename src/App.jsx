@@ -9,6 +9,7 @@ import Modal from './components/Modal';
 import ArchivedTasksModal from './components/ArchivedTasksModal';
 import TeamPanel from './components/collaboration/TeamPanel';
 import NotificationPanel from './components/notifications/NotificationPanel';
+import CommentSection from './components/comments/CommentSection';
 import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS, ROLES } from './utils/constants';
 import { canCreateTasks, canEditTask } from './lib/permissions';
 import { useAuth } from './hooks/useAuth';
@@ -16,6 +17,7 @@ import { useBoards } from './hooks/useBoards';
 import { useTasks } from './hooks/useTasks';
 import { useCollaboration } from './hooks/useCollaboration';
 import { useNotifications } from './hooks/useNotifications';
+import { useComments } from './hooks/useComments';
 import { useTheme } from './hooks/useTheme';
 
 // Default filter/sort state
@@ -54,7 +56,8 @@ export default function App() {
     unreadCount, 
     markAsRead, 
     markAllAsRead, 
-    deleteNotification 
+    deleteNotification,
+    notifyMention
   } = useNotifications(user);
 
   // Derive the current user's role for the selected board
@@ -78,6 +81,14 @@ export default function App() {
   const [showTeamPanel, setShowTeamPanel] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingTask, setEditingTask] = useState(null);
+
+  // Comments hook
+  const {
+    comments,
+    addComment,
+    updateComment,
+    deleteComment
+  } = useComments(user, currentBoard?.id, editingTask?.id, editingTask?.title, notifyMention);
   const [showStats, setShowStats] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [showBoardModal, setShowBoardModal] = useState(false);
@@ -85,6 +96,7 @@ export default function App() {
   const [viewMode, setViewMode] = useState('kanban');
   const [showFilters, setShowFilters] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
   const [customTagInput, setCustomTagInput] = useState('');
   const [customTagColor, setCustomTagColor] = useState('blue');
 
@@ -325,23 +337,47 @@ export default function App() {
     }
   };
 
-  // Handle clicking on a notification — e.g., navigate to shared board on invite
   const handleNotificationAction = (notification) => {
     if (notification.boardId) {
       // Try to find in sharedBoards first, then own boards
-      const sharedBoard = sharedBoards.find(b => b.id === notification.boardId);
-      if (sharedBoard) {
-        setCurrentBoard(sharedBoard);
+      let foundBoard = sharedBoards.find(b => b.id === notification.boardId) || boards.find(b => b.id === notification.boardId);
+      if (foundBoard) {
+        if (currentBoard?.id !== foundBoard.id) {
+          setCurrentBoard(foundBoard);
+        }
         setShowNotifications(false);
-        return;
-      }
-      const ownBoard = boards.find(b => b.id === notification.boardId);
-      if (ownBoard) {
-        setCurrentBoard(ownBoard);
-        setShowNotifications(false);
+        
+        if (notification.taskId) {
+          // If we are already on the board and tasks are loaded:
+          if (currentBoard?.id === foundBoard.id) {
+            const task = tasks.find(t => t.id === notification.taskId);
+            if (task) {
+              setEditingTask(task.id);
+              setTaskForm({ ...task });
+              setIsModalOpen(true);
+            } else {
+              setPendingAction({ taskId: notification.taskId, commentId: notification.commentId });
+            }
+          } else {
+            // Need to wait for new board's tasks to load
+            setPendingAction({ taskId: notification.taskId, commentId: notification.commentId });
+          }
+        }
       }
     }
   };
+
+  useEffect(() => {
+    if (pendingAction && tasks.length > 0) {
+      const task = tasks.find(t => t.id === pendingAction.taskId);
+      if (task) {
+        setEditingTask(task.id);
+        setTaskForm({ ...task });
+        setIsModalOpen(true);
+        // pendingAction is kept for CommentSection to scroll, it clears itself or we can clear it on modal close
+      }
+    }
+  }, [tasks, pendingAction]);
 
   const stats = useMemo(() => {
     const total = tasks.length;
@@ -613,13 +649,28 @@ export default function App() {
               ))}
             </div>
           </div>
+          
+          {editingTask && (
+            <CommentSection 
+              comments={comments}
+              currentUser={user}
+              onAddComment={addComment}
+              onDeleteComment={deleteComment}
+              onUpdateComment={updateComment}
+              collaborators={teamMembers || []}
+              canComment={!!userRole} 
+              scrollToCommentId={pendingAction?.commentId}
+              onScrollComplete={() => setPendingAction(null)}
+            />
+          )}
+
           {canEdit ? (
             <button type="submit" className="w-full bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
               {editingTask ? 'Update Entry' : 'Create Entry'}
               <ChevronRight size={16} />
             </button>
           ) : (
-            <button type="button" onClick={() => setIsModalOpen(false)} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2">
+            <button type="button" onClick={() => { setIsModalOpen(false); setPendingAction(null); }} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2">
               Close
             </button>
           )}
