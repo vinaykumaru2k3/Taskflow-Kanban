@@ -34,6 +34,7 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log(`[useComments] fetched ${snapshot.docs.length} comments for taskId:`, taskId);
       const items = [];
       snapshot.forEach((doc) => {
         items.push({ id: doc.id, ...doc.data() });
@@ -41,7 +42,8 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
       setComments(items);
       setLoading(false);
     }, (error) => {
-      console.error("Firestore onSnapshot Error:", error);
+      console.error("[useComments] Firestore onSnapshot Error:", error);
+      alert("Comments Error: " + error.message);
       setLoading(false);
     });
 
@@ -50,9 +52,15 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
 
   // Add a new comment
   const addComment = async (text, mentions = []) => {
-    if (!user || !boardId || !taskId || !text.trim()) return;
+    console.log("[useComments] attempting to add comment:", { boardId, taskId, text, userUid: user?.uid });
+    
+    if (!user || !boardId || !taskId || !text.trim()) {
+      console.error("[useComments] EARLY RETURN - MISSING DATA:", { user: !!user, boardId, taskId, text });
+      return;
+    }
 
     try {
+      console.log("[useComments] Sending addDoc request out to Firestore...");
       const docRef = await addDoc(collection(db, 'comments'), {
         taskId,
         boardId,
@@ -64,6 +72,8 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+      
+      console.log("[useComments] Successfully added document with ID:", docRef.id);
       
       // Notify mentioned users (skip self)
       if (notifyMention && mentions.length > 0) {
@@ -77,7 +87,8 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
       
       return { success: true };
     } catch (error) {
-      console.error('Error adding comment:', error);
+      console.error('[useComments] Error adding comment:', error);
+      alert('Failed to add comment: ' + error.message);
       throw error;
     }
   };
