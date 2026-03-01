@@ -114,24 +114,22 @@ export default function App() {
   // Comments hook
   const {
     comments,
+    loading: commentsLoading,
     addComment,
     updateComment,
     deleteComment
   } = useComments(user, currentBoard?.id, editingTask, taskForm?.title, notifyMention);
 
-  const handleAddComment = async (text, mentions) => {
-    await addComment(text, mentions);
-    const oldTask = tasks.find(t => t.id === editingTask);
-    const newCount = (oldTask?.commentCount || 0) + 1;
-    await updateTask(editingTask, { commentCount: newCount });
-  };
+  // Robustly sync comment limits back to tasks when reading the comments snapshot 
+  useEffect(() => {
+    if (!editingTask || commentsLoading || !comments) return;
+    const currentTask = tasks.find(t => t.id === editingTask);
+    if (currentTask && currentTask.commentCount !== comments.length) {
+      updateTask(editingTask, { commentCount: comments.length });
+    }
+  }, [comments, commentsLoading, editingTask, tasks]);
 
-  const handleDeleteComment = async (id) => {
-    await deleteComment(id);
-    const oldTask = tasks.find(t => t.id === editingTask);
-    const newCount = Math.max((oldTask?.commentCount || 1) - 1, 0);
-    await updateTask(editingTask, { commentCount: newCount });
-  };
+
 
   // --- Board Handlers ---
 
@@ -192,10 +190,14 @@ export default function App() {
     if (!canEdit) return; // viewers cannot save
     if (!taskForm.title.trim()) return;
     try {
+      const finalTask = { ...taskForm };
+      // Prevent stale task form state from inadvertently wiping out active dynamic properties 
+      delete finalTask.commentCount;
+
       if (editingTask) {
-        await updateTask(editingTask, taskForm);
+        await updateTask(editingTask, finalTask);
       } else {
-        await createTask(taskForm);
+        await createTask(finalTask);
       }
       setIsModalOpen(false);
       setEditingTask(null);
@@ -670,8 +672,8 @@ export default function App() {
             <CommentSection 
               comments={comments}
               currentUser={user}
-              onAddComment={handleAddComment}
-              onDeleteComment={handleDeleteComment}
+              onAddComment={addComment}
+              onDeleteComment={deleteComment}
               onUpdateComment={updateComment}
               collaborators={teamMembers || []}
               canComment={!!userRole} 
