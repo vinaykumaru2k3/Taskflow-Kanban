@@ -34,7 +34,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1">
           {task.assigneeId && (
             <div 
               className="mr-1 ring-2 ring-slate-100 dark:ring-slate-800 rounded-full flex-shrink-0 bg-slate-200 dark:bg-slate-700 w-5 h-5 flex items-center justify-center text-[9px] font-bold text-slate-500 overflow-hidden" 
@@ -47,6 +47,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
               )}
             </div>
           )}
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {readOnly ? (
             <span className="flex items-center gap-1 text-[9px] font-bold text-slate-300 px-2 py-1">
               <Eye size={10} /> View Only
@@ -69,6 +70,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
               )}
             </>
           )}
+          </div>
         </div>
       </div>
       <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1.5 line-clamp-2 leading-snug">{task.title}</h4>
