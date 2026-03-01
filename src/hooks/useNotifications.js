@@ -107,13 +107,23 @@ export const useNotifications = (user) => {
   }, [user]);
 
   // Notify user when they are assigned to a task
-  // This would typically be called from the task assignment logic
-  const notifyAssignment = useCallback(async (assigneeEmail, assignerName, taskTitle, boardId, taskId) => {
-    // Note: This requires a users collection with email indexes to find the user
-    // For now, this is a placeholder - in production you'd:
-    // 1. Look up user by email from a users collection
-    // 2. Create notification in their notifications subcollection
-    console.log('Assignment notification:', { assigneeEmail, assignerName, taskTitle, boardId, taskId });
+  const notifyAssignment = useCallback(async (assigneeId, assignerName, taskTitle, boardId, taskId) => {
+    if (!assigneeId) return;
+
+    try {
+      await addDoc(collection(db, 'users', assigneeId, 'notifications'), {
+        type: 'assignment',
+        title: 'Task Assigned',
+        message: `${assignerName} assigned you to "${taskTitle}"`,
+        taskId,
+        boardId,
+        actorName: assignerName,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.error('Error creating assignment notification:', err);
+    }
   }, []);
 
   // Notify user when they are mentioned in a comment

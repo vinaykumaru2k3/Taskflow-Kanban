@@ -231,6 +231,18 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                         </span>
                       )}
                     </div>
+                    {task.assigneeId && (
+                      <div 
+                        className="mr-1 ring-2 ring-slate-100 dark:ring-slate-800 rounded-full flex-shrink-0 bg-slate-200 dark:bg-slate-700 w-5 h-5 flex items-center justify-center text-[9px] font-bold text-slate-500 overflow-hidden" 
+                        title={`Assigned to ${task.assigneeName || 'someone'}`}
+                      >
+                        {task.assigneeAvatar ? (
+                          <img src={task.assigneeAvatar} alt={task.assigneeName} className="w-full h-full object-cover" />
+                        ) : (
+                          (task.assigneeName?.[0] || '?').toUpperCase()
+                        )}
+                      </div>
+                    )}
                   </div>
                   
                   <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1.5 line-clamp-2 leading-snug">{task.title}</h4>

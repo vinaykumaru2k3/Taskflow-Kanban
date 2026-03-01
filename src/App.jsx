@@ -33,7 +33,6 @@ export default function App() {
   // Custom Hooks
   const { user, loading: authLoading, signInWithGoogle, signInWithEmail, signOut } = useAuth();
   const { boards, currentBoard, setCurrentBoard, createBoard, updateBoard, deleteBoard } = useBoards(user);
-  const { tasks, createTask, updateTask, deleteTask, archiveTask, restoreTask } = useTasks(user, currentBoard);
   const { theme, toggleTheme } = useTheme();
   
   // Collaboration hooks
@@ -57,8 +56,11 @@ export default function App() {
     markAsRead, 
     markAllAsRead, 
     deleteNotification,
-    notifyMention
+    notifyMention,
+    notifyAssignment
   } = useNotifications(user);
+
+  const { tasks, createTask, updateTask, deleteTask, archiveTask, restoreTask } = useTasks(user, currentBoard, notifyAssignment);
 
   // Derive the current user's role for the selected board
   // — OWNER for own boards, the shared role for shared boards, null if no board
@@ -74,6 +76,7 @@ export default function App() {
 
   const canCreate = canCreateTasks(userRole);
   const canEdit   = userRole === ROLES.OWNER || userRole === ROLES.ADMIN || userRole === ROLES.EDITOR;
+  const canAssign = userRole === ROLES.OWNER || userRole === ROLES.ADMIN;
 
   // UI State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -108,7 +111,7 @@ export default function App() {
   // Form States
   const [boardForm, setBoardForm] = useState({ name: '', color: '#1e293b' });
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, boardId: null, boardName: '' });
-  const initialTaskState = { title: '', description: '', priority: 'medium', status: 'todo', dueDate: '', tags: [], subtasks: [] };
+  const initialTaskState = { title: '', description: '', priority: 'medium', status: 'todo', dueDate: '', tags: [], subtasks: [], assigneeId: '' };
   const [taskForm, setTaskForm] = useState(initialTaskState);
 
   // Comments hook
@@ -178,10 +181,28 @@ export default function App() {
     if (!canEdit) return; // viewers cannot save
     if (!taskForm.title.trim()) return;
     try {
+      let assigneeData = { assigneeId: null, assigneeName: null, assigneeAvatar: null };
+      if (taskForm.assigneeId) {
+         if (taskForm.assigneeId === user.uid) {
+             assigneeData = { assigneeId: user.uid, assigneeName: user.displayName || user.email, assigneeAvatar: user.photoURL || null };
+         } else {
+             const member = teamMembers.find(m => m.uid === taskForm.assigneeId);
+             if (member) {
+                 assigneeData = { assigneeId: member.uid, assigneeName: member.displayName || member.email, assigneeAvatar: member.photoURL || null };
+             } else {
+                 // Fallback if they were assigned but left the board
+                 assigneeData = { assigneeId: taskForm.assigneeId, assigneeName: taskForm.assigneeName, assigneeAvatar: taskForm.assigneeAvatar };
+             }
+         }
+      }
+
+      const finalTask = { ...taskForm, ...assigneeData };
+
       if (editingTask) {
-        await updateTask(editingTask, taskForm);
+        const oldTask = tasks.find(t => t.id === editingTask);
+        await updateTask(editingTask, finalTask, oldTask);
       } else {
-        await createTask(taskForm);
+        await createTask(finalTask);
       }
       setIsModalOpen(false);
       setEditingTask(null);
@@ -510,7 +531,7 @@ export default function App() {
               <p className="text-xs font-bold text-slate-400">You have <span className="text-slate-600 dark:text-slate-300">Viewer</span> access — this board is read-only.</p>
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Title</label>
               <input required disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Task title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} />
@@ -519,6 +540,16 @@ export default function App() {
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Priority</label>
               <select disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value})}>
                 {Object.keys(PRIORITIES).map(p => (<option key={p} value={p}>{PRIORITIES[p].label}</option>))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assignee</label>
+              <select disabled={!canAssign} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.assigneeId || ''} onChange={e => setTaskForm({...taskForm, assigneeId: e.target.value})}>
+                <option value="">Unassigned</option>
+                <option value={user?.uid}>{user?.displayName || user?.email} (You)</option>
+                {teamMembers.map(m => (
+                  <option key={m.uid} value={m.uid}>{m.displayName || m.email}</option>
+                ))}
               </select>
             </div>
           </div>
