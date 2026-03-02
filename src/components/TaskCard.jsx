@@ -20,7 +20,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
       draggable={!readOnly}
       onDragStart={readOnly ? undefined : (e) => onDragStart(e, task.id)}
       onClick={() => onEdit(task)}
-      className={`group bg-white/95 dark:bg-white/[0.04] backdrop-blur-lg border rounded-xl p-4 hover:shadow-md hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col ${readOnly ? 'cursor-default' : 'cursor-pointer'} ${
+      className={`group bg-white/95 dark:bg-white/[0.04] backdrop-blur-lg border-2 rounded-xl p-4 hover:shadow-md hover:-translate-y-0.5 transition overflow-hidden flex flex-col ${readOnly ? 'cursor-default' : 'cursor-pointer'} ${
         priority.label === 'Urgent' ? 'border-rose-500/50 dark:border-rose-500/40 shadow-sm shadow-rose-500/10 dark:shadow-rose-500/5' :
         priority.label === 'High' ? 'border-orange-500/50 dark:border-orange-500/40 shadow-sm shadow-orange-500/10 dark:shadow-orange-500/5' :
         priority.label === 'Medium' ? 'border-blue-500/50 dark:border-blue-500/40 shadow-sm shadow-blue-500/10 dark:shadow-blue-500/5' :
