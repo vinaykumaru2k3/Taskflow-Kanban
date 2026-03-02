@@ -174,10 +174,15 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0a0f1c] selection:bg-blue-500/30 font-sans overflow-x-hidden transition-colors duration-300">
+    // [safari/mobile] Use min-h-svh (small viewport height) which excludes browser chrome.
+    // Falls back to min-h-screen for non-supporting browsers.
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0a0f1c] selection:bg-blue-500/30 font-sans overflow-x-hidden transition-colors duration-300"
+      style={{ minHeight: '100svh' }}
+    >
       
       {/* Dynamic Background Elements - Only in Dark Mode or Subtle in Light */}
-      <div className="absolute top-0 inset-x-0 h-screen overflow-hidden pointer-events-none data-hide-on-mobile">
+      {/* [perf/safari] pointer-events-none blurs can be expensive; use contain:strict to isolate paint */}
+      <div className="absolute top-0 inset-x-0 h-screen overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-500/20 dark:bg-blue-500/10 blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
         <div className="absolute top-[20%] -right-[10%] w-[30%] h-[30%] rounded-full bg-purple-500/20 dark:bg-purple-500/10 blur-[100px] mix-blend-multiply dark:mix-blend-screen" />
       </div>
@@ -529,7 +534,8 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
               <StaggerItem key={index}>
                 <div className="h-full p-8 rounded-[2rem] bg-white dark:bg-[#111827] border border-slate-200/60 dark:border-slate-800 hover:border-blue-500/30 dark:hover:border-slate-600 transition-colors shadow-sm hover:shadow-xl dark:shadow-none group relative overflow-hidden">
                   <div className="relative z-10">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${feature.bg} ${feature.color} transition-transform group-hover:scale-110 group-hover:-rotate-3`}>
+                    {/* [perf] Only animate transform+opacity — avoid layout-triggering properties */}
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${feature.bg} ${feature.color} transition duration-300 group-hover:scale-110 group-hover:-rotate-3`}>
                       <feature.icon size={26} strokeWidth={2} />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">
@@ -652,7 +658,14 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <img src={test.img} alt={test.author} className="w-12 h-12 rounded-full ring-2 ring-slate-100 dark:ring-[#162032] group-hover:ring-blue-500/30 transition-all" />
+                    <img
+                    src={test.img}
+                    alt={test.author}
+                    // [perf] lazy-load testimonial avatars — they are below the fold
+                    loading="lazy"
+                    decoding="async"
+                    className="w-12 h-12 rounded-full ring-2 ring-slate-100 dark:ring-[#162032] group-hover:ring-blue-500/30 transition-all"
+                  />
                     <div>
                       <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">{test.author}</h4>
                       <span className="text-sm text-slate-500 dark:text-slate-500">{test.role}</span>

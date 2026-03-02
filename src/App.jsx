@@ -1,10 +1,15 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers, Archive, X, Tag, Eye } from 'lucide-react';
-import Landing from './Landing';
-import CalendarView from './CalendarView';
-import WorkflowTree from './WorkflowTree';
-import Documentation from './Documentation';
-import Support from './Support';
+
+// [perf] Lazy-load heavy page-level components so the main Kanban view loads immediately.
+// These chunks will be code-split into separate bundles by Vite.
+const Landing       = lazy(() => import('./Landing'));
+const CalendarView  = lazy(() => import('./CalendarView'));
+const WorkflowTree  = lazy(() => import('./WorkflowTree'));
+const Documentation = lazy(() => import('./Documentation'));
+const Support       = lazy(() => import('./Support'));
+
+// These are small components used on the critical path – keep as eager imports.
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import KanbanBoard from './components/KanbanBoard';
@@ -22,6 +27,23 @@ import { useCollaboration } from './hooks/useCollaboration';
 import { useNotifications } from './hooks/useNotifications';
 import { useComments } from './hooks/useComments';
 import { useTheme } from './hooks/useTheme';
+
+// [perf] Generic debounce hook to throttle expensive handlers (search, resize)
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+// [perf] Lightweight spinner shown while lazy chunks load
+const LazyFallback = () => (
+  <div className="flex-1 flex items-center justify-center min-h-[200px]">
+    <div className="w-8 h-8 border-2 border-slate-300 dark:border-slate-600 border-t-slate-900 dark:border-t-slate-100 rounded-full animate-spin" />
+  </div>
+);
 
 // Default filter/sort state
 const defaultFilters = {
@@ -88,7 +110,6 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingTask, setEditingTask] = useState(null);
 
-
   const [showStats, setShowStats] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [showBoardModal, setShowBoardModal] = useState(false);
@@ -99,6 +120,31 @@ export default function App() {
   const [pendingAction, setPendingAction] = useState(null);
   const [customTagInput, setCustomTagInput] = useState('');
   const [customTagColor, setCustomTagColor] = useState('blue');
+
+  // [perf] Debounce search so we don't filter on every keystroke (saves re-renders)
+  const debouncedSearch = useDebounce(searchQuery, 200);
+
+  // [safari/mobile] Lock body scroll when any modal is open.
+  // position: fixed + top prevents rubber-band scrolling of background content on iOS.
+  const anyModalOpen = isModalOpen || showBoardModal || showArchived || showTeamPanel;
+  useEffect(() => {
+    if (anyModalOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflowY = 'scroll';
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflowY = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+  }, [anyModalOpen]);
 
   // Filter & Sort State (persisted to localStorage)
   const [filters, setFilters] = useState(() => {
@@ -285,11 +331,11 @@ export default function App() {
   const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
 
   const filteredTasks = useMemo(() => {
-    let result = tasks.filter(t => 
+    let result = tasks.filter(t =>
       // Exclude archived tasks from main view
       !t.archived &&
-      (t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      t.description?.toLowerCase().includes(searchQuery.toLowerCase()))
+      (t.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      t.description?.toLowerCase().includes(debouncedSearch.toLowerCase()))
     );
 
     // Filter by priority
@@ -328,7 +374,7 @@ export default function App() {
     });
 
     return result;
-  }, [tasks, searchQuery, filters]);
+  }, [tasks, debouncedSearch, filters]);
 
   // Archived tasks
   const archivedTasks = useMemo(() => {
@@ -437,11 +483,24 @@ export default function App() {
   );
 
   if (!user) {
-    return <Landing onGoogleSignIn={signInWithGoogle} onEmailSignIn={signInWithEmail} isLoading={false} />;
+    return (
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen bg-white dark:bg-slate-900">
+          <div className="w-10 h-10 border-2 border-slate-300 dark:border-slate-600 border-t-slate-900 dark:border-t-white rounded-full animate-spin" />
+        </div>
+      }>
+        <Landing onGoogleSignIn={signInWithGoogle} onEmailSignIn={signInWithEmail} isLoading={false} />
+      </Suspense>
+    );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 overflow-hidden" style={{ fontFamily: "'Poppins', sans-serif" }}>
+    // [safari/mobile] Use 100dvh (dynamic viewport height) so the app fills the screen even when
+    // the browser chrome (address bar/tab bar) is visible. Falls back to 100vh for older browsers.
+    <div
+      className="flex flex-col bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 overflow-hidden"
+      style={{ fontFamily: "'Poppins', sans-serif", height: '100dvh', minHeight: '100vh' }}
+    >
       {/* Header - Full Width */}
       <Header 
         user={user}
@@ -517,14 +576,22 @@ export default function App() {
                   </div>
                 ) : viewMode === 'calendar' ? (
                   <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-                    <CalendarView tasks={filteredTasks} onTaskClick={handleOpenEditTask} />
+                    <Suspense fallback={<LazyFallback />}>
+                      <CalendarView tasks={filteredTasks} onTaskClick={handleOpenEditTask} />
+                    </Suspense>
                   </div>
                 ) : viewMode === 'workflow' ? (
-                  <WorkflowTree tasks={filteredTasks} />
+                  <Suspense fallback={<LazyFallback />}>
+                    <WorkflowTree tasks={filteredTasks} />
+                  </Suspense>
                 ) : viewMode === 'docs' ? (
-                  <Documentation onBack={() => setViewMode('kanban')} />
+                  <Suspense fallback={<LazyFallback />}>
+                    <Documentation onBack={() => setViewMode('kanban')} />
+                  </Suspense>
                 ) : viewMode === 'support' ? (
-                  <Support onBack={() => setViewMode('kanban')} />
+                  <Suspense fallback={<LazyFallback />}>
+                    <Support onBack={() => setViewMode('kanban')} />
+                  </Suspense>
                 ) : (
                   <KanbanBoard 
                     tasks={filteredTasks}

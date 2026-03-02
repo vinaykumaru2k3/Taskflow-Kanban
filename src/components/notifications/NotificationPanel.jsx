@@ -16,7 +16,7 @@ const NotificationPanel = ({
 }) => {
   const panelRef = useRef(null);
 
-  // Close on click outside
+  // [cross-browser] Use 'pointerdown' so click-outside works on touch devices (iOS/Android)
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (panelRef.current && !panelRef.current.contains(event.target)) {
@@ -25,11 +25,11 @@ const NotificationPanel = ({
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('pointerdown', handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('pointerdown', handleClickOutside);
     };
   }, [isOpen, onClose]);
 

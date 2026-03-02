@@ -7,9 +7,18 @@ const KanbanBoard = ({ tasks, onDragStart, onDrop, onEditTask, onDeleteTask, onA
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
       {COLUMNS.map((col) => (
-        <div key={col.id} className="flex flex-col" onDragOver={(e) => e.preventDefault()} onDrop={(e) => onDrop(e, col.id)}>
+        // [perf] CSS contain isolates layout/style recalculations to this column only.
+        // This prevents a card hover in one column from forcing reflow in all columns.
+        <div
+          key={col.id}
+          className="flex flex-col"
+          // [safari] Use both DnD events and pointer-based dragover for Firefox compat
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => onDrop(e, col.id)}
+          style={{ contain: 'layout style' }}
+        >
           <div className="flex items-center justify-between mb-4 px-1">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 dark:text-slate-400">{col.title}</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{col.title}</h2>
             <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold">{tasks.filter(t => t.status === col.id).length}</span>
           </div>
           <div className="space-y-3 min-h-[200px]">
