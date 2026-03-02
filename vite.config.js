@@ -1,8 +1,109 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+
+    // ── PWA / Service Worker ──────────────────────────────────────────────
+    VitePWA({
+      registerType: 'prompt',   // Don't silently update; prompt the user
+      devOptions: {
+        enabled: true,          // Allow the virtual module and SW in development
+        type: 'module',
+      },
+      includeAssets: ['favicon.png', 'icons/*.svg'],
+      manifest: {
+        name: 'TaskFlow - Kanban Board',
+        short_name: 'TaskFlow',
+        description: 'Modern Kanban board for high-performance teams.',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        orientation: 'any',
+        background_color: '#0f172a',
+        theme_color: '#0f172a',
+        categories: ['productivity', 'utilities'],
+        icons: [
+          {
+            src: '/icons/icon-192.svg',
+            sizes: '192x192',
+            type: 'image/svg+xml',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/icon-512.svg',
+            sizes: '512x512',
+            type: 'image/svg+xml',
+            purpose: 'any maskable',
+          },
+          {
+            src: '/favicon.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any',
+          },
+        ],
+        shortcuts: [
+          {
+            name: 'New Task',
+            short_name: 'Add Task',
+            url: '/?action=new-task',
+            icons: [{ src: '/icons/icon-192.svg', sizes: '192x192' }],
+          },
+        ],
+      },
+      workbox: {
+        // Cache strategy: network-first for Firebase API calls, cache-first for static assets
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Don't precache Firebase SDK chunks (they're huge and versioned)
+        globIgnores: ['**/firebase*', '**/chunk-*firebase*', '**/firebase-*.js', '**/firebase-*.mjs'],
+        runtimeCaching: [
+          // Google Fonts — CacheFirst, long TTL
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'gstatic-fonts-cache',
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          // Avatar images (pravatar) — StaleWhileRevalidate
+          {
+            urlPattern: /^https:\/\/i\.pravatar\.cc\/.*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'avatar-cache',
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          // Firebase Firestore / Auth — NetworkFirst so realtime data stays fresh
+          {
+            urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'firestore-cache',
+              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
+    }),
+  ],
 
   // 1. Development Server Settings
   server: {
@@ -10,7 +111,7 @@ export default defineConfig({
     open: true,
   },
 
-  // 2. Production Preview Settings (Used by Playwright in CI)
+  // 2. Production Preview Settings
   preview: {
     port: 3000,
     strictPort: true,
@@ -19,25 +120,14 @@ export default defineConfig({
 
   // 3. Build optimizations
   build: {
-    // [perf] Enable code splitting for better initial load performance
     target: 'es2020',
-    // [perf] Increase warning threshold slightly – large chunks are expected with Firebase
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        // [perf] Manually chunk heavy vendor libs to benefit from long-term caching
         manualChunks: {
-          // Firebase is very large – isolate it so app code changes don't bust its cache
-          'vendor-firebase': [
-            'firebase/app',
-            'firebase/auth',
-            'firebase/firestore',
-          ],
-          // Framer Motion is only used on the Landing page
+          'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
           'vendor-framer': ['framer-motion'],
-          // React core
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          // Icons
           'vendor-icons': ['lucide-react'],
         },
       },

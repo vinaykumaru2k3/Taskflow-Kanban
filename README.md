@@ -1,76 +1,61 @@
 # TaskFlow - Kanban Task Management App
 
-> A modern, beautiful Kanban task management app built with **React + Firebase**. Features drag-and-drop, subtasks, priorities, and real-time sync.
-
-
-## Live Site
-
-| Environment | URL |
-|-------------|-----|
-| **Production** | https://taskflow-app-f6474.web.app/ |
-| **Staging** | https://taskflow-app-f6474.firebaseapp.app/ |
+> A modern, beautiful Kanban task management app built with **React + Firebase**. Features drag-and-drop, full mobile PWA support, collaborative boards, data visualizations, and real-time sync.
 
 ## Features
 
-### Core Functionality
+### Core Experience
 - **Kanban Board** - 4 columns: To Do → In Progress → Review → Done
-- **Drag & Drop** - Smooth reordering powered by [dnd-kit](https://dndkit.com)
-- **Task CRUD** - Create, edit, delete with inline editing
-- **Subtasks** - Nested checklists with progress tracking
-- **Priorities** - Low/Medium/High/Urgent color-coded
-- **Due Dates** - Date picker with overdue highlighting
-- **Search** - Real-time filtering by title/description
+- **Drag & Drop** - Smooth reordering on desktop (HTML5) and mobile (Touch-optimized Pointer events)
+- **Task CRUD** - Rich task editing with nested subtasks, comments, priorities, and deadlines
+- **Views** - Toggle between Kanban Board, Calendar View, and Workflow Tree Visualizations
+- **Search & Filter** - Real-time filtering by text, tags, priority, or completion status
 
-### User Experience
-- **Dark/Light Mode** - Auto-detect + manual toggle
-- **Real-time Sync** - Instant updates across devices
-- **Statistics** - Completion rates, productivity trends
-- **Google Auth** - Secure OAuth2 login
+### Mobile & PWA
+- **Progressive Web App (PWA)** - Installable to home screen on iOS and Android
+- **Offline Mode** - View and interaction capabilities even when network is down (caches sync automatically when back online)
+- **Touch-Optimized UI** - Swipeable column carousel, custom long-press Drag and Drop, fixed bottom navigation, and mobile sidebar drawer
+- **Standalone Experience** - Custom app icons, splash screens, and native-feeling interface
+
+### Collaboration & Real-Time Sync
+- **Shared Boards** - Invite team members via email to collaborate on your boards
+- **Role-Based Access** - Owner, Editor, and Viewer permissions per board
+- **Notifications** - Real-time alerts for board invitations and task assignments
+- **Task Comments** - Real-time chat threads inside individual tasks
+- **Instant Sync** - Changes pushed instantly to all connected users via Firestore
 
 ### Modern UI/UX
-- Gradient glassmorphism design
-- Framer Motion animations
-- Fully responsive (mobile-first)
-- Lucide React icons
+- **Dark/Light Mode** - Hand-crafted frosted glassmorphism designs with dynamic responsive gradients
+- **Animations** - Micro-interactions powered by CSS and Framer Motion
+- **SaaS Polish** - Smooth toast notifications, modal dialogs, empty states, and contextual banners
 
 ## 🛠️ Tech Stack
 
 | Category | Technology |
 |----------|------------|
 | Frontend | React 18.2, Vite 5.0 |
+| PWA support | vite-plugin-pwa (Workbox) |
 | Styling | Tailwind CSS 3.3 |
 | State | React Context + Hooks |
-| Drag & Drop | [dnd-kit](https://dndkit.com) 6.0 |
-| Backend | Firebase Auth/Firestore/Hosting |
-| Icons | [Lucide React](https://lucide.dev) |
-| Testing | Vitest + Playwright |
-| Deployment | Firebase Hosting + GitHub Actions |
+| Backend | Firebase Auth, Firestore |
+| Icons | Lucide React |
 
 ## Quick Start for Contributors
 
-### Option 1: UI/UX Only (No Firebase needed - 2 minutes) **RECOMMENDED**
-
-Perfect for design, components, animations, bug fixes.
+### Local Setup
 
 ```bash
 git clone https://github.com/vinaykumaru2k3/Taskflow-Kanban.git
 cd Taskflow-Kanban
 npm install
-cp .env.example .env
-echo "VITE_USE_MOCK_DATA=true" >> .env
-npm run dev
 ```
 
-**Mock data loads instantly. No accounts needed!**
+### Firebase Setup (Required for Collaboration Features)
 
-### Option 2: Full Firebase Setup (Backend features)
-
-For auth, database, real-time sync contributions.
-
-1. Complete **Option 1 steps 1-2**
-2. [Firebase Console](https://console.firebase.google.com/) → New Project → "TaskFlow-Dev-[YourName]"
-3. **Enable**: Google Auth + Firestore (test mode, closest region)
-4. **Copy config** from Project Settings → Your Apps → `</>` (web icon):
+1. [Firebase Console](https://console.firebase.google.com/) → New Project
+2. **Enable**: Google Auth + Firestore (Test Mode is fine for development)
+3. **Copy config** from Project Settings → Your Apps → `</>` (web icon)
+4. Create a `.env` file in the root directory:
 ```env
 VITE_FIREBASE_API_KEY=your_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
@@ -78,260 +63,70 @@ VITE_FIREBASE_PROJECT_ID=your_project_id
 VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
 VITE_FIREBASE_APP_ID=your_app_id
-VITE_USE_MOCK_DATA=false
 ```
-5. `npm run dev`
+5. Run the dev server:
+```bash
+npm run dev
+```
+
+*Note: The PWA features (Service workers, offline caching) are fully functional in production builds (`npm run build && npm run preview`), and available in Dev mode via Vite's virtual module injection.*
 
 ## Project Structure
 
 ```
 taskflow-kanban/
-├── .github/workflows/deploy.yml     # CI/CD pipeline
+├── public/
+│   ├── icons/                       # PWA masks & icons
+│   └── manifest.json                # PWA manifest
 ├── src/
-│   ├── components/                  # Reusable UI components
-│   ├── contexts/                    # AuthContext, ThemeContext
-│   ├── hooks/                       # useTasks, useAuth, useDrag
-│   ├── services/                    # firebase.js, mockData.js, auth.js
-│   ├── utils/                       # date utils, validation
-│   ├── App.jsx                      # Main app
+│   ├── components/                  # Reusable UI (Sidebar, KanbanBoard, MobileNav, PWABanners...)
+│   ├── hooks/                       # Custom hooks (useTasks, useAuth, usePWA, useTouchDnd...)
+│   ├── lib/                         # Permissions and logic helpers
+│   ├── utils/                       # Constants, date formatters
+│   ├── App.jsx                      # Main app shell & router
 │   ├── main.jsx                     # Entry point
-│   └── index.css                    # Global styles
-├── tests/e2e.spec.js                # Playwright E2E tests
+│   └── index.css                    # Tailwind + base styles
 ├── .env.example                     # Env template
-├── tailwind.config.js
-├── vite.config.js
-├── package.json
-└── playwright.config.js
-```
-
-## Firebase Schema
-
-```
-users/{userId}/
-├── profile/                    # displayName, email, photoURL, createdAt
-└── tasks/{taskId}/
-    ├── title, description
-    ├── priority: "low|medium|high|urgent"
-    ├── status: "todo|in-progress|review|done"
-    ├── dueDate: timestamp|null
-    ├── subtasks[]: {text, completed}
-    ├── tags[], createdAt, updatedAt
-```
-
-**Security Rules**:
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
-```
-
-## Testing
-
-```bash
-# Unit tests (Vitest)
-npm test
-npm run test:coverage
-npm run test:watch
-
-# E2E tests (Playwright)
-npm run test:e2e
-npm run test:e2e -- tests/e2e/auth.spec.js  # Specific file
-```
-
-**Mock Mode** (`VITE_USE_MOCK_DATA=true`): No network requests, deterministic, fast.
-
-## 🚀 Deployment
-
-**Automatic**: Push to `main` → GitHub Actions deploys to Firebase Hosting
-
-**Manual**:
-```bash
-npm run build
-npm run deploy
-```
-
-## Contributing
-
-⭐ **Star this repo** if you find it helpful!
-
-### Contribution Workflow
-```bash
-# 1️⃣ Fork the repository on GitHub
-# https://github.com/vinaykumaru2k3/Taskflow-Kanban → Click "Fork"
-
-# 2️⃣ Clone your fork
-git clone https://github.com/<your-username>/Taskflow-Kanban.git
-cd Taskflow-Kanban
-
-# 3️⃣ Add upstream (original repo)
-git remote add upstream https://github.com/vinaykumaru2k3/Taskflow-Kanban.git
-
-# 4️⃣ Sync with upstream main
-git fetch upstream
-git checkout main
-git merge upstream/main
-
-# 5️⃣ Create a feature branch
-git checkout -b feat/add-task-analytics   # or fix/bug-description
-
-# 6️⃣ Install + test
-npm install
-npm test && npm run test:e2e
-
-# 7️⃣ Commit
-git commit -m "feat: add task analytics dashboard"
-
-# 8️⃣ Push to your fork
-git push origin feat/add-task-analytics
-
-# 9️⃣ Open Pull Request
-# https://github.com/vinaykumaru2k3/Taskflow-Kanban
-# Base: vinaykumaru2k3/main ← Compare: your-username/feat/add-task-analytics
-```
-
-**PR Requirements**:
-- [ ] Tests pass
-- [ ] `npm run lint` clean
-- [ ] Screenshots for UI changes
-- [ ] References issue: `Fixes #123`
-
-### Code Standards
-```
-DO:
-- Tailwind utility classes only
-- Functional components + hooks
-- Conventional Commits (feat:, fix:, docs:)
-- >70% test coverage for new features
-
-DON'T:
-- Custom CSS (use Tailwind)
-- Console.logs in commits
-- Breaking changes without tests
+├── tailwind.config.js               # Utility design tokens
+├── vite.config.js                   # Build, dev & PWA Plugin config
+└── package.json
 ```
 
 ## Available Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Development server (localhost:5173) |
+| `npm run dev` | Development server (localhost:3000) |
 | `npm run build` | Production build |
-| `npm run preview` | Local preview of production build |
-| `npm test` | Unit tests (Vitest) |
-| `npm run test:e2e` | End-to-end tests (Playwright) |
+| `npm run preview` | Local preview of the production build |
 | `npm run lint` | ESLint check |
-| `npm run lint:fix` | Auto-fix linting |
-| `npm run format` | Prettier format |
-| `npm run deploy` | Build + Firebase deploy |
+| `npm run lint:fix` | Auto-fix linting issues |
 
-## FAQ / Troubleshooting
+## Security Rules (Firestore)
 
-| Issue | Solution |
-|-------|----------|
-| `Firebase config not found` | `.env` vars must start with `VITE_`, restart dev server |
-| `Permission denied` (Firestore) | Enable test mode rules + Google login |
-| Mock data not loading | `VITE_USE_MOCK_DATA=true` + `Ctrl+F5` hard refresh |
-| E2E tests fail | `npx playwright install` |
-| `npm run dev` slow | Disable browser extensions, check `vite.config.js` |
+To deploy to your own Firebase project securely, ensure your Firestore rules are configured correctly to support shared boards:
 
-## Security
-- `.env` in `.gitignore`
-- Firebase client keys safe for web apps
-- Report vulnerabilities privately to maintainers
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Main boards
+    match /boards/{boardId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if request.auth != null && (
+        resource.data.ownerId == request.auth.uid ||
+        request.auth.uid in resource.data.collaborators
+      );
+    }
+  }
+}
+```
 
 ## 📄 License
 This project is licensed under the GNU GPL-3.0 License © 2026 Vinay Kumar
 
-You may use, modify, and distribute this software under GPL-3.0 terms.
-Any derivative work must also be open source under GPL-3.0.
-
 See the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-- [Firebase](https://firebase.google.com) - Backend services
-- [Tailwind CSS](https://tailwindcss.com) - Styling
-- [dnd-kit](https://dndkit.com) - Drag & drop
-- [Lucide React](https://lucide.dev) - Icons
-- [Vite](https://vitejs.dev) - Build tool
-
-***
-
-## 📎 Required Setup Files
-
-### 1. `.env.example`
-```env
-# Firebase Configuration
-VITE_FIREBASE_API_KEY=your_api_key_here
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=your_app_id
-
-# Development Mode
-VITE_USE_MOCK_DATA=true
-```
-
-### 2. `src/services/mockData.js`
-```javascript
-// Mock data for UI contributors (no Firebase needed)
-export const mockUser = {
-  uid: 'demo-user-123',
-  displayName: 'Demo Contributor',
-  email: 'demo@example.com',
-  photoURL: 'https://ui-avatars.com/api/?name=Demo+Contributor&background=random'
-};
-
-export const mockTasks = [
-  {
-    id: 'task-1',
-    title: 'Welcome to TaskFlow! 🎉',
-    description: 'Try dragging this task between columns',
-    priority: 'high',
-    status: 'todo',
-    subtasks: [
-      { text: 'Explore the board', completed: true },
-      { text: 'Try dark mode toggle', completed: false }
-    ]
-  },
-  {
-    id: 'task-2',
-    title: 'Make your first contribution',
-    description: 'Check "good first issue" label',
-    priority: 'medium',
-    status: 'in-progress'
-  }
-];
-
-// Mock Firebase services for UI development
-export const mockAuth = { /* full implementation */ };
-export const mockFirestore = { /* full implementation */ };
-```
-
-### 3. `.gitignore` (essential additions)
-```
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Firebase
-.firebase/
-*.log
-
-# Testing
-coverage/
-test-results/
-playwright-report/
-
-# Build
-dist/
-```
-
-***
-
-**Ready for contributors!** **Start with Option 1** - works instantly!
