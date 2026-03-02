@@ -164,7 +164,7 @@ export default function WorkflowTree({ tasks }) {
                  <div className="flex-1 w-full pb-8">
                     {col.tasks.length === 0 ? (
                        <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800/80 rounded-[3rem] bg-white/30 dark:bg-slate-900/10">
-                          <Icon size={48} className="text-slate-300 dark:text-slate-700 mb-4" strokeWidth={1} />
+                           <col.icon size={48} className="text-slate-300 dark:text-slate-700 mb-4" strokeWidth={1} />
                           <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest text-sm">No Active Tasks in this Stage</p>
                        </div>
                     ) : (
