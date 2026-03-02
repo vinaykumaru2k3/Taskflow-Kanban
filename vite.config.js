@@ -40,7 +40,7 @@ export default defineConfig({
           },
           {
             src: '/favicon.png',
-            sizes: 'any',
+            sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
@@ -58,7 +58,7 @@ export default defineConfig({
         // Cache strategy: network-first for Firebase API calls, cache-first for static assets
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // Don't precache Firebase SDK chunks (they're huge and versioned)
-        globIgnores: ['**/firebase*', '**/chunk-*firebase*'],
+        globIgnores: ['**/firebase*', '**/chunk-*firebase*', '**/firebase-*.js', '**/firebase-*.mjs'],
         runtimeCaching: [
           // Google Fonts — CacheFirst, long TTL
           {
