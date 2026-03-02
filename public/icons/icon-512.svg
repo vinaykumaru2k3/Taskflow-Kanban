@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="92" fill="#0f172a"/>
+  <g transform="translate(256 256)" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Bottom layer -->
+    <polygon points="0,90 -160,45 0,0 160,45" fill="rgba(255,255,255,0.15)" stroke="white" stroke-width="18"/>
+    <!-- Middle layer -->
+    <polygon points="0,25 -160,-20 0,-65 160,-20" fill="rgba(255,255,255,0.35)" stroke="white" stroke-width="18"/>
+    <!-- Top layer -->
+    <polygon points="0,-45 -160,-90 0,-135 160,-90" fill="rgba(255,255,255,0.75)" stroke="white" stroke-width="18"/>
+  </g>
+</svg>

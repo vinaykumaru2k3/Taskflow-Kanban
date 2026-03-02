@@ -2,14 +2,13 @@ import { useState, useMemo, useEffect, useCallback, useRef, lazy, Suspense } fro
 import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers, Archive, X, Tag, Eye } from 'lucide-react';
 
 // [perf] Lazy-load heavy page-level components so the main Kanban view loads immediately.
-// These chunks will be code-split into separate bundles by Vite.
 const Landing       = lazy(() => import('./Landing'));
 const CalendarView  = lazy(() => import('./CalendarView'));
 const WorkflowTree  = lazy(() => import('./WorkflowTree'));
 const Documentation = lazy(() => import('./Documentation'));
 const Support       = lazy(() => import('./Support'));
 
-// These are small components used on the critical path – keep as eager imports.
+// Critical path imports
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import KanbanBoard from './components/KanbanBoard';
@@ -18,6 +17,9 @@ import ArchivedTasksModal from './components/ArchivedTasksModal';
 import TeamPanel from './components/collaboration/TeamPanel';
 import NotificationPanel from './components/notifications/NotificationPanel';
 import CommentSection from './components/comments/CommentSection';
+import MobileNav from './components/MobileNav';
+import { PWAInstallBanner, PWAUpdateBanner, OfflineToast, OnlineToast } from './components/PWABanners';
+import { usePWA } from './hooks/usePWA';
 import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS, ROLES } from './utils/constants';
 import { canCreateTasks, canEditTask } from './lib/permissions';
 import { useAuth } from './hooks/useAuth';
@@ -59,7 +61,30 @@ export default function App() {
   const { user, loading: authLoading, signInWithGoogle, signInWithEmail, signOut } = useAuth();
   const { boards, currentBoard, setCurrentBoard, createBoard, updateBoard, deleteBoard } = useBoards(user);
   const { theme, toggleTheme } = useTheme();
-  
+
+  // ── PWA: install prompt, SW updates, online/offline ───────────────────
+  const {
+    isInstallable,
+    promptInstall,
+    isOnline,
+    needRefresh,
+    applyUpdate,
+  } = usePWA();
+  const [dismissedInstall, setDismissedInstall] = useState(false);
+  const [dismissedUpdate, setDismissedUpdate] = useState(false);
+  const [showOnlineToast, setShowOnlineToast] = useState(false);
+  const prevOnlineRef = useRef(isOnline);
+
+  // Show "Back online" toast for 3 seconds whenever connectivity restores
+  useEffect(() => {
+    if (!prevOnlineRef.current && isOnline) {
+      setShowOnlineToast(true);
+      const t = setTimeout(() => setShowOnlineToast(false), 3000);
+      return () => clearTimeout(t);
+    }
+    prevOnlineRef.current = isOnline;
+  }, [isOnline]);
+
   // Collaboration hooks
   const { 
     collaborators,
@@ -533,13 +558,22 @@ export default function App() {
       />
 
       {/* Main Area - Sidebar + Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* [mobile] Backdrop overlay — tapping it closes the sidebar on small screens */}
+        {showSidebar && (
+          <div
+            className="md:hidden fixed inset-0 z-10 bg-slate-900/40 backdrop-blur-sm"
+            onClick={() => setShowSidebar(false)}
+            aria-hidden="true"
+          />
+        )}
+
         <Sidebar 
           showSidebar={showSidebar}
           boards={boards}
           sharedBoards={sharedBoards}
           currentBoard={currentBoard}
-          setCurrentBoard={setCurrentBoard}
+          setCurrentBoard={(b) => { setCurrentBoard(b); setShowSidebar(false); }}
           onAddBoard={() => { setEditingBoard(null); setBoardForm({ name: '', color: '#1e293b' }); setShowBoardModal(true); }}
           onEditBoard={openEditBoard}
           onDeleteBoard={confirmDeleteBoard}
@@ -554,8 +588,9 @@ export default function App() {
              <div className="absolute top-[40%] left-[60%] w-[30%] h-[30%] bg-blue-600/5 rounded-full blur-[100px] mix-blend-screen" />
           </div>
 
-          <div className="flex-1 flex flex-col min-h-0 relative z-10">  
-            <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 flex flex-col min-h-0 relative z-10">
+            {/* [mobile] Add bottom padding so content isn't hidden behind the MobileNav */}
+            <main className="flex-1 p-4 md:p-6 lg:p-8 pb-24 md:pb-6 lg:pb-8 overflow-y-auto custom-scrollbar">
               <div className="max-w-7xl mx-auto h-full flex flex-col">
                 {!currentBoard ? (
                   <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-center">
@@ -626,6 +661,16 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* ── Mobile Bottom Navigation ─────────────────────────────────── */}
+      <MobileNav
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        onNewTask={handleOpenCreateTask}
+        canCreate={canCreate}
+        onToggleSidebar={() => setShowSidebar((s) => !s)}
+        currentBoard={currentBoard}
+      />
 
       {/* Task Modal */}
       <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTask(null); }} title={editingTask ? (canEdit ? 'Update Entry' : 'View Entry') : 'New Entry'}>
@@ -915,6 +960,32 @@ export default function App() {
         onAccept={handleAcceptInvite}
         onReject={rejectInvite}
       />
+
+      {/* ── PWA Install Banner (shown when installable and not dismissed) ── */}
+      {isInstallable && !dismissedInstall && (
+        <PWAInstallBanner
+          onInstall={async () => {
+            const accepted = await promptInstall();
+            if (!accepted) setDismissedInstall(true);
+          }}
+          onDismiss={() => setDismissedInstall(true)}
+        />
+      )}
+
+      {/* ── SW Update Banner ── */}
+      {needRefresh && !dismissedUpdate && (
+        <PWAUpdateBanner
+          onUpdate={applyUpdate}
+          onDismiss={() => setDismissedUpdate(true)}
+        />
+      )}
+
+      {/* ── Offline Toast ── */}
+      {!isOnline && <OfflineToast />}
+
+      {/* ── Back Online Toast (auto-fades after 3s via state timer) ── */}
+      {showOnlineToast && <OnlineToast />}
+
     </div>
   );
 }

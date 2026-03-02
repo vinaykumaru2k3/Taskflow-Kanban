@@ -1,8 +1,7 @@
-import React from 'react';
-import { Trash2, AlertCircle, CheckSquare, Calendar, Archive, Tag, Eye, MessageSquare } from 'lucide-react';
+import { Trash2, AlertCircle, CheckSquare, Calendar, Archive, Eye, MessageSquare } from 'lucide-react';
 import { PRIORITIES, TAG_COLORS } from '../utils/constants';
 
-const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = false }) => {
+const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = false, touchHandlers = {} }) => {
   const priority = PRIORITIES[task.priority] || PRIORITIES.low;
   const subtasksCount = task.subtasks?.length || 0;
   const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0;
@@ -28,7 +27,9 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
         priority.label === 'Medium' ? 'border-blue-500/50 dark:border-blue-500/40 shadow-sm shadow-blue-500/10 dark:shadow-blue-500/5' :
         'border-slate-200/60 dark:border-slate-700/50 shadow-sm'
       }`}
-      style={{ willChange: 'transform' }}
+      // [touch] Merge touch DnD handlers from useTouchDnd (pointer events + touch-action)
+      {...touchHandlers}
+      style={{ willChange: 'transform', ...(touchHandlers.style || {}) }}
     >
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-2 flex-wrap">
