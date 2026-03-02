@@ -12,7 +12,10 @@ const Sidebar = ({
   onDeleteBoard 
 }) => {
   return (
-    <aside className={`${showSidebar ? 'w-64' : 'w-0'} h-full bg-slate-50/80 dark:bg-white/[0.02] backdrop-blur-2xl border-r border-slate-200/50 dark:border-slate-800/50 transition-all duration-300 overflow-hidden flex-shrink-0 relative z-20`}>
+    <aside 
+      className={`h-full bg-slate-50/80 dark:bg-white/[0.02] backdrop-blur-2xl overflow-hidden flex-shrink-0 relative z-20 transition-[width,border-width] duration-300 ease-in-out ${showSidebar ? 'w-64 border-r border-slate-200/50 dark:border-slate-800/50' : 'w-0 border-0'}`}
+      style={{ willChange: 'width' }}
+    >
       <div className="w-64 h-full flex flex-col overflow-y-auto custom-scrollbar">
 
         {/* ── MY BOARDS ── */}

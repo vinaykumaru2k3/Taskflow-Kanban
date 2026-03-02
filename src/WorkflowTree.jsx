@@ -178,7 +178,7 @@ export default function WorkflowTree({ tasks }) {
                                  animate={{ opacity: 1, scale: 1 }}
                                  transition={{ delay: tidx * 0.05 }}
                                  key={task.id} 
-                                 className={`group/task flex flex-col gap-3 p-5 rounded-3xl bg-white dark:bg-[#111928] border ${isCritical ? 'border-rose-200 dark:border-rose-500/30 shadow-[0_4px_20px_rgba(244,63,94,0.05)]' : 'border-slate-200/60 dark:border-slate-700/50 shadow-sm hover:shadow-md'} hover:border-slate-300 dark:hover:border-slate-500 transition-all`}
+                                 className={`group/task flex flex-col gap-3 p-5 rounded-3xl bg-white dark:bg-[#111928] border-2 ${isCritical ? 'border-rose-200 dark:border-rose-500/30 shadow-[0_4px_20px_rgba(244,63,94,0.05)]' : 'border-slate-200/60 dark:border-slate-700/50 shadow-sm hover:shadow-md'} hover:border-slate-300 dark:hover:border-slate-500 transition-all`}
                                >
                                  <div className="flex items-start justify-between gap-3">
                                    <h4 className="text-[15px] font-bold text-slate-800 dark:text-slate-100 leading-snug line-clamp-2">{task.title}</h4>
