@@ -9,6 +9,10 @@ export default defineConfig({
     // ── PWA / Service Worker ──────────────────────────────────────────────
     VitePWA({
       registerType: 'prompt',   // Don't silently update; prompt the user
+      devOptions: {
+        enabled: true,          // Allow the virtual module and SW in development
+        type: 'module',
+      },
       includeAssets: ['favicon.png', 'icons/*.svg'],
       manifest: {
         name: 'TaskFlow - Kanban Board',
@@ -82,6 +86,7 @@ export default defineConfig({
             options: {
               cacheName: 'avatar-cache',
               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
           // Firebase Firestore / Auth — NetworkFirst so realtime data stays fresh

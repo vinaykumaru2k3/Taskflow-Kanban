@@ -29,39 +29,44 @@ export function useTouchDnd({ onDrop, enabled = true }) {
   const sourceRef = useRef(null);  // { taskId, element }
   const startPosRef = useRef(null); // { x, y }
   const offsetRef = useRef({ x: 0, y: 0 }); // pointer offset within card
+  const listenersCleanupRef = useRef(null); // stores cleanup for global event listeners
 
   // ──────────────────────────────────────────────────────────────────────
   // Helpers
   // ──────────────────────────────────────────────────────────────────────
 
   const createGhost = useCallback((sourceEl, clientX, clientY) => {
-    const rect = sourceEl.getBoundingClientRect();
-    const clone = sourceEl.cloneNode(true);
+    try {
+      const rect = sourceEl.getBoundingClientRect();
+      const clone = sourceEl.cloneNode(true);
 
-    // Positioning
-    clone.style.cssText = `
-      position: fixed;
-      left: ${rect.left}px;
-      top: ${rect.top}px;
-      width: ${rect.width}px;
-      pointer-events: none;
-      z-index: 9999;
-      opacity: 0.85;
-      transform: scale(1.04) rotate(-1.5deg);
-      box-shadow: 0 24px 48px rgba(0,0,0,0.35);
-      border-radius: 12px;
-      transition: transform 0.1s ease;
-      will-change: transform;
-    `;
-    clone.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(clone);
+      // Positioning
+      clone.style.cssText = `
+        position: fixed;
+        left: ${rect.left}px;
+        top: ${rect.top}px;
+        width: ${rect.width}px;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.85;
+        transform: scale(1.04) rotate(-1.5deg);
+        box-shadow: 0 24px 48px rgba(0,0,0,0.35);
+        border-radius: 12px;
+        transition: transform 0.1s ease;
+        will-change: transform;
+      `;
+      clone.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(clone);
 
-    offsetRef.current = {
-      x: clientX - rect.left,
-      y: clientY - rect.top,
-    };
+      offsetRef.current = {
+        x: clientX - rect.left,
+        y: clientY - rect.top,
+      };
 
-    ghostRef.current = clone;
+      ghostRef.current = clone;
+    } catch (err) {
+      console.warn('[useTouchDnd] Failed to create drag ghost element:', err);
+    }
   }, []);
 
   const moveGhost = useCallback((clientX, clientY) => {
@@ -130,6 +135,13 @@ export function useTouchDnd({ onDrop, enabled = true }) {
         document.addEventListener('pointermove', onPointerMove, { passive: false });
         document.addEventListener('pointerup', onPointerUp);
         document.addEventListener('pointercancel', onPointerCancel);
+
+        // Store reference to cleanup function so unmount can remove these listeners
+        listenersCleanupRef.current = () => {
+          document.removeEventListener('pointermove', onPointerMove);
+          document.removeEventListener('pointerup', onPointerUp);
+          document.removeEventListener('pointercancel', onPointerCancel);
+        };
       }, 300);
     };
 
@@ -186,9 +198,10 @@ export function useTouchDnd({ onDrop, enabled = true }) {
       sourceRef.current = null;
       startPosRef.current = null;
 
-      document.removeEventListener('pointermove', onPointerMove);
-      document.removeEventListener('pointerup', onPointerUp);
-      document.removeEventListener('pointercancel', onPointerCancel);
+      if (listenersCleanupRef.current) {
+        listenersCleanupRef.current();
+        listenersCleanupRef.current = null;
+      }
     };
 
     return {
@@ -204,6 +217,9 @@ export function useTouchDnd({ onDrop, enabled = true }) {
   useEffect(() => () => {
     clearTimeout(timerRef.current);
     removeGhost();
+    if (listenersCleanupRef.current) {
+      listenersCleanupRef.current();
+    }
   }, [removeGhost]);
 
   return {

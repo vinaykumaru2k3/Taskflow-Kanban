@@ -8,6 +8,8 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
  * production, so this import always resolves correctly.
  */
 
+let updateInterval;
+
 export function usePWA() {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstallable, setIsInstallable] = useState(false);
@@ -17,7 +19,9 @@ export function usePWA() {
 
   const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
     onRegistered(r) {
-      if (r) setInterval(() => r.update(), 60_000);
+      if (r && !updateInterval) {
+        updateInterval = setInterval(() => r.update(), 60_000);
+      }
     },
     onRegisterError(err) {
       console.warn('[PWA] SW registration error:', err);
@@ -58,13 +62,18 @@ export function usePWA() {
   // ── Actions ────────────────────────────────────────────────────────────
   const promptInstall = useCallback(async () => {
     if (!installPrompt) return false;
-    await installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setIsInstallable(false);
-      setInstallPrompt(null);
+    try {
+      await installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsInstallable(false);
+        setInstallPrompt(null);
+      }
+      return outcome === 'accepted';
+    } catch (err) {
+      console.error('[PWA] Error during installation prompt:', err);
+      return false;
     }
-    return outcome === 'accepted';
   }, [installPrompt]);
 
   const applyUpdate = useCallback(() => {
