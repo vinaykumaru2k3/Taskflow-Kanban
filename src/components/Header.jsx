@@ -53,7 +53,7 @@ const Header = ({
     });
   };
 
-  // Close menus when clicking outside
+  // [cross-browser] Use 'pointerdown' instead of 'mousedown' so click-outside also fires on touch devices
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) {
@@ -63,12 +63,16 @@ const Header = ({
         setShowUserMenu(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('pointerdown', handleClickOutside);
+    return () => document.removeEventListener('pointerdown', handleClickOutside);
   }, []);
 
   return (
-    <header className="bg-white/80 dark:bg-[#0a0f1c]/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/60 px-4 md:px-6 lg:px-8 py-3 sticky top-0 z-40 transition-colors duration-300">
+    // [safari] position: sticky with -webkit-sticky prefix for older Safari versions
+    <header
+      className="bg-white/80 dark:bg-[#0a0f1c]/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/60 px-4 md:px-6 lg:px-8 py-3 sticky top-0 z-40 transition-colors duration-300"
+      style={{ position: '-webkit-sticky', top: 0 }}
+    >
       <div className="flex items-center justify-between gap-4">
         {/* Left Section: Toggle + Logo + Board */}
         <div className="flex items-center gap-3 flex-shrink-0">

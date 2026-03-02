@@ -1,3 +1,4 @@
+/* [perf] Font loading with display=swap prevents FOIT (flash of invisible text) */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
@@ -6,12 +7,59 @@
 
 @layer base {
   html {
-    /* Remove zoom: 95%; */
     @apply antialiased text-slate-900 bg-white dark:bg-slate-900 dark:text-slate-50;
-    font-size: 16px; /* Restored to browser default 16px for better accessibility */
+    font-size: 16px;
+    /* [safari] Prevent text size adjustment on orientation change */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    /* [safari] Disable elastic/rubber-band overscroll on the body */
+    overscroll-behavior: none;
+    /* [perf] Promote body to its own compositor layer to prevent repaints */
+    isolation: isolate;
+  }
+
+  /* [safari] Fix 100vh including the browser chrome on mobile Safari */
+  #root {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    min-height: 100dvh;
+  }
+
+  /* [cross-browser] Normalize box-sizing */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  /* [perf] Reduce motion: disable all transitions/animations for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* [touch] Ensure minimum 44px touch targets on touch devices */
+  @media (pointer: coarse) {
+    button,
+    [role="button"],
+    a {
+      min-height: 44px;
+      min-width: 44px;
+    }
   }
 }
 
+/* ── Scrollbar Styles (WebKit / Chrome / Safari) ── */
+/* [safari] Custom scrollbar only works in WebKit – non-WebKit uses native. */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
@@ -23,4 +71,117 @@
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
+}
+
+/* [cross-browser] Firefox thin scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+/* ── Drag-and-Drop Performance ── */
+/* [perf] Use contain to limit layout recalculations during drag */
+.kanban-column {
+  contain: layout style;
+}
+
+/* [perf] GPU-accelerate frequently animated elements */
+.task-card-animated {
+  will-change: transform, opacity;
+}
+
+/* ── Animation keyframes ── */
+/* [cross-browser] Prefix for max webkit compat */
+@keyframes slide-right {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+@-webkit-keyframes slide-right {
+  0%   { -webkit-transform: translateX(-100%); }
+  100% { -webkit-transform: translateX(400%); }
+}
+
+/* ── Safe Area Insets (Notch / Dynamic Island on iOS) ── */
+/* [safari/ios] Respect safe-area-inset for edge-to-edge displays */
+.safe-area-top    { padding-top:    env(safe-area-inset-top, 0px); }
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* ── Modal body scroll lock ── */
+/* [cross-browser] Applied via JS when a modal is open */
+body.modal-open {
+  overflow: hidden;
+  /* [safari] Prevent background from scrolling while modal is open */
+  position: fixed;
+  width: 100%;
+  /* Preserve scroll position via JS: document.body.style.top = -scrollY + 'px' */
+}
+
+/* ── Focus visible polyfill shim ── */
+/* [cross-browser] Fallback for browsers that don't support :focus-visible */
+.js-focus-visible :focus:not(.focus-visible) {
+  outline: none;
+}
+
+/* ── Tweak Tailwind's animate-in for better Safari compat ── */
+/* Tailwind's animate-in uses @layer utilities which may have specificity issues in Safari; 
+   re-declare the base animation properties here for robustness. */
+.animate-in {
+  animation-fill-mode: both;
+}
+
+/* [safari/webkit] Fix backdrop-filter not being applied in older Safari */
+@supports not (backdrop-filter: blur(0)) {
+  .backdrop-blur-md,
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-sm,
+  .backdrop-blur-lg {
+    /* Fallback: use semi-opaque background for non-supporting browsers */
+    background-color: rgba(255, 255, 255, 0.95);
+  }
+  .dark .backdrop-blur-md,
+  .dark .backdrop-blur-xl,
+  .dark .backdrop-blur-2xl,
+  .dark .backdrop-blur-sm,
+  .dark .backdrop-blur-lg {
+    background-color: rgba(15, 23, 42, 0.95);
+  }
+}
+
+/* ── Smooth scrolling (respecting prefers-reduced-motion) ── */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ── Input appearance normalization ── */
+/* [cross-browser] Remove browser default styling for inputs/selects */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  /* [safari] Style date picker indicator */
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+/* [webkit/safari] Remove inner shadow on iOS inputs */
+input,
+textarea,
+select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* [safari] Re-enable select appearance since we need it */
+select {
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+
+/* ── Image optimization ── */
+img {
+  /* [cross-browser] Prevent layout shift from images */
+  max-width: 100%;
+  height: auto;
+  /* [safari] Smooth rendering */
+  image-rendering: -webkit-optimize-contrast;
 }
