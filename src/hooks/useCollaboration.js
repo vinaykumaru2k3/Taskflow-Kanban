@@ -471,8 +471,10 @@ export const useCollaboration = (user, currentBoard) => {
         const sharedRef = doc(db, 'users', collaboratorUid, 'sharedBoards', boardId);
         await deleteDoc(sharedRef);
       } catch (err) {
-        console.warn('Could not delete sharedBoards entry (permission denied):', err);
-        // This is expected - collaborator will still see the board but won't have access
+        // Permission denied is expected - collaborator's data is private
+        if (err.code !== 'permission-denied') {
+          console.warn('Could not delete sharedBoards entry:', err);
+        }
       }
 
       try {
@@ -486,8 +488,10 @@ export const useCollaboration = (user, currentBoard) => {
         const deletePromises = notifSnapshot.docs.map(notifDoc => deleteDoc(notifDoc.ref));
         await Promise.allSettled(deletePromises);
       } catch (err) {
-        console.warn('Could not delete notifications (permission denied):', err);
-        // This is expected - notifications will remain but user won't have board access
+        // Permission denied is expected - collaborator's data is private
+        if (err.code !== 'permission-denied') {
+          console.warn('Could not delete notifications:', err);
+        }
       }
       
       return { success: true, tasksAffected: tasksSnapshot.size };
