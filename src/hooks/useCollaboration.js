@@ -464,6 +464,22 @@ export const useCollaboration = (user, currentBoard) => {
 
       await batch.commit();
 
+      // Send removal notification to collaborator
+      try {
+        await addDoc(collection(db, 'users', collaboratorUid, 'notifications'), {
+          type: 'removal',
+          title: 'Removed from Board',
+          message: `You have been removed from "${currentBoard?.name || 'a board'}" by ${user.displayName || user.email}`,
+          boardId: boardId,
+          fromUserId: user.uid,
+          fromUserName: user.displayName || user.email,
+          read: false,
+          createdAt: serverTimestamp()
+        });
+      } catch (err) {
+        console.warn('Could not send removal notification:', err);
+      }
+
       // Separately handle collaborator's own data (they need to clean up their own subcollections)
       // We'll use individual operations that may fail gracefully
       try {
