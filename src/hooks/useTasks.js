@@ -91,6 +91,11 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
   const updateTask = async (taskId, taskData, oldTaskData) => {
     if (!user) return;
     try {
+        // Authorization check: only owner or editor can update
+        if (taskOwnerId !== user.uid && (!currentBoard.role || currentBoard.role === 'viewer')) {
+          throw new Error('Unauthorized task update');
+        }
+
         // Validate assignee is a team member if being assigned
         if (taskData.assigneeId && currentBoard) {
           const memberRef = doc(db, 'boards', currentBoard.id, 'members', taskData.assigneeId);

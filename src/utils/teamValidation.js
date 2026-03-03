@@ -49,7 +49,8 @@ export const filterValidAssignees = async (assignees, boardId) => {
   if (!assignees || !boardId) return [];
   
   const activeIds = await getActiveTeamMemberIds(boardId);
-  return assignees.filter(assignee => activeIds.includes(assignee.uid));
+  const activeIdSet = new Set(activeIds);
+  return assignees.filter(assignee => activeIdSet.has(assignee.uid));
 };
 
 /**

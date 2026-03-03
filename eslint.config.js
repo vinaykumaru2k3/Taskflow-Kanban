@@ -3,7 +3,7 @@ export default [
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 'latest',
       globals: {
         browser: true,
         node: true,
@@ -45,7 +45,7 @@ export default [
     },
     rules: {
       'no-unused-vars': 'warn',
-      'no-undef': 'warn',
+      'no-undef': 'error',
     },
   },
   {
