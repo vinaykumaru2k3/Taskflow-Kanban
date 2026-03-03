@@ -145,7 +145,7 @@ const Header = ({
                 viewMode === 'workflow' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300'
               }`}
             >
-              <BarChart3 size={14} /> Tree
+              <BarChart3 size={14} /> Workflow
             </button>
           </div>
 
