@@ -78,19 +78,11 @@ export function usePWA() {
 
   const applyUpdate = useCallback(() => {
     updateServiceWorker(true);
-    // Reload the page to load new assets from the updated service worker
-    window.location.reload();
+    // Give the service worker time to activate, then reload
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   }, [updateServiceWorker]);
-
-  // Listen for service worker activation and reload if needed
-  useEffect(() => {
-    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        // A new service worker has taken control; reload to get fresh assets
-        window.location.reload();
-      });
-    }
-  }, []);
 
   return { isInstallable, promptInstall, isOnline, needRefresh, applyUpdate };
 }
