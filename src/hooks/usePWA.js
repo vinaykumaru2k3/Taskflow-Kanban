@@ -19,7 +19,7 @@ export function usePWA() {
   const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
     onRegistered(r) {
       if (r && !updateIntervalRef.current) {
-        updateIntervalRef.current = setInterval(() => r.update(), 60_000);
+        updateIntervalRef.current = setInterval(() => r.update(), 5 * 60 * 1000);
       }
     },
     onRegisterError(err) {
@@ -86,10 +86,10 @@ export function usePWA() {
 
   const applyUpdate = useCallback(() => {
     try {
+      updateServiceWorker(true);
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
       }
-      updateServiceWorker(true);
     } catch (err) {
       console.error('[PWA] Failed to apply update:', err);
     }
