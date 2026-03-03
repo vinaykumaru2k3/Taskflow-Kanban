@@ -975,7 +975,10 @@ export default function App() {
       {/* ── SW Update Banner ── */}
       {needRefresh && !dismissedUpdate && (
         <PWAUpdateBanner
-          onUpdate={applyUpdate}
+          onUpdate={() => {
+            setDismissedUpdate(true);
+            applyUpdate();
+          }}
           onDismiss={() => setDismissedUpdate(true)}
         />
       )}
