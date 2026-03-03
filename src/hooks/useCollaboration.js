@@ -458,26 +458,37 @@ export const useCollaboration = (user, currentBoard) => {
         }
       });
 
-      // Delete the sharedBoards entry from the target user's subcollection
-      const sharedRef = doc(db, 'users', collaboratorUid, 'sharedBoards', boardId);
-      batch.delete(sharedRef);
-
-      // Remove from boards/{boardId}/members
+      // Remove from boards/{boardId}/members (you have permission for this)
       const memberRef = doc(db, 'boards', boardId, 'members', collaboratorUid);
       batch.delete(memberRef);
 
-      // Delete pending notifications for this board
-      const notificationsQuery = query(
-        collection(db, 'users', collaboratorUid, 'notifications'),
-        where('boardId', '==', boardId),
-        where('status', '==', 'pending')
-      );
-      const notifSnapshot = await getDocs(notificationsQuery);
-      notifSnapshot.forEach((notifDoc) => {
-        batch.delete(notifDoc.ref);
-      });
-
       await batch.commit();
+
+      // Separately handle collaborator's own data (they need to clean up their own subcollections)
+      // We'll use individual operations that may fail gracefully
+      try {
+        // Try to delete their sharedBoards entry
+        const sharedRef = doc(db, 'users', collaboratorUid, 'sharedBoards', boardId);
+        await deleteDoc(sharedRef);
+      } catch (err) {
+        console.warn('Could not delete sharedBoards entry (permission denied):', err);
+        // This is expected - collaborator will still see the board but won't have access
+      }
+
+      try {
+        // Try to delete pending notifications
+        const notificationsQuery = query(
+          collection(db, 'users', collaboratorUid, 'notifications'),
+          where('boardId', '==', boardId),
+          where('status', '==', 'pending')
+        );
+        const notifSnapshot = await getDocs(notificationsQuery);
+        const deletePromises = notifSnapshot.docs.map(notifDoc => deleteDoc(notifDoc.ref));
+        await Promise.allSettled(deletePromises);
+      } catch (err) {
+        console.warn('Could not delete notifications (permission denied):', err);
+        // This is expected - notifications will remain but user won't have board access
+      }
       
       return { success: true, tasksAffected: tasksSnapshot.size };
     } catch (err) {

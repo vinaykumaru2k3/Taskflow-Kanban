@@ -24,6 +24,7 @@ service cloud.firestore {
     // Owner has full access.
     // Collaborator READ: any role (viewer, editor, admin) can read.
     // Collaborator WRITE: only editor or admin — NOT viewer.
+    // Board owner can update tasks for member removal (reassignment).
     // VALIDATION: assigneeId must be a valid team member if set.
     match /users/{userId}/tasks/{taskId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
@@ -39,6 +40,10 @@ service cloud.firestore {
         collaboratorRole(request.auth.uid, request.resource.data.boardId) in ['admin', 'editor'] &&
         (request.resource.data.assigneeId == null || 
          exists(/databases/$(database)/documents/boards/$(request.resource.data.boardId)/members/$(request.resource.data.assigneeId)));
+
+      // Board owner can update tasks (for member removal/reassignment)
+      allow update: if request.auth != null &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/boards/$(resource.data.boardId));
     }
 
     // ── sharedBoards subcollection ──
