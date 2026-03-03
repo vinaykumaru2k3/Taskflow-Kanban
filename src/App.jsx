@@ -18,7 +18,7 @@ import TeamPanel from './components/collaboration/TeamPanel';
 import NotificationPanel from './components/notifications/NotificationPanel';
 import CommentSection from './components/comments/CommentSection';
 import MobileNav from './components/MobileNav';
-import { PWAInstallBanner, PWAUpdateBanner, OfflineToast, OnlineToast } from './components/PWABanners';
+import { PWAInstallBanner, OfflineToast, OnlineToast } from './components/PWABanners';
 import { usePWA } from './hooks/usePWA';
 import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS, ROLES } from './utils/constants';
 import { canCreateTasks, canEditTask } from './lib/permissions';
@@ -67,20 +67,12 @@ export default function App() {
     isInstallable,
     promptInstall,
     isOnline,
-    needRefresh,
     applyUpdate,
   } = usePWA();
   const [dismissedInstall, setDismissedInstall] = useState(false);
-  const [dismissedUpdate, setDismissedUpdate] = useState(() => {
-    return localStorage.getItem('pwa-update-dismissed') === 'true';
-  });
   const [showOnlineToast, setShowOnlineToast] = useState(false);
   const prevOnlineRef = useRef(isOnline);
 
-  // Persist dismissedUpdate to localStorage
-  useEffect(() => {
-    localStorage.setItem('pwa-update-dismissed', dismissedUpdate);
-  }, [dismissedUpdate]);
 
   // Show "Back online" toast for 3 seconds whenever connectivity restores
   useEffect(() => {
@@ -980,12 +972,7 @@ export default function App() {
       )}
 
       {/* ── SW Update Banner ── */}
-      {needRefresh && !dismissedUpdate && (
-        <PWAUpdateBanner
-          onUpdate={applyUpdate}
-          onDismiss={() => setDismissedUpdate(true)}
-        />
-      )}
+      {/* Removed: Using autoUpdate now - SW updates silently in background */}
 
       {/* ── Offline Toast ── */}
       {!isOnline && <OfflineToast />}

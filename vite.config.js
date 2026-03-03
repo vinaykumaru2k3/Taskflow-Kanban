@@ -8,7 +8,7 @@ export default defineConfig({
 
     // ── PWA / Service Worker ──────────────────────────────────────────────
     VitePWA({
-      registerType: 'prompt',   // Don't silently update; prompt the user
+      registerType: 'autoUpdate',   // Automatically update SW without prompting user
       devOptions: {
         enabled: true,          // Allow the virtual module and SW in development
         type: 'module',
