@@ -77,12 +77,28 @@ export function usePWA() {
   }, [installPrompt]);
 
   const applyUpdate = useCallback(() => {
+    console.log('[PWA] Update button clicked');
+    // Send SKIP_WAITING message to all service workers
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+    }
+    // Also call updateServiceWorker to ensure it's processed
     updateServiceWorker(true);
-    // Give the service worker time to activate, then reload
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
   }, [updateServiceWorker]);
+
+  // Listen for when a new service worker takes control
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      const handleControllerChange = () => {
+        console.log('[PWA] New service worker activated, reloading...');
+        window.location.reload();
+      };
+      navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+      return () => {
+        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      };
+    }
+  }, []);
 
   return { isInstallable, promptInstall, isOnline, needRefresh, applyUpdate };
 }
