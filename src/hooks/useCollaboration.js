@@ -403,8 +403,8 @@ export const useCollaboration = (user, currentBoard) => {
   };
 
 
-  // Remove a collaborator (deletes their sharedBoards entry)
-  const removeCollaborator = async (boardId, collaboratorUid) => {
+  // Remove a collaborator (deletes their sharedBoards entry and handles task reassignment)
+  const removeCollaborator = async (boardId, collaboratorUid, reassignStrategy = 'unassign') => {
     if (!user || !boardId || !collaboratorUid) return;
 
     try {
@@ -413,15 +413,104 @@ export const useCollaboration = (user, currentBoard) => {
         throw new Error('Cannot remove yourself as board owner');
       }
 
-      // Delete the sharedBoards entry from the target user's subcollection
-      const sharedRef = doc(db, 'users', collaboratorUid, 'sharedBoards', boardId);
-      await deleteDoc(sharedRef);
+      // Get board owner ID to determine task collection location
+      const boardRef = doc(db, 'users', user.uid, 'boards', boardId);
+      const boardSnap = await getDoc(boardRef);
+      const taskOwnerId = boardSnap.exists() ? user.uid : currentBoard?.ownerId;
 
-      // Also remove from boards/{boardId}/members
-      const memberRef = doc(db, 'boards', boardId, 'members', collaboratorUid);
-      await deleteDoc(memberRef);
+      if (!taskOwnerId) {
+        throw new Error('Cannot determine board owner');
+      }
+
+      // Handle task reassignment based on strategy
+      const tasksQuery = query(
+        collection(db, 'users', taskOwnerId, 'tasks'),
+        where('boardId', '==', boardId),
+        where('assigneeId', '==', collaboratorUid)
+      );
       
-      return { success: true };
+      const tasksSnapshot = await getDocs(tasksQuery);
+      const batch = writeBatch(db);
+
+      tasksSnapshot.forEach((taskDoc) => {
+        const taskRef = doc(db, 'users', taskOwnerId, 'tasks', taskDoc.id);
+        
+        if (reassignStrategy === 'owner') {
+          // Reassign to board owner
+          batch.update(taskRef, {
+            assigneeId: taskOwnerId,
+            assigneeName: user.displayName || user.email || 'Board Owner',
+            assigneeAvatar: user.photoURL || null,
+            updatedAt: serverTimestamp(),
+            reassignedFrom: collaboratorUid,
+            reassignedAt: serverTimestamp()
+          });
+        } else {
+          // Unassign (default)
+          batch.update(taskRef, {
+            assigneeId: null,
+            assigneeName: null,
+            assigneeAvatar: null,
+            updatedAt: serverTimestamp(),
+            previousAssignee: collaboratorUid,
+            unassignedAt: serverTimestamp()
+          });
+        }
+      });
+
+      // Remove from boards/{boardId}/members (you have permission for this)
+      const memberRef = doc(db, 'boards', boardId, 'members', collaboratorUid);
+      batch.delete(memberRef);
+
+      await batch.commit();
+
+      // Send removal notification to collaborator
+      try {
+        await addDoc(collection(db, 'users', collaboratorUid, 'notifications'), {
+          type: 'removal',
+          title: 'Removed from Board',
+          message: `You have been removed from "${currentBoard?.name || 'a board'}" by ${user.displayName || user.email}`,
+          boardId: boardId,
+          fromUserId: user.uid,
+          fromUserName: user.displayName || user.email,
+          read: false,
+          createdAt: serverTimestamp()
+        });
+      } catch (err) {
+        console.warn('Could not send removal notification:', err);
+      }
+
+      // Separately handle collaborator's own data (they need to clean up their own subcollections)
+      // We'll use individual operations that may fail gracefully
+      try {
+        // Try to delete their sharedBoards entry
+        const sharedRef = doc(db, 'users', collaboratorUid, 'sharedBoards', boardId);
+        await deleteDoc(sharedRef);
+      } catch (err) {
+        // Permission denied is expected - collaborator's data is private
+        if (err.code !== 'permission-denied') {
+          console.warn('Could not delete sharedBoards entry:', err);
+        }
+      }
+
+      try {
+        // Try to delete pending notifications
+        const notificationsQuery = query(
+          collection(db, 'users', collaboratorUid, 'notifications'),
+          where('boardId', '==', boardId),
+          where('status', '==', 'pending')
+        );
+        const notifSnapshot = await getDocs(notificationsQuery);
+        const deletePromises = notifSnapshot.docs.map(notifDoc => deleteDoc(notifDoc.ref));
+        await Promise.allSettled(deletePromises);
+      } catch (err) {
+        // Permission denied is expected - collaborator's data is private
+        if (err.code !== 'permission-denied') {
+          console.warn('Could not delete notifications:', err);
+        }
+      }
+      
+      return { success: true, tasksAffected: tasksSnapshot.size };
     } catch (err) {
       console.error('Error removing collaborator:', err);
       throw err;

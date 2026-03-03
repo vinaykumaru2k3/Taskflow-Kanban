@@ -118,23 +118,52 @@ const CommentSection = ({
       .filter(Boolean)
       .sort((a, b) => b.length - a.length);
 
-    if (names.length === 0) return content;
+    // Match @mentions pattern
+    const mentionPattern = /@(\w+(?:\s+\w+)*)/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
 
-    const escapedNames = names.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-    // Match exact collaborator names, or fallback to simple @words
-    const pattern = `(@(?:${escapedNames.join('|')})|@\\w+)`;
-    const regex = new RegExp(pattern, 'gi');
+    while ((match = mentionPattern.exec(content)) !== null) {
+      // Add text before mention
+      if (match.index > lastIndex) {
+        parts.push({ type: 'text', content: content.slice(lastIndex, match.index) });
+      }
+      
+      const mentionedName = match[1];
+      const isActiveMember = names.some(name => name.toLowerCase() === mentionedName.toLowerCase());
+      
+      parts.push({ 
+        type: 'mention', 
+        content: `@${mentionedName}`,
+        isActive: isActiveMember
+      });
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text
+    if (lastIndex < content.length) {
+      parts.push({ type: 'text', content: content.slice(lastIndex) });
+    }
 
-    return content.split(regex).map((part, i) => {
-      if (!part) return null;
-      if (part.startsWith('@')) {
+    return parts.map((part, i) => {
+      if (part.type === 'mention') {
         return (
-          <span key={i} className="text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-900/30 px-1 rounded inline-block">
-            {part}
+          <span 
+            key={i} 
+            className={`font-bold px-1 rounded inline-block ${
+              part.isActive 
+                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
+                : 'text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 line-through'
+            }`}
+            title={part.isActive ? '' : 'Former member'}
+          >
+            {part.content}
           </span>
         );
       }
-      return <span key={i}>{part}</span>;
+      return <span key={i}>{part.content}</span>;
     });
   };
 

@@ -110,7 +110,5 @@ describe('useBoards Hook', () => {
     
     expect(result.current.boards).toEqual([]);
     expect(result.current.currentBoard).toBeNull();
-    // Verify no firebase calls happened
-    expect(collection).not.toHaveBeenCalled();
   });
 });

@@ -12,6 +12,7 @@ node_modules/
 # Production
 /build
 /dist
+/dev-dist
 
 # Misc
 .DS_Store
@@ -46,3 +47,6 @@ ui-debug.log
 
 # Vite
 *.local
+
+# Local dev documentation
+/docs/
