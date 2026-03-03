@@ -16,8 +16,9 @@ export function usePWA() {
   const [isOnline, setIsOnline] = useState(
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
+  const [updateDismissed, setUpdateDismissed] = useState(false);
 
-  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
+  const { needRefresh: [needRefresh, setNeedRefresh], updateServiceWorker } = useRegisterSW({
     onRegistered(r) {
       if (r && !updateInterval) {
         updateInterval = setInterval(() => r.update(), 60_000);
@@ -81,11 +82,13 @@ export function usePWA() {
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
       }
+      setUpdateDismissed(true);
+      setNeedRefresh(false);
       updateServiceWorker(true);
     } catch (err) {
       console.error('[PWA] Failed to apply update:', err);
     }
-  }, [updateServiceWorker]);
+  }, [updateServiceWorker, setNeedRefresh]);
 
   // Reload page when new service worker takes control (after user clicks update)
   useEffect(() => {
@@ -100,5 +103,5 @@ export function usePWA() {
     }
   }, []);
 
-  return { isInstallable, promptInstall, isOnline, needRefresh, applyUpdate };
+  return { isInstallable, promptInstall, isOnline, needRefresh: needRefresh && !updateDismissed, applyUpdate };
 }
