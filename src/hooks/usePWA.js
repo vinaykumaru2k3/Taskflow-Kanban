@@ -77,18 +77,26 @@ export function usePWA() {
   }, [installPrompt]);
 
   const applyUpdate = useCallback(() => {
-    updateServiceWorker(true);
-    // Reload the page to load new assets from the updated service worker
-    window.location.reload();
+    try {
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+      }
+      updateServiceWorker(true);
+    } catch (err) {
+      console.error('[PWA] Failed to apply update:', err);
+    }
   }, [updateServiceWorker]);
 
-  // Listen for service worker activation and reload if needed
+  // Reload page when new service worker takes control (after user clicks update)
   useEffect(() => {
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        // A new service worker has taken control; reload to get fresh assets
+      const handleControllerChange = () => {
         window.location.reload();
-      });
+      };
+      navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+      return () => {
+        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      };
     }
   }, []);
 
