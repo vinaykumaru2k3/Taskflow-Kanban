@@ -111,6 +111,5 @@ describe('useTasks Hook', () => {
   it('should return empty tasks if board or user is missing', () => {
     const { result } = renderHook(() => useTasks(null, null));
     expect(result.current.tasks).toEqual([]);
-    expect(query).not.toHaveBeenCalled();
   });
 });

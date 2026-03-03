@@ -47,3 +47,6 @@ ui-debug.log
 
 # Vite
 *.local
+
+# Local dev documentation
+/docs/
