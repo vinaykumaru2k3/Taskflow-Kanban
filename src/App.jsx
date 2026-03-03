@@ -735,21 +735,39 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Blocked By</label>
-                <select multiple disabled={!canEdit} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed h-24" value={taskForm.blockedBy || []} onChange={e => setTaskForm({...taskForm, blockedBy: Array.from(e.target.selectedOptions, opt => opt.value)})}>
+                <select multiple disabled={!canEdit} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed h-40" value={taskForm.blockedBy || []} onClick={e => {
+                  if (e.target.tagName === 'OPTION') {
+                    const clickedValue = e.target.value;
+                    const current = taskForm.blockedBy || [];
+                    const newValue = current.includes(clickedValue) 
+                      ? current.filter(id => id !== clickedValue) 
+                      : [...current, clickedValue];
+                    setTaskForm({...taskForm, blockedBy: newValue});
+                  }
+                }}>
                   {filteredTasks.filter(t => t.id !== editingTask).map(t => (
                     <option key={t.id} value={t.id}>{t.title}</option>
                   ))}
                 </select>
-                <p className="text-[9px] text-slate-400 mt-1">Tasks that must be completed first</p>
+                <p className="text-[9px] text-slate-400 mt-1">Click to select/deselect tasks</p>
               </div>
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Blocks</label>
-                <select multiple disabled={!canEdit} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed h-24" value={taskForm.blocks || []} onChange={e => setTaskForm({...taskForm, blocks: Array.from(e.target.selectedOptions, opt => opt.value)})}>
+                <select multiple disabled={!canEdit} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed h-40" value={taskForm.blocks || []} onClick={e => {
+                  if (e.target.tagName === 'OPTION') {
+                    const clickedValue = e.target.value;
+                    const current = taskForm.blocks || [];
+                    const newValue = current.includes(clickedValue) 
+                      ? current.filter(id => id !== clickedValue) 
+                      : [...current, clickedValue];
+                    setTaskForm({...taskForm, blocks: newValue});
+                  }
+                }}>
                   {filteredTasks.filter(t => t.id !== editingTask).map(t => (
                     <option key={t.id} value={t.id}>{t.title}</option>
                   ))}
                 </select>
-                <p className="text-[9px] text-slate-400 mt-1">Tasks that depend on this one</p>
+                <p className="text-[9px] text-slate-400 mt-1">Click to select/deselect tasks</p>
               </div>
             </div>
           )}
