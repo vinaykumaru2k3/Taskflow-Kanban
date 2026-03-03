@@ -98,10 +98,9 @@ export function usePWA() {
       setNeedRefresh(false);
       console.log('[PWA] Set needRefresh to false');
       
+      // updateServiceWorker(true) triggers the SW to skip waiting and take control
+      // The controllerchange event will handle the page reload
       updateServiceWorker(true);
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-      }
       console.log('[PWA] updateServiceWorker(true) called');
     } catch (err) {
       console.error('[PWA] Failed to apply update:', err);
