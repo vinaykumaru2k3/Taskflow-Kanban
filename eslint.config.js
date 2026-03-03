@@ -16,6 +16,7 @@ export default [
         setTimeout: true,
         clearTimeout: true,
         setInterval: true,
+        clearInterval: true,
         alert: true,
         fetch: true,
         URL: true,

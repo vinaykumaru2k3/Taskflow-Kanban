@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 /**
@@ -8,25 +8,33 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
  * production, so this import always resolves correctly.
  */
 
-let updateInterval;
-
 export function usePWA() {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isOnline, setIsOnline] = useState(
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
+  const updateIntervalRef = useRef();
 
-  const { needRefresh: [needRefresh, setNeedRefresh], updateServiceWorker } = useRegisterSW({
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
     onRegistered(r) {
-      if (r && !updateInterval) {
-        updateInterval = setInterval(() => r.update(), 60_000);
+      if (r && !updateIntervalRef.current) {
+        updateIntervalRef.current = setInterval(() => r.update(), 60_000);
       }
     },
     onRegisterError(err) {
       console.warn('[PWA] SW registration error:', err);
     },
   });
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current);
+      }
+    };
+  }, []);
 
   // ── Install prompt ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -82,13 +90,12 @@ export function usePWA() {
         navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
       }
       updateServiceWorker(true);
-      setTimeout(() => window.location.reload(), 500);
     } catch (err) {
       console.error('[PWA] Failed to apply update:', err);
     }
   }, [updateServiceWorker]);
 
-  // Reload page when new service worker takes control (after user clicks update)
+  // Reload page when new service worker takes control
   useEffect(() => {
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       const handleControllerChange = () => {
