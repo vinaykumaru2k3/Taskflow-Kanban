@@ -6,6 +6,7 @@ const Landing       = lazy(() => import('./Landing'));
 const CalendarView  = lazy(() => import('./CalendarView'));
 const WorkflowTree  = lazy(() => import('./WorkflowTree'));
 const Documentation = lazy(() => import('./Documentation'));
+const PrivacyPolicy = lazy(() => import('./PrivacyPolicy'));
 const Support       = lazy(() => import('./Support'));
 
 // Critical path imports
@@ -622,6 +623,10 @@ export default function App() {
                   <Suspense fallback={<LazyFallback />}>
                     <Documentation onBack={() => setViewMode('kanban')} />
                   </Suspense>
+                ) : viewMode === 'privacy' ? (
+                  <Suspense fallback={<LazyFallback />}>
+                    <PrivacyPolicy onBack={() => setViewMode('kanban')} />
+                  </Suspense>
                 ) : viewMode === 'support' ? (
                   <Suspense fallback={<LazyFallback />}>
                     <Support onBack={() => setViewMode('kanban')} />
@@ -650,6 +655,7 @@ export default function App() {
               
               <div className="hidden md:flex items-center gap-6 text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                 <a href="#" onClick={e => { e.preventDefault(); setViewMode('docs'); }} className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors">Documentation</a>
+                <a href="#" onClick={e => { e.preventDefault(); setViewMode('privacy'); }} className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors">Privacy Policy</a>
                 <a href="#" onClick={e => { e.preventDefault(); setViewMode('support'); }} className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors">Support</a>
                 <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
