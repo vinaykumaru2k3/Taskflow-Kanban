@@ -1,5 +1,5 @@
 export default [
-  { ignores: ['dist', 'node_modules', 'dev-dist', 'build', 'playwright-report', 'test-results'] },
+  { ignores: ['dist', 'node_modules', 'dev-dist', 'build', 'playwright-report', 'test-results', 'coverage'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
@@ -36,6 +36,7 @@ export default [
         IDBTransaction: true,
         IDBRequest: true,
         DOMException: true,
+        process: true,
       },
       parserOptions: {
         ecmaVersion: 'latest',
