@@ -17,6 +17,7 @@ export default [
         clearTimeout: false,
         setInterval: false,
         clearInterval: false,
+        confirm: false,
         alert: false,
         fetch: false,
         URL: false,

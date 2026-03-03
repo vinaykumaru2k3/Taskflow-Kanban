@@ -1,4 +1,4 @@
-import { Trash2, AlertCircle, CheckSquare, Calendar, Archive, Eye, MessageSquare } from 'lucide-react';
+import { Trash2, AlertCircle, CheckSquare, Calendar, Archive, Eye, MessageSquare, Link2 } from 'lucide-react';
 import { PRIORITIES, TAG_COLORS } from '../utils/constants';
 
 const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = false, touchHandlers = {} }) => {
@@ -143,12 +143,20 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
           <Calendar size={11} />
           <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}</span>
         </div>
-        {task.commentCount > 0 && (
-          <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
-            <MessageSquare size={11} />
-            <span>{task.commentCount}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {(task.blockedBy?.length > 0 || task.blocks?.length > 0) && (
+            <div className="flex items-center gap-1 text-[10px] font-bold text-amber-500" title={`${task.blockedBy?.length || 0} blocking, ${task.blocks?.length || 0} blocked`}>
+              <Link2 size={11} />
+              <span>{(task.blockedBy?.length || 0) + (task.blocks?.length || 0)}</span>
+            </div>
+          )}
+          {task.commentCount > 0 && (
+            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+              <MessageSquare size={11} />
+              <span>{task.commentCount}</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

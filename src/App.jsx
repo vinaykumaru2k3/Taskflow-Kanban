@@ -185,7 +185,7 @@ export default function App() {
   // Form States
   const [boardForm, setBoardForm] = useState({ name: '', color: '#1e293b' });
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, boardId: null, boardName: '' });
-  const initialTaskState = { title: '', description: '', priority: 'medium', status: 'todo', dueDate: '', tags: [], subtasks: [], assigneeId: '' };
+  const initialTaskState = { title: '', description: '', priority: 'medium', status: 'todo', dueDate: '', tags: [], subtasks: [], assigneeId: '', blockedBy: [], blocks: [] };
   const [taskForm, setTaskForm] = useState(initialTaskState);
 
   // Comments hook
@@ -304,6 +304,18 @@ export default function App() {
     e.preventDefault();
     const id = e.dataTransfer.getData('taskId');
     if (!id) return;
+    
+    const task = tasks.find(t => t.id === id);
+    if (task?.blockedBy?.length > 0 && status === 'done') {
+      const blockedByTasks = tasks.filter(t => task.blockedBy.includes(t.id) && t.status !== 'done');
+      if (blockedByTasks.length > 0) {
+        const taskNames = blockedByTasks.map(t => t.title).join(', ');
+        if (!confirm(`Warning: This task is blocked by incomplete tasks: ${taskNames}. Continue anyway?`)) {
+          return;
+        }
+      }
+    }
+    
     await updateTask(id, { status });
   };
 
@@ -717,6 +729,30 @@ export default function App() {
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Deadline</label>
             <input type="date" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.dueDate} onChange={e => setTaskForm({...taskForm, dueDate: e.target.value})} />
           </div>
+          
+          {/* Dependencies Section */}
+          {canEdit && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Blocked By</label>
+                <select multiple disabled={!canEdit} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed h-24" value={taskForm.blockedBy || []} onChange={e => setTaskForm({...taskForm, blockedBy: Array.from(e.target.selectedOptions, opt => opt.value)})}>
+                  {filteredTasks.filter(t => t.id !== editingTask).map(t => (
+                    <option key={t.id} value={t.id}>{t.title}</option>
+                  ))}
+                </select>
+                <p className="text-[9px] text-slate-400 mt-1">Tasks that must be completed first</p>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Blocks</label>
+                <select multiple disabled={!canEdit} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed h-24" value={taskForm.blocks || []} onChange={e => setTaskForm({...taskForm, blocks: Array.from(e.target.selectedOptions, opt => opt.value)})}>
+                  {filteredTasks.filter(t => t.id !== editingTask).map(t => (
+                    <option key={t.id} value={t.id}>{t.title}</option>
+                  ))}
+                </select>
+                <p className="text-[9px] text-slate-400 mt-1">Tasks that depend on this one</p>
+              </div>
+            </div>
+          )}
           
           {/* Tags Section */}
           <div>
