@@ -77,20 +77,20 @@ export function usePWA() {
   }, [installPrompt]);
 
   const applyUpdate = useCallback(() => {
-    console.log('[PWA] Update button clicked');
-    // Send SKIP_WAITING message to all service workers
-    if (navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+    try {
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+      }
+      updateServiceWorker(true);
+    } catch (err) {
+      console.error('[PWA] Failed to apply update:', err);
     }
-    // Also call updateServiceWorker to ensure it's processed
-    updateServiceWorker(true);
   }, [updateServiceWorker]);
 
-  // Listen for when a new service worker takes control
+  // Reload page when new service worker takes control (after user clicks update)
   useEffect(() => {
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       const handleControllerChange = () => {
-        console.log('[PWA] New service worker activated, reloading...');
         window.location.reload();
       };
       navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
