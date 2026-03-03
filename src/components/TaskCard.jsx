@@ -62,10 +62,18 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
           {task.assigneeId && (
             <div 
               className="mr-1 ring-2 ring-slate-100 dark:ring-slate-800 rounded-full flex-shrink-0 bg-slate-200 dark:bg-slate-700 w-5 h-5 flex items-center justify-center text-[9px] font-bold text-slate-500 overflow-hidden" 
-              title={`Assigned to ${task.assigneeName || 'someone'}`}
+              title={task.assigneeName ? `Assigned to ${task.assigneeName}` : 'Assigned (member removed)'}
             >
               {task.assigneeAvatar ? (
-                <img src={task.assigneeAvatar} alt={task.assigneeName} className="w-full h-full object-cover" />
+                <img 
+                  src={task.assigneeAvatar} 
+                  alt={task.assigneeName || 'Former member'} 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.parentElement.textContent = '?';
+                  }}
+                />
               ) : (
                 (task.assigneeName?.[0] || '?').toUpperCase()
               )}

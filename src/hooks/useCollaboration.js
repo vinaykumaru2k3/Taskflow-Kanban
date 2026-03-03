@@ -403,8 +403,8 @@ export const useCollaboration = (user, currentBoard) => {
   };
 
 
-  // Remove a collaborator (deletes their sharedBoards entry)
-  const removeCollaborator = async (boardId, collaboratorUid) => {
+  // Remove a collaborator (deletes their sharedBoards entry and handles task reassignment)
+  const removeCollaborator = async (boardId, collaboratorUid, reassignStrategy = 'unassign') => {
     if (!user || !boardId || !collaboratorUid) return;
 
     try {
@@ -413,15 +413,73 @@ export const useCollaboration = (user, currentBoard) => {
         throw new Error('Cannot remove yourself as board owner');
       }
 
+      // Get board owner ID to determine task collection location
+      const boardRef = doc(db, 'users', user.uid, 'boards', boardId);
+      const boardSnap = await getDoc(boardRef);
+      const taskOwnerId = boardSnap.exists() ? user.uid : currentBoard?.ownerId;
+
+      if (!taskOwnerId) {
+        throw new Error('Cannot determine board owner');
+      }
+
+      // Handle task reassignment based on strategy
+      const tasksQuery = query(
+        collection(db, 'users', taskOwnerId, 'tasks'),
+        where('boardId', '==', boardId),
+        where('assigneeId', '==', collaboratorUid)
+      );
+      
+      const tasksSnapshot = await getDocs(tasksQuery);
+      const batch = writeBatch(db);
+
+      tasksSnapshot.forEach((taskDoc) => {
+        const taskRef = doc(db, 'users', taskOwnerId, 'tasks', taskDoc.id);
+        
+        if (reassignStrategy === 'owner') {
+          // Reassign to board owner
+          batch.update(taskRef, {
+            assigneeId: taskOwnerId,
+            assigneeName: user.displayName || user.email || 'Board Owner',
+            assigneeAvatar: user.photoURL || null,
+            updatedAt: serverTimestamp(),
+            reassignedFrom: collaboratorUid,
+            reassignedAt: serverTimestamp()
+          });
+        } else {
+          // Unassign (default)
+          batch.update(taskRef, {
+            assigneeId: null,
+            assigneeName: null,
+            assigneeAvatar: null,
+            updatedAt: serverTimestamp(),
+            previousAssignee: collaboratorUid,
+            unassignedAt: serverTimestamp()
+          });
+        }
+      });
+
       // Delete the sharedBoards entry from the target user's subcollection
       const sharedRef = doc(db, 'users', collaboratorUid, 'sharedBoards', boardId);
-      await deleteDoc(sharedRef);
+      batch.delete(sharedRef);
 
-      // Also remove from boards/{boardId}/members
+      // Remove from boards/{boardId}/members
       const memberRef = doc(db, 'boards', boardId, 'members', collaboratorUid);
-      await deleteDoc(memberRef);
+      batch.delete(memberRef);
+
+      // Delete pending notifications for this board
+      const notificationsQuery = query(
+        collection(db, 'users', collaboratorUid, 'notifications'),
+        where('boardId', '==', boardId),
+        where('status', '==', 'pending')
+      );
+      const notifSnapshot = await getDocs(notificationsQuery);
+      notifSnapshot.forEach((notifDoc) => {
+        batch.delete(notifDoc.ref);
+      });
+
+      await batch.commit();
       
-      return { success: true };
+      return { success: true, tasksAffected: tasksSnapshot.size };
     } catch (err) {
       console.error('Error removing collaborator:', err);
       throw err;

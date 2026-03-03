@@ -943,7 +943,7 @@ export default function App() {
         currentUser={user}
         userRole={userRole}
         onInvite={(email, role) => shareBoard(currentBoard?.id, email, role)}
-        onRemove={(uid) => removeCollaborator(currentBoard?.id, uid)}
+        onRemove={(uid, strategy) => removeCollaborator(currentBoard?.id, uid, strategy)}
         onUpdateRole={(uid, newRole) => updateCollaboratorRole(currentBoard?.id, uid, newRole)}
       />
 
