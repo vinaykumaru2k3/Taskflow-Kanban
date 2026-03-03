@@ -71,9 +71,16 @@ export default function App() {
     applyUpdate,
   } = usePWA();
   const [dismissedInstall, setDismissedInstall] = useState(false);
-  const [dismissedUpdate, setDismissedUpdate] = useState(false);
+  const [dismissedUpdate, setDismissedUpdate] = useState(() => {
+    return localStorage.getItem('pwa-update-dismissed') === 'true';
+  });
   const [showOnlineToast, setShowOnlineToast] = useState(false);
   const prevOnlineRef = useRef(isOnline);
+
+  // Persist dismissedUpdate to localStorage
+  useEffect(() => {
+    localStorage.setItem('pwa-update-dismissed', dismissedUpdate);
+  }, [dismissedUpdate]);
 
   // Show "Back online" toast for 3 seconds whenever connectivity restores
   useEffect(() => {
