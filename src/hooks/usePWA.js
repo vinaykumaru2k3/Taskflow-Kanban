@@ -16,7 +16,7 @@ export function usePWA() {
   );
   const updateIntervalRef = useRef();
 
-  const { needRefresh: [needRefresh, setNeedRefresh], updateServiceWorker } = useRegisterSW({
+  const { updateServiceWorker } = useRegisterSW({
     onRegistered(r) {
       console.log('[PWA] Service Worker registered:', r);
       if (r && !updateIntervalRef.current) {
@@ -27,11 +27,6 @@ export function usePWA() {
       console.warn('[PWA] SW registration error:', err);
     },
   });
-
-  // Debug: Log needRefresh changes
-  useEffect(() => {
-    console.log('[PWA] needRefresh changed:', needRefresh);
-  }, [needRefresh]);
 
   // Cleanup interval on unmount
   useEffect(() => {
@@ -91,21 +86,10 @@ export function usePWA() {
   }, [installPrompt]);
 
   const applyUpdate = useCallback(() => {
-    console.log('[PWA] applyUpdate called, current needRefresh:', needRefresh);
-    try {
-      // Reset needRefresh immediately to hide the banner
-      // The page will reload via controllerchange event below
-      setNeedRefresh(false);
-      console.log('[PWA] Set needRefresh to false');
-      
-      // updateServiceWorker(true) triggers the SW to skip waiting and take control
-      // The controllerchange event will handle the page reload
-      updateServiceWorker(true);
-      console.log('[PWA] updateServiceWorker(true) called');
-    } catch (err) {
-      console.error('[PWA] Failed to apply update:', err);
-    }
-  }, [updateServiceWorker, needRefresh, setNeedRefresh]);
+    // With autoUpdate, SW updates automatically in the background
+    console.log('[PWA] updateServiceWorker called for manual update');
+    updateServiceWorker();
+  }, [updateServiceWorker]);
 
   // Reload page when new service worker takes control
   useEffect(() => {
@@ -120,5 +104,5 @@ export function usePWA() {
     }
   }, []);
 
-  return { isInstallable, promptInstall, isOnline, needRefresh, applyUpdate };
+  return { isInstallable, promptInstall, isOnline, applyUpdate };
 }
