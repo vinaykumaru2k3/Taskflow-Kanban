@@ -8,11 +8,16 @@ export default defineConfig({
 
     // ── PWA / Service Worker ──────────────────────────────────────────────
     VitePWA({
-      registerType: 'autoUpdate',   // Automatically update SW without prompting user
+      // Use prompt so the app can show a banner and activate immediately on user action.
+      // autoUpdate can leave users on older tabs until they reload, which feels "stuck".
+      registerType: 'prompt',
       devOptions: {
-        enabled: true,          // Allow the virtual module and SW in development
+        enabled: true, // Allow the virtual module and SW in development
         type: 'module',
       },
+      // Use custom Service Worker - generateSW mode with proper lifecycle handling
+      srcDir: 'public',
+      filename: 'sw.js',
       includeAssets: ['favicon.png', 'icons/*.svg'],
       manifest: {
         name: 'TaskFlow - Kanban Board',
@@ -55,10 +60,24 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Cache strategy: network-first for Firebase API calls, cache-first for static assets
+        // IMPORTANT: Set skipWaiting to false to allow the update banner to show
+        // When true, SW skips waiting automatically and users never see the update prompt
+        // With registerType: 'prompt', the SW should wait for user action
+        skipWaiting: false,
+        clientsClaim: true,
+
+        // Precache static assets produced by Vite.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // Don't precache Firebase SDK chunks (they're huge and versioned)
         globIgnores: ['**/firebase*', '**/chunk-*firebase*', '**/firebase-*.js', '**/firebase-*.mjs'],
+
+        // Avoid serving stale index.html; rely on network for navigations (fallback to cache if offline).
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//],
+
+        // Enable maximum precache update delay for faster updates
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+
         runtimeCaching: [
           // Google Fonts — CacheFirst, long TTL
           {
@@ -97,6 +116,17 @@ export default defineConfig({
               cacheName: 'firestore-cache',
               networkTimeoutSeconds: 5,
               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          // Firebase Auth
+          {
+            urlPattern: /^https:\/\/www\.googleapis\.com\/identitytoolkit\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'firebase-auth-cache',
+              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 5 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
@@ -142,3 +172,4 @@ export default defineConfig({
     exclude: ['**/node_modules/**', '**/tests-e2e/**'],
   },
 });
+

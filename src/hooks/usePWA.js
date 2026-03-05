@@ -16,10 +16,24 @@ export function usePWA() {
   );
   const updateIntervalRef = useRef();
 
+  const [hasUpdate, setHasUpdate] = useState(false);
+
   const { updateServiceWorker } = useRegisterSW({
+    // When a new SW is installed and waiting, show an update banner.
+    onNeedRefresh() {
+      console.log('[PWA] Update available (waiting SW).');
+      setHasUpdate(true);
+    },
+    onOfflineReady() {
+      console.log('[PWA] App ready to work offline.');
+    },
     onRegistered(r) {
       console.log('[PWA] Service Worker registered:', r);
-      if (r && !updateIntervalRef.current) {
+      // Clear any existing interval before setting a new one
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current);
+      }
+      if (r) {
         updateIntervalRef.current = setInterval(() => r.update(), 5 * 60 * 1000);
       }
     },
@@ -85,10 +99,16 @@ export function usePWA() {
     }
   }, [installPrompt]);
 
-  const applyUpdate = useCallback(() => {
-    // With autoUpdate, SW updates automatically in the background
-    console.log('[PWA] updateServiceWorker called for manual update');
-    updateServiceWorker();
+  const applyUpdate = useCallback(async () => {
+    // With registerType: 'prompt', this triggers SKIP_WAITING and resolves once the new SW is activated.
+    console.log('[PWA] User accepted update; activating new Service Worker...');
+    try {
+      await updateServiceWorker(true);
+      // controllerchange listener below will reload once the new SW takes control.
+      setHasUpdate(false);
+    } catch (err) {
+      console.error('[PWA] Failed to apply update:', err);
+    }
   }, [updateServiceWorker]);
 
   // Reload page when new service worker takes control
@@ -104,5 +124,5 @@ export function usePWA() {
     }
   }, []);
 
-  return { isInstallable, promptInstall, isOnline, applyUpdate };
+  return { isInstallable, promptInstall, isOnline, hasUpdate, applyUpdate };
 }
