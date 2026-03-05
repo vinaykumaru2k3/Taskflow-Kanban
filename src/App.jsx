@@ -646,7 +646,7 @@ export default function App() {
                     <Support onBack={() => setViewMode('kanban')} />
                   </Suspense>
                 ) : (
-                  <KanbanBoard 
+                  <KanbanBoard
                     tasks={filteredTasks}
                     onDragStart={canEdit ? handleDragStart : () => {}}
                     onDrop={canEdit ? handleDrop : () => {}}

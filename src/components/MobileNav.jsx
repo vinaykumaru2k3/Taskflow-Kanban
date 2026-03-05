@@ -1,4 +1,4 @@
-import { Layers, Calendar, BarChart3, Plus, Menu } from 'lucide-react';
+import { Layers, Calendar, Workflow, Plus, Menu } from 'lucide-react';
 
 /**
  * MobileNav
@@ -19,7 +19,7 @@ const MobileNav = ({
     { id: 'boards',    label: 'Boards',    icon: Menu,      action: onToggleSidebar },
     { id: 'kanban',   label: 'Board',     icon: Layers,    viewMode: 'kanban'   },
     { id: 'calendar', label: 'Calendar',  icon: Calendar,  viewMode: 'calendar' },
-    { id: 'workflow', label: 'Workflow', icon: BarChart3, viewMode: 'workflow' },
+    { id: 'workflow', label: 'Workflow', icon: Workflow, viewMode: 'workflow' },
   ];
 
   return (
