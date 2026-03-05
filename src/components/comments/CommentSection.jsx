@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, AtSign, Trash2, Edit2, Check, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { MessageSquare, Send, Trash2, Edit2, Check, X } from 'lucide-react';
 
 const CommentSection = ({ 
   comments, 
@@ -113,13 +113,25 @@ const CommentSection = ({
     if (!content) return null;
     
     // Sort collaborators by name length descending to match longest names first (e.g. "Jane Doe" before "Jane")
-    const names = collaborators
-      .map(c => c.displayName || c.email)
+    const allNames = [];
+    collaborators.forEach(c => {
+      if (c.displayName) allNames.push(c.displayName);
+      if (c.email) allNames.push(c.email);
+    });
+    const names = Array.from(new Set(allNames))
       .filter(Boolean)
       .sort((a, b) => b.length - a.length);
 
-    // Match @mentions pattern
-    const mentionPattern = /@(\w+(?:\s+\w+)*)/g;
+    // Build a dynamic regex to match known names (including those with spaces) 
+    // or fallback to matching a single word (for former members).
+    const namePattern = names.length > 0
+      ? names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+      : '(?!)'; // Match nothing if no names
+    
+    // Priority 1: One of the known names (case insensitive)
+    // Priority 2: A single word until space/punctuation for "former members"
+    const mentionPattern = new RegExp(`@(${namePattern}|[a-zA-Z0-9._%+-]+)`, 'gi');
+    
     const parts = [];
     let lastIndex = 0;
     let match;
@@ -131,6 +143,7 @@ const CommentSection = ({
       }
       
       const mentionedName = match[1];
+      // Check if it's one of the current names
       const isActiveMember = names.some(name => name.toLowerCase() === mentionedName.toLowerCase());
       
       parts.push({ 
