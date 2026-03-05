@@ -29,7 +29,11 @@ export function usePWA() {
     },
     onRegistered(r) {
       console.log('[PWA] Service Worker registered:', r);
-      if (r && !updateIntervalRef.current) {
+      // Clear any existing interval before setting a new one
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current);
+      }
+      if (r) {
         updateIntervalRef.current = setInterval(() => r.update(), 5 * 60 * 1000);
       }
     },

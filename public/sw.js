@@ -40,11 +40,12 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activate event - claiming clients');
   
-  // Claim all clients immediately so the new SW controls all pages
-  event.waitUntil(self.clients.claim());
-  
-  // Clean up old caches that don't match current version
-  event.waitUntil(
+  // Combine both operations into a single Promise.all to avoid race condition
+  // Only the last event.waitUntil is considered per SW spec
+  event.waitUntil(Promise.all([
+    // Claim all clients immediately so the new SW controls all pages
+    self.clients.claim(),
+    // Clean up old caches that don't match current version
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
@@ -60,7 +61,7 @@ self.addEventListener('activate', (event) => {
           })
       );
     })
-  );
+  ]));
 });
 
 // ── Message: Handle SKIP_WAITING from client ──
