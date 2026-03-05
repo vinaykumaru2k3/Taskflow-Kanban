@@ -143,8 +143,17 @@ const CommentSection = ({
       }
       
       const mentionedName = match[1];
-      // Check if it's one of the current names
-      const isActiveMember = names.some(name => name.toLowerCase() === mentionedName.toLowerCase());
+      // Check if it's one of the current names, a first name, or an email handle
+      const isActiveMember = collaborators.some(c => {
+        const dName = (c.displayName || '').toLowerCase();
+        const email = (c.email || '').toLowerCase();
+        const mention = mentionedName.toLowerCase().trim();
+        
+        return dName === mention || 
+               email === mention || 
+               dName.split(' ')[0] === mention || 
+               email.split('@')[0] === mention;
+      });
       
       parts.push({ 
         type: 'mention', 
