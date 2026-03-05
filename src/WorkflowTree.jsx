@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   CircleDot, PlayCircle, Eye, CheckCircle2, Zap, 
@@ -152,8 +152,8 @@ function ConnectorLayer({ tasks, containerRef }) {
   }, [depPairs, containerRef]);
 
   const schedule = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(recalc);
+    if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
+    rafRef.current = window.requestAnimationFrame(recalc);
   }, [recalc]);
 
   useLayoutEffect(() => {
@@ -167,10 +167,10 @@ function ConnectorLayer({ tasks, containerRef }) {
     const ct = containerRef.current;
     if (!ct) return;
 
-    const ro = new ResizeObserver(schedule);
+    const ro = new window.ResizeObserver(schedule);
     ro.observe(ct);
 
-    const mo = new MutationObserver(schedule);
+    const mo = new window.MutationObserver(schedule);
     mo.observe(ct, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'data-task-id'] });
 
     ct.addEventListener('scroll', schedule, { passive: true });
@@ -180,7 +180,7 @@ function ConnectorLayer({ tasks, containerRef }) {
       ro.disconnect(); mo.disconnect();
       ct.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
     };
   }, [containerRef, schedule]);
 
@@ -317,7 +317,7 @@ export default function WorkflowTree({ tasks }) {
              <div className="absolute top-[68px] left-12 md:left-24 right-12 md:right-24 h-px bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0" />
              
              <div className="flex items-start justify-between relative z-10">
-               {metrics.map((col, idx) => {
+               {metrics.map((col) => {
                   const isActive = activeId === col.id;
                   const Icon = col.icon;
                   
@@ -404,7 +404,7 @@ export default function WorkflowTree({ tasks }) {
                            </div>
                         ) : (
                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-max">
-                              {col.tasks.map((task, tidx) => {
+                              {col.tasks.map((task) => {
                                  const priority = PRIORITIES[task.priority] || PRIORITIES.low;
                                  return (
                                    <div 
@@ -552,7 +552,7 @@ export default function WorkflowTree({ tasks }) {
       {viewMode === 'team' && (
         <div className="flex-1 w-full overflow-y-auto custom-scrollbar relative z-10 flex flex-col px-4 md:px-8 pb-8 pt-8">
           <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
-            {teamMetrics.map((user, idx) => {
+            {teamMetrics.map((user) => {
               const donePct = user.total > 0 ? Math.round((user.tasks['done'] / user.total) * 100) : 0;
               const inProgPct = user.total > 0 ? Math.round((user.tasks['in-progress'] / user.total) * 100) : 0;
               const reviewPct = user.total > 0 ? Math.round((user.tasks['review'] / user.total) * 100) : 0;

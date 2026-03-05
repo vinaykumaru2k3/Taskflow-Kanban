@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { 
   Layers, User, LogOut, Workflow, Search, Calendar, CheckCircle2, AlertCircle, 
   Filter, ArrowUpDown, X, PanelLeftClose, PanelLeft, Folder, Archive, 
-  MoreHorizontal, Settings, ChevronDown, Tag, Bell, Share2, Users, Sun, Moon, Plus
+  MoreHorizontal, Settings, ChevronDown, Bell, Users, Sun, Moon, Plus, BarChart3
 } from 'lucide-react';
-import { PRIORITIES, COLUMNS, TAG_COLORS, DEFAULT_TAGS } from '../utils/constants';
+import { PRIORITIES, COLUMNS, DEFAULT_TAGS } from '../utils/constants';
 
 const Header = ({
   user,
@@ -28,7 +28,6 @@ const Header = ({
   archivedCount,
   setShowArchived,
   allTags,
-  onShareBoard,
   onShowTeam,
   teamMemberCount = 0,
   onShowNotifications,

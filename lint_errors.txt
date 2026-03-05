@@ -1,0 +1,24 @@
+[0m
+[4mC:\Users\vinay kumar\Desktop\Taskflow-Kanban\src\WorkflowTree.jsx[24m
+    [2m1:8[22m   [33mwarning[39m  'React' is defined but never used       [2mno-unused-vars[22m
+  [2m155:25[22m  [31merror[39m    'cancelAnimationFrame' is not defined   [2mno-undef[22m
+  [2m156:22[22m  [31merror[39m    'requestAnimationFrame' is not defined  [2mno-undef[22m
+  [2m170:20[22m  [31merror[39m    'ResizeObserver' is not defined         [2mno-undef[22m
+  [2m173:20[22m  [31merror[39m    'MutationObserver' is not defined       [2mno-undef[22m
+  [2m183:27[22m  [31merror[39m    'cancelAnimationFrame' is not defined   [2mno-undef[22m
+  [2m320:35[22m  [33mwarning[39m  'idx' is defined but never used         [2mno-unused-vars[22m
+  [2m407:53[22m  [33mwarning[39m  'tidx' is defined but never used        [2mno-unused-vars[22m
+  [2m555:37[22m  [33mwarning[39m  'idx' is defined but never used         [2mno-unused-vars[22m
+
+[4mC:\Users\vinay kumar\Desktop\Taskflow-Kanban\src\components\Header.jsx[24m
+    [2m5:42[22m  [33mwarning[39m  'Tag' is defined but never used           [2mno-unused-vars[22m
+    [2m5:53[22m  [33mwarning[39m  'Share2' is defined but never used        [2mno-unused-vars[22m
+    [2m7:31[22m  [33mwarning[39m  'TAG_COLORS' is defined but never used    [2mno-unused-vars[22m
+   [2m31:3[22m   [33mwarning[39m  'onShareBoard' is defined but never used  [2mno-unused-vars[22m
+  [2m253:20[22m  [31merror[39m    'BarChart3' is not defined                [2mno-undef[22m
+
+[4mC:\Users\vinay kumar\Desktop\Taskflow-Kanban\src\components\Modal.jsx[24m
+  [2m1:8[22m  [33mwarning[39m  'React' is defined but never used  [2mno-unused-vars[22m
+
+[31m[1mΓ£û 15 problems (6 errors, 9 warnings)[22m[39m
+[0m
