@@ -102,27 +102,37 @@ export function usePWA() {
   const applyUpdate = useCallback(async () => {
     console.log('[PWA] User accepted update; activating new Service Worker...');
     setHasUpdate(false);
+
+    // Set a timeout reload as a last resort — if controllerchange never fires
+    // (no waiting SW, dev quirk, etc.) we still reload after 3s.
+    reloadTimerRef.current = setTimeout(() => {
+      console.warn('[PWA] controllerchange did not fire in time — force reloading');
+      window.location.reload();
+    }, 3000);
+
     try {
-      // updateServiceWorker(true) sends SKIP_WAITING to the waiting SW via the
-      // virtual:pwa-register module, then reloads the page.
-      await updateServiceWorker(true);
-    } catch (err) {
-      // Fallback: manually post SKIP_WAITING to the waiting SW registration.
-      // This handles cases where the virtual module's handler isn't available
-      // (e.g. dev mode with an unusual SW lifecycle).
-      console.warn('[PWA] updateServiceWorker() failed, using fallback:', err);
-      try {
-        const reg = await navigator.serviceWorker.getRegistration();
-        if (reg?.waiting) {
-          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-          // controllerchange listener will reload the page
-        } else {
-          // No waiting SW found; just reload to get the freshest content.
-          window.location.reload();
-        }
-      } catch (fallbackErr) {
-        console.error('[PWA] Fallback update also failed:', fallbackErr);
+      // Prefer the direct approach: post SKIP_WAITING to the waiting SW.
+      // This is more reliable than updateServiceWorker(true) which can hang
+      // indefinitely awaiting the controllerchange event.
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg?.waiting) {
+        console.log('[PWA] Posting SKIP_WAITING to waiting SW');
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        // The controllerchange listener clears reloadTimerRef and reloads.
+      } else {
+        // No waiting SW — just reload directly.
+        console.log('[PWA] No waiting SW found — reloading directly');
+        clearTimeout(reloadTimerRef.current);
+        reloadTimerRef.current = null;
         window.location.reload();
+      }
+    } catch (err) {
+      console.warn('[PWA] Direct SKIP_WAITING failed, trying updateServiceWorker:', err);
+      try {
+        // Fire and forget — do NOT await this, it can hang forever.
+        updateServiceWorker(true);
+      } catch {
+        // All methods exhausted — the timer will reload in 3s.
       }
     }
   }, [updateServiceWorker]);
@@ -133,10 +143,19 @@ export function usePWA() {
     setHasUpdate(false);
   }, []);
 
+  // Ref to hold the fallback reload timer set in applyUpdate.
+  // The controllerchange listener clears it so we don't double-reload.
+  const reloadTimerRef = useRef(null);
+
   // Reload page when new service worker takes control
   useEffect(() => {
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       const handleControllerChange = () => {
+        // Cancel the fallback timer — we're reloading now via controllerchange.
+        if (reloadTimerRef.current) {
+          clearTimeout(reloadTimerRef.current);
+          reloadTimerRef.current = null;
+        }
         window.location.reload();
       };
       navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
