@@ -8,16 +8,21 @@ export default defineConfig({
 
     // ── PWA / Service Worker ──────────────────────────────────────────────
     VitePWA({
-      // Use prompt so the app can show a banner and activate immediately on user action.
-      // autoUpdate can leave users on older tabs until they reload, which feels "stuck".
+      // registerType: 'prompt' — new SWs stay in the "waiting" state until
+      // the user explicitly clicks Update. This is required for onNeedRefresh
+      // (and the update banner) to ever fire. 'autoUpdate' would skip waiting
+      // automatically and the banner would never appear.
       registerType: 'prompt',
       devOptions: {
-        enabled: true, // Allow the virtual module and SW in development
+        // Enable the virtual:pwa-register module in dev so the hook resolves.
+        // Without this, useRegisterSW() throws in development.
+        enabled: true,
         type: 'module',
       },
-      // Use custom Service Worker - generateSW mode with proper lifecycle handling
-      srcDir: 'public',
-      filename: 'sw.js',
+      // NOTE: Do NOT set srcDir + filename here.
+      // Those props switch the plugin to 'injectManifest' mode, where the
+      // workbox config block below is completely ignored (including skipWaiting).
+      // We need 'generateSW' mode so that skipWaiting: false is applied.
       includeAssets: ['favicon.png', 'icons/*.svg'],
       manifest: {
         name: 'TaskFlow - Kanban Board',
@@ -60,10 +65,17 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // IMPORTANT: Set skipWaiting to false to allow the update banner to show
-        // When true, SW skips waiting automatically and users never see the update prompt
-        // With registerType: 'prompt', the SW should wait for user action
+        // skipWaiting: false is CRITICAL.
+        // When true (Workbox default), the SW calls skipWaiting() on install,
+        // which bypasses the waiting phase and prevents onNeedRefresh from firing.
+        // Setting it to false makes the new SW wait for an explicit SKIP_WAITING
+        // message — sent by updateServiceWorker(true) when user clicks Update.
         skipWaiting: false,
+        // clientsClaim: true makes the SW take control of all open tabs once
+        // it activates. Combined with skipWaiting: false this means:
+        //   - New SW waits (update banner shows)
+        //   - User clicks Update → SKIP_WAITING sent → SW activates
+        //   - SW claims all clients → page reloads with new version
         clientsClaim: true,
 
         // Precache static assets produced by Vite.

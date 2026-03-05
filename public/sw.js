@@ -29,11 +29,16 @@ precacheAndRoute(self.__WB_MANIFEST);
 // Clean up outdated caches
 cleanupOutdatedCaches();
 
-// ── Install: Skip waiting immediately (for first install)
-// This ensures fresh install gets control right away
+// ── Install: Do NOT call skipWaiting() here.
+// Calling skipWaiting() on install means every update bypasses the waiting
+// phase, which prevents onNeedRefresh from firing in the client and thus
+// prevents the update banner from ever showing.
+// The SW will stay in "waiting" state until the client sends SKIP_WAITING.
 self.addEventListener('install', (event) => {
-  console.log('[SW] Install event - skipping waiting');
-  self.skipWaiting();
+  console.log('[SW] Install event - waiting for activation signal');
+  // Intentionally NOT calling self.skipWaiting() here.
+  // The update banner (PWAUpdateBanner) will send SKIP_WAITING when the
+  // user clicks "Update", which is handled by the message listener below.
 });
 
 // ── Activate: Claim all clients immediately and clean up old caches ──

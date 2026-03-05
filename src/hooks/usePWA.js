@@ -100,16 +100,38 @@ export function usePWA() {
   }, [installPrompt]);
 
   const applyUpdate = useCallback(async () => {
-    // With registerType: 'prompt', this triggers SKIP_WAITING and resolves once the new SW is activated.
     console.log('[PWA] User accepted update; activating new Service Worker...');
+    setHasUpdate(false);
     try {
+      // updateServiceWorker(true) sends SKIP_WAITING to the waiting SW via the
+      // virtual:pwa-register module, then reloads the page.
       await updateServiceWorker(true);
-      // controllerchange listener below will reload once the new SW takes control.
-      setHasUpdate(false);
     } catch (err) {
-      console.error('[PWA] Failed to apply update:', err);
+      // Fallback: manually post SKIP_WAITING to the waiting SW registration.
+      // This handles cases where the virtual module's handler isn't available
+      // (e.g. dev mode with an unusual SW lifecycle).
+      console.warn('[PWA] updateServiceWorker() failed, using fallback:', err);
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg?.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          // controllerchange listener will reload the page
+        } else {
+          // No waiting SW found; just reload to get the freshest content.
+          window.location.reload();
+        }
+      } catch (fallbackErr) {
+        console.error('[PWA] Fallback update also failed:', fallbackErr);
+        window.location.reload();
+      }
     }
   }, [updateServiceWorker]);
+
+  // Allow the user to dismiss the update banner without applying the update.
+  // The waiting SW stays in place and will activate on the next page load.
+  const dismissUpdate = useCallback(() => {
+    setHasUpdate(false);
+  }, []);
 
   // Reload page when new service worker takes control
   useEffect(() => {
@@ -124,5 +146,5 @@ export function usePWA() {
     }
   }, []);
 
-  return { isInstallable, promptInstall, isOnline, hasUpdate, applyUpdate };
+  return { isInstallable, promptInstall, isOnline, hasUpdate, applyUpdate, dismissUpdate };
 }

@@ -70,6 +70,7 @@ export default function App() {
     isOnline,
     hasUpdate,
     applyUpdate,
+    dismissUpdate,
   } = usePWA();
   const [dismissedInstall, setDismissedInstall] = useState(false);
   const [showOnlineToast, setShowOnlineToast] = useState(false);
@@ -1036,11 +1037,7 @@ export default function App() {
       {hasUpdate && (
         <PWAUpdateBanner
           onUpdate={applyUpdate}
-          onDismiss={() => {
-            // Hiding the banner doesn't prevent the SW from staying "waiting";
-            // it simply avoids interrupting the user. Next reload/tab open will still update.
-            // If you want to re-show it later, we can add a timer here.
-          }}
+          onDismiss={dismissUpdate}
         />
       )}
 
