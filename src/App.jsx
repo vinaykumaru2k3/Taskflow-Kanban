@@ -19,7 +19,7 @@ import TeamPanel from './components/collaboration/TeamPanel';
 import NotificationPanel from './components/notifications/NotificationPanel';
 import CommentSection from './components/comments/CommentSection';
 import MobileNav from './components/MobileNav';
-import { PWAInstallBanner, OfflineToast, OnlineToast } from './components/PWABanners';
+import { PWAInstallBanner, PWAUpdateBanner, OfflineToast, OnlineToast } from './components/PWABanners';
 import { usePWA } from './hooks/usePWA';
 import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS, ROLES } from './utils/constants';
 import { canCreateTasks, canEditTask } from './lib/permissions';
@@ -68,6 +68,7 @@ export default function App() {
     isInstallable,
     promptInstall,
     isOnline,
+    hasUpdate,
     applyUpdate,
   } = usePWA();
   const [dismissedInstall, setDismissedInstall] = useState(false);
@@ -1032,7 +1033,16 @@ export default function App() {
       )}
 
       {/* ── SW Update Banner ── */}
-      {/* Removed: Using autoUpdate now - SW updates silently in background */}
+      {hasUpdate && (
+        <PWAUpdateBanner
+          onUpdate={applyUpdate}
+          onDismiss={() => {
+            // Hiding the banner doesn't prevent the SW from staying "waiting";
+            // it simply avoids interrupting the user. Next reload/tab open will still update.
+            // If you want to re-show it later, we can add a timer here.
+          }}
+        />
+      )}
 
       {/* ── Offline Toast ── */}
       {!isOnline && <OfflineToast />}
