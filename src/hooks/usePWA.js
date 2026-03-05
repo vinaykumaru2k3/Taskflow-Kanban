@@ -103,37 +103,38 @@ export function usePWA() {
     console.log('[PWA] User accepted update; activating new Service Worker...');
     setHasUpdate(false);
 
-    // Set a timeout reload as a last resort — if controllerchange never fires
-    // (no waiting SW, dev quirk, etc.) we still reload after 3s.
-    reloadTimerRef.current = setTimeout(() => {
-      console.warn('[PWA] controllerchange did not fire in time — force reloading');
-      window.location.reload();
-    }, 3000);
+    // [Robustness] Force a reload after 3s as a fail-safe.
+    // We use a timestamped URL to bypass HTTP cache on index.html.
+    const forceReload = () => {
+      console.warn('[PWA] Update took too long — force reloading with cache-bust');
+      const url = new URL(window.location.href);
+      url.searchParams.set('v', Date.now());
+      window.location.assign(url.href);
+    };
+
+    reloadTimerRef.current = setTimeout(forceReload, 3000);
 
     try {
-      // Prefer the direct approach: post SKIP_WAITING to the waiting SW.
-      // This is more reliable than updateServiceWorker(true) which can hang
-      // indefinitely awaiting the controllerchange event.
+      // 1. Target the waiting Service Worker directly
       const reg = await navigator.serviceWorker.getRegistration();
       if (reg?.waiting) {
         console.log('[PWA] Posting SKIP_WAITING to waiting SW');
         reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-        // The controllerchange listener clears reloadTimerRef and reloads.
       } else {
-        // No waiting SW — just reload directly.
-        console.log('[PWA] No waiting SW found — reloading directly');
-        clearTimeout(reloadTimerRef.current);
-        reloadTimerRef.current = null;
-        window.location.reload();
+        // Fallback to the library-provided update method
+        console.log('[PWA] No waiting SW found via API, falling back to updateServiceWorker');
+        updateServiceWorker(true);
+      }
+
+      // 2. Attempt to clear caches for a truly fresh start
+      if ('caches' in window) {
+        const names = await caches.keys();
+        await Promise.all(names.map(n => caches.delete(n)));
+        console.log('[PWA] Local caches cleared');
       }
     } catch (err) {
-      console.warn('[PWA] Direct SKIP_WAITING failed, trying updateServiceWorker:', err);
-      try {
-        // Fire and forget — do NOT await this, it can hang forever.
-        updateServiceWorker(true);
-      } catch {
-        // All methods exhausted — the timer will reload in 3s.
-      }
+      console.warn('[PWA] Update logic encountered an error:', err);
+      // Fallback timer will handle it
     }
   }, [updateServiceWorker]);
 
@@ -151,13 +152,18 @@ export function usePWA() {
   useEffect(() => {
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       const handleControllerChange = () => {
-        // Cancel the fallback timer — we're reloading now via controllerchange.
+        // Cancel the fallback timer — we're about to reload.
         if (reloadTimerRef.current) {
           clearTimeout(reloadTimerRef.current);
           reloadTimerRef.current = null;
         }
-        window.location.reload();
+        
+        console.log('[PWA] Controller changed — reloading with cache-bust');
+        const url = new URL(window.location.href);
+        url.searchParams.set('v', Date.now());
+        window.location.assign(url.href);
       };
+      
       navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
       return () => {
         navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
