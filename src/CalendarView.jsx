@@ -177,6 +177,7 @@ const CalendarView = ({ tasks, onTaskClick }) => {
       <Modal
         isOpen={!!selectedDay}
         onClose={() => setSelectedDay(null)}
+        maxWidth="max-w-xl"
         title={
           selectedDay
             ? selectedDay.date.toLocaleDateString('en-US', {
@@ -212,28 +213,13 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                     onTaskClick(task);
                     setSelectedDay(null);
                   }}
-                  className={`group relative bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border-2 ${priority.border} rounded-xl p-3.5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden`}
+                  className="group relative bg-white dark:bg-[#111928] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer overflow-hidden flex flex-col gap-3"
                 >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex flex-wrap gap-1.5">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1.5 ${priority.color}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${priority.dot}`} />
-                        {priority.label}
-                      </span>
-                      {isOverdue && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1">
-                          <AlertCircle size={10} /> Overdue
-                        </span>
-                      )}
-                      {task.status === 'done' && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                          <CheckCircle2 size={10} /> Done
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex justify-between items-start">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 pr-4">{task.title}</h4>
                     {task.assigneeId && (
                       <div 
-                        className="mr-1 ring-2 ring-slate-100 dark:ring-slate-800 rounded-full flex-shrink-0 bg-slate-200 dark:bg-slate-700 w-5 h-5 flex items-center justify-center text-[9px] font-bold text-slate-500 overflow-hidden" 
+                        className="flex-shrink-0 w-6 h-6 rounded-full border border-white dark:border-slate-800 shadow-sm overflow-hidden flex items-center justify-center bg-indigo-100 dark:bg-indigo-900/50 text-[9px] text-indigo-700 dark:text-indigo-300 font-bold"
                         title={`Assigned to ${task.assigneeName || 'someone'}`}
                       >
                         {task.assigneeAvatar ? (
@@ -245,30 +231,45 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                     )}
                   </div>
                   
-                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1.5 line-clamp-2 leading-snug">{task.title}</h4>
-                  
                   {task.description && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 leading-relaxed font-normal">{task.description}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">{task.description}</p>
                   )}
                   
                   {subtasksCount > 0 && (
-                    <div className="mb-3">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                          <CheckSquare size={10} /> {completedSubtasks}/{subtasksCount} Tasks
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-400">{Math.round(progress)}%</span>
-                      </div>
-                      <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                        <div className={`h-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${progress}%` }} />
-                      </div>
+                    <div className="pt-2">
+                       <div className="flex justify-between items-center mb-1">
+                         <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1.5">
+                           <CheckSquare size={12} /> {completedSubtasks}/{subtasksCount} Tasks
+                         </span>
+                         <span className="text-[10px] font-bold text-slate-500">{Math.round(progress)}%</span>
+                       </div>
+                       <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                         <div className={`h-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${progress}%` }} />
+                       </div>
                     </div>
                   )}
                   
-                  <div className="flex items-center pt-3 border-t border-slate-50 dark:border-slate-800 mt-auto">
-                    <div className={`flex items-center gap-1.5 text-[10px] font-bold ${isOverdue ? 'text-rose-500' : 'text-slate-400'}`}>
-                      <Calendar size={11} />
-                      <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}</span>
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/80 mt-auto">
+                    <div className="flex items-center gap-2">
+                       <span className={`text-[10px] font-bold uppercase px-2 py-1.5 rounded ${task.priority === 'urgent' ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' : task.priority === 'high' ? 'bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>{priority.label}</span>
+                       <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1.5 rounded">TSK-{task.id.slice(0, 4).toUpperCase()}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {isOverdue && (
+                        <span className="text-[10px] font-bold uppercase px-2 py-1.5 rounded bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                          <AlertCircle size={10} /> Overdue
+                        </span>
+                      )}
+                      {task.status === 'done' && (
+                        <span className="text-[10px] font-bold uppercase px-2 py-1.5 rounded bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                          <CheckCircle2 size={10} /> Done
+                        </span>
+                      )}
+                      <div className={`flex items-center gap-1.5 text-[10px] font-bold ${isOverdue ? 'text-rose-500' : 'text-slate-400'}`}>
+                        <Calendar size={12} />
+                        <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

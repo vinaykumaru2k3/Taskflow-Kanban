@@ -22,6 +22,7 @@ const KanbanBoard = ({
   onArchiveTask,
   readOnly,
 }) => {
+  const boardRef = useRef(null); // ref for the desktop grid container (overlay anchor)
   // ── Mobile carousel state ──────────────────────────────────────────────
   const [activeColIndex, setActiveColIndex] = useState(0);
   const carouselRef = useRef(null);
@@ -75,7 +76,8 @@ const KanbanBoard = ({
   return (
     <>
       {/* ── Desktop (md+): 4-column grid ── */}
-      <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      {/* position:relative so the SVG overlay can be abs-positioned over this */}
+      <div ref={boardRef} className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 relative">
         {COLUMNS.map((col) => {
           const colTasks = tasks.filter((t) => t.status === col.id);
           const dropHighlight = dragging && overColumnId === col.id;
@@ -95,16 +97,18 @@ const KanbanBoard = ({
               <ColumnHeader col={col} count={colTasks.length} />
               <div className="space-y-3 min-h-[200px]">
                 {colTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onDelete={onDeleteTask}
-                    onEdit={onEditTask}
-                    onDragStart={onDragStart}
-                    onArchive={onArchiveTask}
-                    readOnly={readOnly}
-                    touchHandlers={getCardHandlers(task.id)}
-                  />
+                  // data-task-id lets DependencyOverlay locate each card via querySelector
+                  <div key={task.id}>
+                    <TaskCard
+                      task={task}
+                      onDelete={onDeleteTask}
+                      onEdit={onEditTask}
+                      onDragStart={onDragStart}
+                      onArchive={onArchiveTask}
+                      readOnly={readOnly}
+                      touchHandlers={getCardHandlers(task.id)}
+                    />
+                  </div>
                 ))}
                 <AddTaskButton col={col} onAddTask={onAddTask} />
               </div>

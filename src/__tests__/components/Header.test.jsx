@@ -5,6 +5,7 @@ import Header from '../../components/Header';
 vi.mock('lucide-react', () => ({
   Layers: () => <div data-testid="icon-layers" />,
   User: () => <div data-testid="icon-user" />,
+  Workflow: () => <div data-testid="icon-workflow" />,
   LogOut: () => <div data-testid="icon-logout" />,
   BarChart3: () => <div data-testid="icon-chart" />,
   Search: () => <div data-testid="icon-search" />,
@@ -85,12 +86,15 @@ describe('Header Component', () => {
     expect(screen.getByText('1')).toBeInTheDocument();  // overdue
   });
 
-  test('changes view mode between Kanban and Calendar', () => {
+  test('changes view mode between Kanban, Calendar and Workflow', () => {
     render(<Header {...defaultProps} />);
     
     fireEvent.click(screen.getByRole('button', { name: /Calendar/i }));
     expect(defaultProps.setViewMode).toHaveBeenCalledWith('calendar');
     
+    fireEvent.click(screen.getByRole('button', { name: /Workflow/i }));
+    expect(defaultProps.setViewMode).toHaveBeenCalledWith('workflow');
+
     fireEvent.click(screen.getByRole('button', { name: /Board/i }));
     expect(defaultProps.setViewMode).toHaveBeenCalledWith('kanban');
   });

@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
-const Modal = ({ isOpen, onClose, title, children }) => {
+const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-3xl' }) => {
   const closeButtonRef = useRef(null);
 
   // [cross-browser] Focus the close button when the modal opens for keyboard/screen-reader accessibility
@@ -29,12 +29,12 @@ const Modal = ({ isOpen, onClose, title, children }) => {
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-x-0 bottom-0 top-[64px] md:top-[73px] z-[38] flex items-center justify-center p-4 md:p-6 bg-slate-900/40 dark:bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
       // [cross-browser] Clicking backdrop closes modal
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[85dvh] max-h-[85vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800"
+        className={`bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full ${maxWidth} max-h-full overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800`}
         // [safari] Stop propagation so inner scrolling doesn't close the modal
         onClick={(e) => e.stopPropagation()}
       >
