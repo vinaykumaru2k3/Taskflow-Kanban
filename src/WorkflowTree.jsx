@@ -358,37 +358,37 @@ export default function WorkflowTree({ tasks }) {
                      transition={{ duration: 0.3 }}
                      className="w-full flex flex-col gap-6"
                    >
-                     {/* Monochromatic Metric Cards */}
-                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-shrink-0">
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                           <div>
-                             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Stage Volume</p>
-                             <p className="text-3xl font-black text-slate-900 dark:text-white">{col.total}</p>
-                           </div>
-                           <div className="text-sm font-bold text-slate-500">{percentage}%</div>
-                        </div>
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                           <div>
-                             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Urgent</p>
-                             <p className="text-3xl font-black text-slate-900 dark:text-white">{col.urgent}</p>
-                           </div>
-                           <Zap size={20} className="text-slate-400" />
-                        </div>
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                           <div>
-                             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">High</p>
-                             <p className="text-3xl font-black text-slate-900 dark:text-white">{col.high}</p>
-                           </div>
-                           <Zap size={20} className="text-slate-400" />
-                        </div>
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                           <div>
-                             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Normal/Low</p>
-                             <p className="text-3xl font-black text-slate-900 dark:text-white">{col.total - (col.urgent + col.high)}</p>
-                           </div>
-                           <AlignLeft size={20} className="text-slate-400" />
-                        </div>
-                     </div>
+                      {/* Monochromatic Metric Cards */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-shrink-0">
+                         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between group/card transition-colors hover:border-indigo-200 dark:hover:border-indigo-900">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">Stage Volume</p>
+                              <p className="text-3xl font-black text-slate-900 dark:text-white">{col.total}</p>
+                            </div>
+                            <div className="text-sm font-bold text-indigo-400 group-hover/card:scale-110 transition-transform">{percentage}%</div>
+                         </div>
+                         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between group/card transition-colors hover:border-rose-200 dark:hover:border-rose-900">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-rose-500 dark:text-rose-400 mb-1">Urgent</p>
+                              <p className="text-3xl font-black text-slate-900 dark:text-white">{col.urgent}</p>
+                            </div>
+                            <Zap size={20} className="text-rose-400 group-hover/card:scale-110 transition-transform" />
+                         </div>
+                         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between group/card transition-colors hover:border-orange-200 dark:hover:border-orange-900">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-orange-500 dark:text-orange-400 mb-1">High</p>
+                              <p className="text-3xl font-black text-slate-900 dark:text-white">{col.high}</p>
+                            </div>
+                            <Zap size={20} className="text-orange-400 group-hover/card:scale-110 transition-transform" />
+                         </div>
+                         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between group/card transition-colors hover:border-slate-300 dark:hover:border-slate-700">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Normal/Low</p>
+                              <p className="text-3xl font-black text-slate-900 dark:text-white">{col.total - (col.urgent + col.high)}</p>
+                            </div>
+                            <AlignLeft size={20} className="text-slate-400 group-hover/card:scale-110 transition-transform" />
+                         </div>
+                      </div>
 
                      {/* Cards Grid */}
                      <div className="flex-1 w-full pb-12">
@@ -398,36 +398,46 @@ export default function WorkflowTree({ tasks }) {
                              <p className="text-slate-500 font-semibold text-sm">No Active Tasks in this Stage</p>
                            </div>
                         ) : (
-                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-max">
-                              {col.tasks.map((task) => {
-                                 const priority = PRIORITIES[task.priority] || PRIORITIES.low;
-                                 return (
-                                   <div 
-                                     key={task.id} 
-                                     className="flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-[#111928] border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors shadow-sm"
-                                   >
-                                     <div className="flex items-start justify-between gap-3">
-                                       <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug line-clamp-2">{task.title}</h4>
-                                     </div>
-                                     <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-100 dark:border-slate-800/80">
-                                       <div className="flex items-center gap-2">
-                                         <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1.5 rounded">TSK-{task.id.slice(0, 4).toUpperCase()}</span>
-                                         <span className={`text-[10px] font-bold uppercase px-2 py-1.5 rounded ${task.priority === 'urgent' ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' : task.priority === 'high' ? 'bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>{priority.label}</span>
-                                       </div>
-                                       
-                                       <div className="flex items-center">
-                                          {task.assigneeId ? (
-                                             task.assigneeAvatar ? <img src={task.assigneeAvatar} className="w-6 h-6 rounded-full border border-white dark:border-slate-800 shadow-sm" alt=""/> : 
-                                             <div className="w-6 h-6 rounded-full border border-white dark:border-slate-800 bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-[9px] text-indigo-700 dark:text-indigo-300 font-bold shadow-sm">{task.assigneeName?.[0]?.toUpperCase()}</div>
-                                          ) : (
-                                             <div className="w-6 h-6 rounded-full border border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400"><Users size={10}/></div>
-                                          )}
-                                       </div>
-                                     </div>
-                                   </div>
-                                 );
-                              })}
-                           </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-max">
+                               {col.tasks.map((task) => {
+                                  const priority = PRIORITIES[task.priority] || PRIORITIES.low;
+                                  
+                                  // Priority-specific visual tokens for premium card feel
+                                  const priorityThemes = {
+                                    urgent: 'border-l-rose-500 bg-rose-50/30 dark:bg-rose-500/5',
+                                    high: 'border-l-orange-500 bg-orange-50/30 dark:bg-orange-500/5',
+                                    medium: 'border-l-blue-500 bg-blue-50/30 dark:bg-blue-500/5',
+                                    low: 'border-l-slate-300 bg-slate-50/30 dark:bg-slate-500/5'
+                                  };
+                                  const theme = priorityThemes[task.priority] || priorityThemes.low;
+
+                                  return (
+                                    <div 
+                                      key={task.id} 
+                                      className={`group flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-[#111928] border border-slate-200 dark:border-slate-800 border-l-4 ${theme} hover:shadow-md transition-all duration-200`}
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{task.title}</h4>
+                                      </div>
+                                      <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1.5 rounded">TSK-{task.id.slice(0, 4).toUpperCase()}</span>
+                                          <span className={`text-[10px] font-bold uppercase px-2 py-1.5 rounded ${task.priority === 'urgent' ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' : task.priority === 'high' ? 'bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>{priority.label}</span>
+                                        </div>
+                                        
+                                        <div className="flex items-center">
+                                           {task.assigneeId ? (
+                                              task.assigneeAvatar ? <img src={task.assigneeAvatar} className="w-6 h-6 rounded-full border border-white dark:border-slate-800 shadow-sm" alt=""/> : 
+                                              <div className="w-6 h-6 rounded-full border border-white dark:border-slate-800 bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-[9px] text-indigo-700 dark:text-indigo-300 font-bold shadow-sm">{task.assigneeName?.[0]?.toUpperCase()}</div>
+                                           ) : (
+                                              <div className="w-6 h-6 rounded-full border border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400"><Users size={10}/></div>
+                                           )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                               })}
+                            </div>
                         )}
                      </div>
                    </motion.div>
@@ -475,19 +485,28 @@ export default function WorkflowTree({ tasks }) {
                       const hasDeps = task.blockedBy?.length > 0 || task.blocks?.length > 0;
                       const isSelected = selectedTask?.id === task.id;
                       const priority = PRIORITIES[task.priority] || PRIORITIES.low;
+
+                      // Priority-specific visual tokens for premium card feel
+                      const priorityThemes = {
+                        urgent: 'border-l-rose-500 bg-rose-50/10 dark:bg-rose-500/5',
+                        high: 'border-l-orange-500 bg-orange-50/10 dark:bg-orange-500/5',
+                        medium: 'border-l-blue-500 bg-blue-50/10 dark:bg-blue-500/5',
+                        low: 'border-l-slate-300 bg-slate-50/10 dark:bg-slate-500/5'
+                      };
+                      const theme = priorityThemes[task.priority] || priorityThemes.low;
                       
                       return (
                         <div
                           key={task.id}
                           data-task-id={task.id}
                           onClick={() => setSelectedTask(isSelected ? null : task)}
-                          className={`relative w-full rounded-xl border ${isSelected ? 'border-slate-800 dark:border-slate-300 ring-1 ring-slate-800 dark:ring-slate-300 shadow-md' : 'border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600'} bg-white dark:bg-[#111928] p-4 cursor-pointer transition-all flex-shrink-0`}
+                          className={`relative w-full rounded-xl border-l-4 ${theme} border ${isSelected ? 'border-slate-800 dark:border-slate-300 ring-1 ring-slate-800 dark:ring-slate-300 shadow-md' : 'border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600'} bg-white dark:bg-[#111928] p-4 cursor-pointer transition-all flex-shrink-0`}
                         >
                           <div className="flex justify-between items-center mb-2">
                              <span className={`text-[10px] font-bold uppercase tracking-wide ${sc.text}`}>{STATUS_LABEL[task.status]}</span>
                              {hasDeps && <Link size={12} className="text-slate-300" />}
                           </div>
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-snug mb-3">{task.title}</h4>
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-snug mb-3 uppercase tracking-tight">{task.title}</h4>
                           <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 pt-3 border-t border-slate-100 dark:border-slate-800/80">
                              <div className="flex items-center gap-2">
                                 <span className={`uppercase px-2 py-1 rounded ${task.priority === 'urgent' ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' : task.priority === 'high' ? 'bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>{priority.label}</span>
