@@ -195,7 +195,7 @@ function ConnectorLayer({ tasks, containerRef }) {
       </defs>
       {paths.map(({ id, d }) => (
         <g key={id}>
-          <path d={d} fill="none" stroke={EDGE_COLOR} strokeWidth="1.5" strokeOpacity="0.4" strokeDasharray="4 4" strokeLinecap="square" markerEnd={`url(#wt-arrow)`} />
+          <path d={d} fill="none" stroke={EDGE_COLOR} strokeWidth="2" strokeOpacity="0.6" strokeDasharray="4 4" strokeLinecap="square" markerEnd={`url(#wt-arrow)`} />
         </g>
       ))}
     </svg>
@@ -234,12 +234,7 @@ export default function WorkflowTree({ tasks }) {
     
     cols.forEach(col => col.sort((a, b) => a.priority.localeCompare(b.priority)));
     
-    const depPairs = [];
-    tasks.forEach(t => (t.blockedBy || []).forEach(bid => {
-      if (tasks.find(x => x.id === bid)) depPairs.push(1);
-    }));
-
-    return { columns: cols, hasDependencies: depPairs.length > 0 };
+    return { columns: cols, hasDependencies: maxD > 0 };
   }, [tasks]);
 
   // Compute Team Metrics
