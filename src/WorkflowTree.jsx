@@ -269,6 +269,7 @@ export default function WorkflowTree({ tasks }) {
       <div className="w-full pt-8 pb-6 shrink-0 z-20 flex justify-center border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111928]">
         <div className="inline-flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 overflow-x-auto max-w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <button
+            id="btn-workflow-view-stages"
             onClick={() => setViewMode('stages')}
             className={`flex items-center justify-center gap-2 w-36 md:w-40 py-2 rounded-md text-xs font-bold transition-all duration-200 flex-shrink-0 ${
               viewMode === 'stages' 
@@ -279,6 +280,7 @@ export default function WorkflowTree({ tasks }) {
             <Layers size={14} /> Stage Overview
           </button>
           <button
+            id="btn-workflow-view-dependency"
             onClick={() => setViewMode('dependency')}
             className={`flex items-center justify-center gap-2 w-36 md:w-40 py-2 rounded-md text-xs font-bold transition-all duration-200 flex-shrink-0 ${
               viewMode === 'dependency' 
@@ -289,6 +291,7 @@ export default function WorkflowTree({ tasks }) {
             <GitBranch size={14} /> Dependency Tree
           </button>
           <button
+            id="btn-workflow-view-team"
             onClick={() => setViewMode('team')}
             className={`flex items-center justify-center gap-2 w-36 md:w-40 py-2 rounded-md text-xs font-bold transition-all duration-200 flex-shrink-0 ${
               viewMode === 'team' 
@@ -318,6 +321,7 @@ export default function WorkflowTree({ tasks }) {
                   
                   return (
                      <button 
+                       id={`btn-workflow-stage-${col.id}`}
                        key={col.id}
                        onClick={() => setActiveId(col.id)}
                        className={`group flex flex-col items-center gap-4 transition-all w-24 md:w-32 ${!isActive ? 'opacity-50 hover:opacity-100' : 'opacity-100'}`}
@@ -540,7 +544,7 @@ export default function WorkflowTree({ tasks }) {
                 className="flex-shrink-0 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xl z-20"
               >
                 <div className="w-[300px] p-6 h-full relative overflow-y-auto">
-                  <button onClick={() => setSelectedTask(null)} className="absolute top-6 right-6 p-1.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors"><X size={14} /></button>
+                  <button id="btn-workflow-close-task-details" onClick={() => setSelectedTask(null)} className="absolute top-6 right-6 p-1.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors"><X size={14} /></button>
                   
                   <div className="mb-6 pr-8">
                      <span className={`inline-block text-[10px] font-bold uppercase tracking-wide mb-2 ${(COLORS[selectedTask.status] || COLORS.todo).text}`}>{STATUS_LABEL[selectedTask.status]}</span>

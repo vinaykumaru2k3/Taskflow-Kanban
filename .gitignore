@@ -50,3 +50,6 @@ ui-debug.log
 
 # Local dev documentation
 /docs/
+
+.Planning-mode.txt
+.Fast-prompt.txt

@@ -95,6 +95,7 @@ const NotificationItem = ({ notification, icon, onMarkAsRead, onDelete, onAction
           {isPendingInvite && (
             <div className="flex items-center gap-2 mt-2.5">
               <button
+                id={`btn-accept-invite-${notification.id}`}
                 onClick={handleAccept}
                 disabled={isActing}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
@@ -107,6 +108,7 @@ const NotificationItem = ({ notification, icon, onMarkAsRead, onDelete, onAction
                 Accept
               </button>
               <button
+                id={`btn-reject-invite-${notification.id}`}
                 onClick={handleReject}
                 disabled={isActing}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 text-slate-600 dark:text-slate-300 hover:text-rose-600 text-xs font-bold rounded-lg transition-all border border-slate-200 dark:border-slate-700 hover:border-rose-200 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -144,6 +146,7 @@ const NotificationItem = ({ notification, icon, onMarkAsRead, onDelete, onAction
       {/* Delete button (X in top-right) */}
       {!isPendingInvite && (
         <button
+          id={`btn-delete-notification-${notification.id}`}
           onClick={(e) => {
             e.stopPropagation();
             onDelete();

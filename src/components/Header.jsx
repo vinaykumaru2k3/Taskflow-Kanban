@@ -77,6 +77,7 @@ const Header = ({
         <div className="flex items-center gap-3 flex-shrink-0">
           {/* Sidebar Toggle */}
           <button 
+            id="btn-toggle-sidebar"
             onClick={() => setShowSidebar(!showSidebar)} 
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300 transition-colors"
             title={showSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
@@ -123,6 +124,7 @@ const Header = ({
           {/* View Mode Switcher */}
           <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1 flex-shrink-0">
             <button 
+              id="btn-view-kanban"
               onClick={() => setViewMode('kanban')} 
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                 viewMode === 'kanban' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300'
@@ -131,6 +133,7 @@ const Header = ({
               <Layers size={14} /> Board
             </button>
             <button 
+              id="btn-view-calendar"
               onClick={() => setViewMode('calendar')} 
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                 viewMode === 'calendar' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300'
@@ -139,6 +142,7 @@ const Header = ({
               <Calendar size={14} /> Calendar
             </button>
             <button 
+              id="btn-view-workflow"
               onClick={() => setViewMode('workflow')} 
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                 viewMode === 'workflow' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300'
@@ -152,6 +156,7 @@ const Header = ({
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input 
+              id="input-search-tasks"
               type="text" 
               placeholder="Search tasks..." 
               className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-transparent rounded-lg text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-900 dark:focus:bg-slate-900 focus:border-slate-300 dark:border-slate-600 dark:focus:border-slate-600 transition-all outline-none" 
@@ -166,6 +171,7 @@ const Header = ({
           {/* Add Task Button (Visible if they have permission) */}
           {currentBoard && canCreate && (
             <button
+              id="btn-create-task"
               onClick={() => handleOpenCreateTask && handleOpenCreateTask()}
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-100 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95 mr-1"
               title="Add a new task"
@@ -178,6 +184,7 @@ const Header = ({
           {/* Team Members Button */}
           {currentBoard && (
             <button
+              id="btn-show-team"
               onClick={onShowTeam}
               className="relative p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition-all"
               title="View team members"
@@ -193,6 +200,7 @@ const Header = ({
 
           {/* Notifications Bell */}
           <button 
+            id="btn-show-notifications"
             onClick={onShowNotifications}
             className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:bg-slate-700 transition-all relative"
             title="Notifications"
@@ -207,6 +215,7 @@ const Header = ({
 
           {/* Theme Toggle Button */}
           <button 
+            id="btn-toggle-theme"
             onClick={toggleTheme}
             className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 dark:text-slate-400 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-700 transition-all"
             title="Toggle theme"
@@ -216,6 +225,7 @@ const Header = ({
 
           {/* Filter Button */}
           <button 
+            id="btn-toggle-filters"
             onClick={() => setShowFilters(!showFilters)} 
             className={`p-2 rounded-lg transition-all ${
               showFilters || hasActiveFilters 
@@ -233,6 +243,7 @@ const Header = ({
           {/* More Menu */}
           <div className="relative" ref={moreMenuRef}>
             <button 
+              id="btn-more-menu"
               onClick={() => setShowMoreMenu(!showMoreMenu)} 
               className={`p-2 rounded-lg transition-all ${
                 showMoreMenu ? 'bg-slate-900 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:bg-slate-700'
@@ -246,6 +257,7 @@ const Header = ({
               <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-2 z-50">
                 {/* Stats */}
                 <button 
+                  id="btn-toggle-stats"
                   onClick={() => { setShowStats(!showStats); setShowMoreMenu(false); }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors"
                 >
@@ -257,6 +269,7 @@ const Header = ({
 
                 {/* Archived Tasks */}
                 <button 
+                  id="btn-show-archived"
                   onClick={() => { setShowArchived(true); setShowMoreMenu(false); }}
                   className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors"
                 >
@@ -289,6 +302,7 @@ const Header = ({
           {/* User Menu */}
           <div className="relative" ref={userMenuRef}>
             <button 
+              id="btn-user-menu"
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 transition-colors"
             >
@@ -309,6 +323,7 @@ const Header = ({
                   <p className="text-xs text-slate-400 truncate">{user?.email}</p>
                 </div>
                 <button 
+                  id="btn-sign-out"
                   onClick={() => { handleSignOut(); setShowUserMenu(false); }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-rose-50 text-rose-600 transition-colors"
                 >
@@ -331,6 +346,7 @@ const Header = ({
             </div>
             {hasActiveFilters && (
               <button 
+                id="btn-reset-filters"
                 onClick={resetFilters}
                 className="flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 dark:text-slate-100 transition-colors"
               >
@@ -344,6 +360,7 @@ const Header = ({
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Priority</label>
               <select 
+                id="select-filter-priority"
                 value={filters.priority}
                 onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-100 focus:border-slate-400 outline-none transition-all cursor-pointer"
@@ -359,6 +376,7 @@ const Header = ({
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Status</label>
               <select 
+                id="select-filter-status"
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-100 focus:border-slate-400 outline-none transition-all cursor-pointer"
@@ -374,6 +392,7 @@ const Header = ({
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Label</label>
               <select 
+                id="select-filter-tag"
                 value={filters.tag || 'all'}
                 onChange={(e) => setFilters({ ...filters, tag: e.target.value })}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-100 focus:border-slate-400 outline-none transition-all cursor-pointer"
@@ -389,6 +408,7 @@ const Header = ({
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sort By</label>
               <select 
+                id="select-filter-sort-by"
                 value={filters.sortBy}
                 onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-100 focus:border-slate-400 outline-none transition-all cursor-pointer"
@@ -403,6 +423,7 @@ const Header = ({
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Order</label>
               <select 
+                id="select-filter-sort-order"
                 value={filters.sortOrder}
                 onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-100 focus:border-slate-400 outline-none transition-all cursor-pointer"

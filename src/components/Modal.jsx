@@ -41,6 +41,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-3xl' }) => 
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h3>
           <button
+            id="btn-close-modal"
             ref={closeButtonRef}
             onClick={onClose}
             // [a11y] Clear label for screen readers

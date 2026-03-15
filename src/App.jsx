@@ -591,6 +591,7 @@ export default function App() {
                       To get started with tracking and prioritizing your tasks, you'll need to create your first board.
                     </p>
                     <button
+                      id="btn-init-first-board"
                       onClick={() => { setEditingBoard(null); setBoardForm({ name: '', color: '#1e293b' }); setShowBoardModal(true); }}
                       className="px-8 py-4 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-bold rounded-xl transition-all shadow-xl shadow-slate-200 dark:shadow-none hover:-translate-y-1 active:scale-95 flex items-center gap-2"
                     >
@@ -679,17 +680,17 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Title</label>
-              <input required disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Task title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} />
+              <input id="input-task-title" required disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Task title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} />
             </div>
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Priority</label>
-              <select disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value})}>
+              <select id="select-task-priority" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value})}>
                 {Object.keys(PRIORITIES).map(p => (<option key={p} value={p}>{PRIORITIES[p].label}</option>))}
               </select>
             </div>
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assignee</label>
-              <select disabled={!canAssign} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.assigneeId || ''} onChange={e => setTaskForm({...taskForm, assigneeId: e.target.value})}>
+              <select id="select-task-assignee" disabled={!canAssign} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.assigneeId || ''} onChange={e => setTaskForm({...taskForm, assigneeId: e.target.value})}>
                 <option value="">Unassigned</option>
                 <option value={user?.uid}>{user?.displayName || user?.email} (You)</option>
                 {teamMembers.map(m => (
@@ -700,11 +701,11 @@ export default function App() {
           </div>
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Description</label>
-            <textarea disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all min-h-[100px] resize-none disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Contextual details..." value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} />
+            <textarea id="textarea-task-desc" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all min-h-[100px] resize-none disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Contextual details..." value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} />
           </div>
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Deadline</label>
-            <input type="date" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.dueDate} onChange={e => setTaskForm({...taskForm, dueDate: e.target.value})} />
+            <input id="input-task-deadline" type="date" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.dueDate} onChange={e => setTaskForm({...taskForm, dueDate: e.target.value})} />
           </div>
           
           {/* Dependencies Section */}
@@ -712,7 +713,7 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Blocked By</label>
-                <select multiple disabled={!canEdit} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed h-40" value={taskForm.blockedBy || []} onClick={e => {
+                <select id="select-task-blocked-by" multiple disabled={!canEdit} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed h-40" value={taskForm.blockedBy || []} onClick={e => {
                   if (e.target.tagName === 'OPTION') {
                     const clickedValue = e.target.value;
                     const current = taskForm.blockedBy || [];
@@ -730,7 +731,7 @@ export default function App() {
               </div>
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Blocks</label>
-                <select multiple disabled={!canEdit} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed h-40" value={taskForm.blocks || []} onClick={e => {
+                <select id="select-task-blocks" multiple disabled={!canEdit} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed h-40" value={taskForm.blocks || []} onClick={e => {
                   if (e.target.tagName === 'OPTION') {
                     const clickedValue = e.target.value;
                     const current = taskForm.blocks || [];
@@ -769,6 +770,7 @@ export default function App() {
                     >
                       {tag.label}
                       <button 
+                        id={`btn-remove-tag-${tag.id}`}
                         type="button"
                         onClick={() => handleRemoveTag(tag.id)}
                         className="hover:opacity-70"
@@ -789,6 +791,7 @@ export default function App() {
                   const isSelected = taskForm.tags?.some(t => t.id === tag.id);
                   return (
                     <button
+                      id={`btn-toggle-tag-${tag.id}`}
                       key={tag.id}
                       type="button"
                       onClick={() => isSelected ? handleRemoveTag(tag.id) : handleAddTag(tag)}
@@ -811,6 +814,7 @@ export default function App() {
                 <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">Create Custom Label</p>
                 <div className="flex gap-2">
                   <input
+                    id="input-custom-tag-name"
                     type="text"
                     placeholder="Label name..."
                     value={customTagInput}
@@ -821,6 +825,7 @@ export default function App() {
                   <div className="flex gap-1">
                     {TAG_COLORS.slice(0, 5).map((color) => (
                       <button
+                        id={`btn-custom-tag-color-${color.id}`}
                         key={color.id}
                         type="button"
                         onClick={() => setCustomTagColor(color.id)}
@@ -832,6 +837,7 @@ export default function App() {
                     ))}
                   </div>
                   <button
+                    id="btn-create-custom-tag"
                     type="button"
                     onClick={handleCreateCustomTag}
                     disabled={!customTagInput.trim()}
@@ -848,7 +854,7 @@ export default function App() {
             <div className="flex items-center justify-between mb-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Checklist</label>
               {canEdit && (
-                <button type="button" onClick={handleAddSubtask} className="text-[10px] font-black text-slate-900 dark:text-slate-100 hover:opacity-70 flex items-center gap-1">
+                <button id="btn-add-subtask" type="button" onClick={handleAddSubtask} className="text-[10px] font-black text-slate-900 dark:text-slate-100 hover:opacity-70 flex items-center gap-1">
                   <Plus size={12} /> Add Item
                 </button>
               )}
@@ -856,12 +862,12 @@ export default function App() {
             <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
               {taskForm.subtasks?.map((sub, idx) => (
                 <div key={sub.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl group/sub border border-transparent hover:border-slate-200 dark:border-slate-700 transition-all">
-                  <button type="button" disabled={!canEdit} onClick={() => canEdit && toggleSubtask(sub.id)} className={`transition-colors ${sub.completed ? 'text-slate-900 dark:text-slate-100' : 'text-slate-300'} ${!canEdit ? 'cursor-default' : ''}`}>
+                  <button id={`btn-toggle-subtask-${sub.id}`} type="button" disabled={!canEdit} onClick={() => canEdit && toggleSubtask(sub.id)} className={`transition-colors ${sub.completed ? 'text-slate-900 dark:text-slate-100' : 'text-slate-300'} ${!canEdit ? 'cursor-default' : ''}`}>
                     {sub.completed ? <CheckCircle2 size={18} strokeWidth={2.5} /> : <Circle size={18} strokeWidth={2.5} />}
                   </button>
-                  <input disabled={!canEdit} className={`flex-1 bg-transparent border-none text-xs font-bold outline-none disabled:cursor-not-allowed ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'}`} value={sub.text} placeholder="Item description..." onChange={(e) => { const updated = [...taskForm.subtasks]; updated[idx].text = e.target.value; setTaskForm({...taskForm, subtasks: updated}); }} />
+                  <input id={`input-subtask-${sub.id}`} disabled={!canEdit} className={`flex-1 bg-transparent border-none text-xs font-bold outline-none disabled:cursor-not-allowed ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'}`} value={sub.text} placeholder="Item description..." onChange={(e) => { const updated = [...taskForm.subtasks]; updated[idx].text = e.target.value; setTaskForm({...taskForm, subtasks: updated}); }} />
                   {canEdit && (
-                    <button type="button" onClick={() => removeSubtask(sub.id)} className="opacity-0 group-hover/sub:opacity-100 text-slate-400 hover:text-rose-500 transition-all">
+                    <button id={`btn-remove-subtask-${sub.id}`} type="button" onClick={() => removeSubtask(sub.id)} className="opacity-0 group-hover/sub:opacity-100 text-slate-400 hover:text-rose-500 transition-all">
                       <Trash2 size={14} />
                     </button>
                   )}
@@ -885,12 +891,12 @@ export default function App() {
           )}
 
           {canEdit ? (
-            <button type="submit" className="w-full bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
+            <button id="btn-submit-task" type="submit" className="w-full bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
               {editingTask ? 'Update Entry' : 'Create Entry'}
               <ChevronRight size={16} />
             </button>
           ) : (
-            <button type="button" onClick={() => { setIsModalOpen(false); setPendingAction(null); }} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2">
+            <button id="btn-close-task-modal" type="button" onClick={() => { setIsModalOpen(false); setPendingAction(null); }} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2">
               Close
             </button>
           )}
@@ -910,6 +916,7 @@ export default function App() {
               <Layers size={14} className="text-slate-300" />
             </div>
             <input 
+              id="input-board-name"
               required 
               autoFocus
               className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-base font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-300 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all" 
@@ -922,7 +929,7 @@ export default function App() {
             </p>
           </div>
           <div className="pt-2">
-            <button type="submit" className="w-full bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
+            <button id="btn-submit-board" type="submit" className="w-full bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
               {editingBoard ? 'Apply Changes' : 'Initialize Board'}
               <ChevronRight size={16} />
             </button>
@@ -946,6 +953,7 @@ export default function App() {
           </p>
           <div className="flex flex-col gap-3">
             <button 
+              id="btn-confirm-delete-board"
               onClick={onConfirmDeleteBoard}
               className="w-full px-4 py-3.5 bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-rose-600 dark:hover:bg-rose-500 hover:text-white dark:hover:text-white text-white font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 group"
             >
@@ -953,6 +961,7 @@ export default function App() {
               <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </button>
             <button 
+              id="btn-cancel-delete-board"
               onClick={() => setDeleteConfirm({ show: false, boardId: null, boardName: '' })}
               className="w-full px-4 py-3 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 dark:text-slate-100 font-bold text-xs uppercase tracking-widest transition-colors"
             >

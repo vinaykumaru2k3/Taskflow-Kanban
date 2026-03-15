@@ -251,12 +251,14 @@ const CommentSection = ({
                 {currentUser?.uid === comment.authorId && (
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
+                      id={`btn-edit-comment-${comment.id}`}
                       onClick={() => startEditing(comment)}
                       className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 rounded text-slate-400 hover:text-slate-600 dark:text-slate-300"
                     >
                       <Edit2 size={12} />
                     </button>
                     <button
+                      id={`btn-delete-comment-${comment.id}`}
                       onClick={() => onDeleteComment(comment.id)}
                       className="p-1 hover:bg-rose-50 rounded text-slate-400 hover:text-rose-500"
                     >
@@ -270,6 +272,7 @@ const CommentSection = ({
               {editingId === comment.id ? (
                 <div className="flex items-center gap-2">
                   <input
+                    id={`input-edit-comment-${comment.id}`}
                     type="text"
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
@@ -277,12 +280,14 @@ const CommentSection = ({
                     autoFocus
                   />
                   <button
+                    id={`btn-save-comment-edit-${comment.id}`}
                     onClick={() => saveEdit(comment.id)}
                     className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
                   >
                     <Check size={14} />
                   </button>
                   <button
+                    id={`btn-cancel-comment-edit-${comment.id}`}
                     onClick={cancelEditing}
                     className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:bg-slate-700"
                   >
@@ -324,6 +329,7 @@ const CommentSection = ({
             
             <div className="flex-1 relative">
               <input
+                id="input-new-comment"
                 type="text"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
@@ -337,6 +343,7 @@ const CommentSection = ({
                 <div className="absolute bottom-full left-0 mb-1 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg overflow-hidden">
                   <div className="p-2 border-b border-slate-100 dark:border-slate-800">
                     <input
+                      id="input-mention-search"
                       type="text"
                       placeholder="Search..."
                       value={mentionSearch}
@@ -348,6 +355,7 @@ const CommentSection = ({
                   <div className="max-h-32 overflow-y-auto">
                     {filteredCollaborators.map((user) => (
                       <button
+                        id={`btn-mention-user-${user.uid}`}
                         key={user.uid}
                         type="button"
                         onClick={() => insertMention(user)}
@@ -367,6 +375,7 @@ const CommentSection = ({
             </div>
             
             <button
+              id="btn-submit-comment"
               type="button"
               onClick={handleSubmit}
               disabled={!newComment.trim() || isSubmitting}

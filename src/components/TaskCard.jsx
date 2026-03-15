@@ -16,6 +16,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
 
   return (
     <div
+      id={`task-card-${task.id}`}
       draggable={!readOnly}
       onDragStart={readOnly ? undefined : (e) => onDragStart(e, task.id)}
       onClick={() => onEdit(task)}
@@ -88,6 +89,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
             <>
               {task.status === 'done' && onArchive && (
                 <button
+                  id={`btn-archive-task-${task.id}`}
                   onClick={(e) => { e.stopPropagation(); onArchive(task.id); }}
                   className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-300 dark:hover:text-slate-300 rounded-lg transition-all"
                   title="Archive task"
@@ -96,7 +98,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
                 </button>
               )}
               {onDelete && (
-                <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-all">
+                <button id={`btn-delete-task-${task.id}`} onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-all">
                   <Trash2 size={14} />
                 </button>
               )}

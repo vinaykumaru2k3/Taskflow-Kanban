@@ -71,6 +71,7 @@ const NotificationPanel = ({
         <div className="flex items-center gap-1">
           {unreadCount > 0 && (
             <button
+              id="btn-mark-all-read"
               onClick={onMarkAllAsRead}
               className="p-1.5 hover:bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
               title="Mark all as read"
@@ -79,6 +80,7 @@ const NotificationPanel = ({
             </button>
           )}
           <button
+            id="btn-close-notifications"
             onClick={onClose}
             className="p-1.5 hover:bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
           >

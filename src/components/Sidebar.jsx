@@ -25,6 +25,7 @@ const Sidebar = ({
             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">My Boards</h2>
           </div>
           <button
+            id="btn-add-board"
             onClick={onAddBoard}
             className="p-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 transition-all shadow-sm active:scale-95"
             title="Create new board"
@@ -40,6 +41,7 @@ const Sidebar = ({
 
             return (
               <div
+                id={`board-item-${board.id}`}
                 key={board.id}
                 className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all border ${
                   isActive
@@ -68,6 +70,7 @@ const Sidebar = ({
 
                 <div className="hidden group-hover:flex items-center gap-0.5">
                   <button
+                    id={`btn-edit-board-${board.id}`}
                     onClick={(e) => { e.stopPropagation(); onEditBoard(board); }}
                     className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     title="Edit board"
@@ -75,6 +78,7 @@ const Sidebar = ({
                     <Edit2 size={12} />
                   </button>
                   <button
+                    id={`btn-delete-board-${board.id}`}
                     onClick={(e) => { e.stopPropagation(); onDeleteBoard(board); }}
                     className="p-1.5 rounded hover:bg-rose-50 dark:hover:bg-rose-900/30 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
                     title="Delete board"
@@ -111,6 +115,7 @@ const Sidebar = ({
 
             return (
               <div
+                id={`shared-board-item-${sharedBoard.id}`}
                 key={sharedBoard.id}
                 className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all border ${
                   isActive

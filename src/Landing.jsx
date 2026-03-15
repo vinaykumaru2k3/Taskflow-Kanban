@@ -193,6 +193,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
           <Logo />
           <div className="flex items-center gap-4 sm:gap-6">
             <button
+              id="btn-login-nav"
               onClick={() => setShowEmailForm(true)}
               className="hidden sm:block text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
@@ -200,6 +201,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
             </button>
             <div className="h-4 w-px bg-slate-300 dark:bg-slate-700 hidden sm:block"></div>
             <button
+              id="btn-start-free-nav"
               onClick={() => setShowEmailForm(true)}
               className="group relative flex items-center justify-center gap-2 px-6 py-2 sm:py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-sm font-bold overflow-hidden transition-transform hover:scale-105 active:scale-95 shadow-none"
             >
@@ -239,8 +241,9 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                     </p>
                   </div>
                   <button 
+                    id="btn-close-auth-modal"
                     onClick={() => { setShowEmailForm(false); setError(''); }}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 transition-colors absolute top-6 right-6"
+                    className="p-2 hover:bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 transition-colors absolute top-6 right-6"
                   >
                     <CheckCircle2 className="rotate-45" size={20} />
                   </button>
@@ -255,6 +258,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input
+                          id="input-auth-name"
                           type="text"
                           required={isSignUp}
                           className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
@@ -273,6 +277,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
+                        id="input-auth-email"
                         type="email"
                         required
                         className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
@@ -290,6 +295,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
+                        id="input-auth-password"
                         type={showPassword ? 'text' : 'password'}
                         required
                         className="w-full pl-10 pr-12 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
@@ -298,6 +304,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                         onChange={(e) => setPassword(e.target.value)}
                       />
                       <button
+                        id="btn-toggle-password-visibility"
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
@@ -323,6 +330,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                   </AnimatePresence>
 
                   <button
+                    id="btn-submit-auth"
                     type="submit"
                     disabled={loading}
                     className="w-full mt-6 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold py-2.5 rounded-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 shadow-sm"
@@ -342,6 +350,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                 </div>
 
                 <button
+                  id="btn-google-signin"
                   onClick={onGoogleSignIn}
                   className="mt-6 w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-all shadow-sm active:scale-[0.98]"
                 >
@@ -358,6 +367,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                 <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
                   {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
                   <button
+                    id="btn-toggle-auth-mode"
                     onClick={() => { setIsSignUp(!isSignUp); setError(''); setName(''); }}
                     className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
                   >
@@ -387,6 +397,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
+                id="btn-hero-start-free"
                 onClick={() => setShowEmailForm(true)}
                 className="w-full sm:w-auto px-8 py-4 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-lg font-semibold transition-all hover:scale-105 active:scale-95 shadow-xl shadow-slate-200 dark:shadow-none flex items-center justify-center gap-2"
               >
@@ -394,6 +405,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                 <ArrowRight size={20} />
               </button>
               <button
+                id="btn-hero-watch-demo"
                 className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl text-lg font-semibold transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm"
               >
                 <Play size={20} className="text-slate-400" fill="currentColor" />
@@ -694,6 +706,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
+              id="btn-cta-start-free"
               onClick={() => setShowEmailForm(true)}
               className="w-full sm:w-auto px-10 py-5 bg-white text-blue-600 hover:bg-slate-50 hover:scale-105 active:scale-95 rounded-xl text-lg font-bold transition-all shadow-xl flex items-center justify-center gap-2"
             >

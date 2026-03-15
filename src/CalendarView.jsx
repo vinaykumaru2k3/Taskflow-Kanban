@@ -92,9 +92,9 @@ const CalendarView = ({ tasks, onTaskClick }) => {
           </div>
 
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-            <button onClick={prevMonth} className="p-1 hover:bg-white dark:bg-slate-900 rounded-md text-slate-600 dark:text-slate-300 transition-all"><ChevronLeft size={16} /></button>
-            <button onClick={goToToday} className="px-3 py-1 text-[9px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-white dark:bg-slate-900 rounded-md transition-all">Today</button>
-            <button onClick={nextMonth} className="p-1 hover:bg-white dark:bg-slate-900 rounded-md text-slate-600 dark:text-slate-300 transition-all"><ChevronRight size={16} /></button>
+            <button id="btn-calendar-prev-month" onClick={prevMonth} className="p-1 hover:bg-white dark:bg-slate-900 rounded-md text-slate-600 dark:text-slate-300 transition-all"><ChevronLeft size={16} /></button>
+            <button id="btn-calendar-today" onClick={goToToday} className="px-3 py-1 text-[9px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-white dark:bg-slate-900 rounded-md transition-all">Today</button>
+            <button id="btn-calendar-next-month" onClick={nextMonth} className="p-1 hover:bg-white dark:bg-slate-900 rounded-md text-slate-600 dark:text-slate-300 transition-all"><ChevronRight size={16} /></button>
           </div>
         </div>
 

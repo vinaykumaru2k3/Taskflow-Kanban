@@ -149,6 +149,7 @@ const TeamPanel = ({
             </div>
           </div>
           <button
+            id="btn-close-team-panel"
             onClick={onClose}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-slate-300 transition-colors"
           >
@@ -162,6 +163,7 @@ const TeamPanel = ({
             <form onSubmit={handleInvite} className="flex gap-2">
               <div className="relative flex-1">
                 <input
+                  id="input-invite-email"
                   type="email"
                   required
                   value={email}
@@ -172,6 +174,7 @@ const TeamPanel = ({
               </div>
               <div className="relative group">
                 <select
+                  id="select-invite-role"
                   value={inviteRole}
                   onChange={e => setInviteRole(e.target.value)}
                   className="appearance-none pl-3 pr-8 py-2 bg-slate-50 dark:bg-slate-800/50 border border-transparent rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-slate-300 dark:focus:border-slate-600 transition-colors cursor-pointer"
@@ -183,6 +186,7 @@ const TeamPanel = ({
                 <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
               <button
+                id="btn-send-invite"
                 type="submit"
                 disabled={sending || !email.trim()}
                 className="flex items-center justify-center w-8 h-8 bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white rounded-xl hover:bg-slate-800 dark:hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-all flex-shrink-0"
@@ -200,6 +204,7 @@ const TeamPanel = ({
             <div className="mt-3 pt-3 flex items-center justify-between">
               <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Share Link</span>
               <button
+                id="btn-copy-invite-link"
                 onClick={copyInviteLink}
                 className="flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
                 title="Copy Board Link"
@@ -276,6 +281,7 @@ const TeamPanel = ({
                               ) : (
                                 <>
                                   <select
+                                    id={`select-member-role-${member.uid}`}
                                     value={member.role}
                                     onChange={e => handleRoleChange(member, e.target.value)}
                                     className={`appearance-none pl-2 pr-4 py-1 text-[9px] uppercase tracking-widest font-black cursor-pointer bg-slate-100 dark:bg-slate-800 rounded-md outline-none transition-all ${rc.cls}`}
@@ -293,6 +299,7 @@ const TeamPanel = ({
 
                           {canRemove && (
                             <button
+                              id={`btn-remove-member-${member.uid}`}
                               onClick={() => setConfirmRemove(member)}
                               disabled={removing}
                               className="p-1.5 text-slate-300 hover:text-rose-500 transition-all disabled:opacity-40"
@@ -330,6 +337,7 @@ const TeamPanel = ({
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
+                      id="radio-reassign-unassign"
                       type="radio"
                       name="reassign"
                       value="unassign"
@@ -341,6 +349,7 @@ const TeamPanel = ({
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
+                      id="radio-reassign-owner"
                       type="radio"
                       name="reassign"
                       value="owner"
@@ -355,12 +364,14 @@ const TeamPanel = ({
 
               <div className="flex gap-2">
                 <button
+                  id="btn-cancel-remove-member"
                   onClick={() => setConfirmRemove(null)}
                   className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
+                  id="btn-confirm-remove-member"
                   onClick={() => handleRemove(confirmRemove)}
                   disabled={removingId === confirmRemove.uid}
                   className="flex-1 px-3 py-2 bg-rose-500 text-white rounded-lg text-xs font-bold hover:bg-rose-600 disabled:opacity-50 transition-colors"

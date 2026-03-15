@@ -26,6 +26,7 @@ const ArchivedTasksModal = ({ isOpen, onClose, tasks, onRestore, onDelete }) => 
             </div>
           </div>
           <button 
+            id="btn-close-archived-modal"
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-300 transition-colors"
           >
@@ -71,6 +72,7 @@ const ArchivedTasksModal = ({ isOpen, onClose, tasks, onRestore, onDelete }) => 
                       {/* Action buttons */}
                       <div className="flex items-center gap-1">
                         <button 
+                          id={`btn-restore-archived-task-${task.id}`}
                           onClick={() => onRestore(task.id)}
                           className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-300 transition-all"
                           title="Restore task"
@@ -78,6 +80,7 @@ const ArchivedTasksModal = ({ isOpen, onClose, tasks, onRestore, onDelete }) => 
                           <RotateCcw size={14} />
                         </button>
                         <button 
+                          id={`btn-delete-archived-task-${task.id}`}
                           onClick={() => onDelete(task.id)}
                           className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg text-slate-400 hover:text-rose-500 transition-all"
                           title="Delete permanently"
@@ -123,6 +126,7 @@ const ArchivedTasksModal = ({ isOpen, onClose, tasks, onRestore, onDelete }) => 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
           <button
+            id="btn-close-archived-modal-footer"
             onClick={onClose}
             className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all"
           >

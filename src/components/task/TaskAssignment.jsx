@@ -86,12 +86,14 @@ const TaskAssignment = ({
             </div>
             <div className="flex items-center gap-1">
               <button
+                id="btn-toggle-assignment-dropdown"
                 onClick={() => setIsOpen(!isOpen)}
                 className="p-1 hover:bg-slate-200 dark:bg-slate-700 rounded transition-colors"
               >
                 <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
               </button>
               <button
+                id="btn-remove-assignment"
                 onClick={() => onRemove()}
                 className="p-1 hover:bg-rose-100 text-slate-400 hover:text-rose-500 rounded transition-colors"
               >
@@ -101,6 +103,7 @@ const TaskAssignment = ({
           </div>
         ) : (
           <button
+            id="btn-open-assignment-dropdown"
             onClick={() => setIsOpen(!isOpen)}
             className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:border-slate-300 dark:border-slate-600 hover:text-slate-500 dark:text-slate-400 transition-colors"
           >
@@ -116,6 +119,7 @@ const TaskAssignment = ({
               <div className="relative">
                 <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
+                  id="input-search-collaborators"
                   type="text"
                   placeholder="Search collaborators..."
                   value={search}
@@ -134,6 +138,7 @@ const TaskAssignment = ({
               ) : (
                 filteredCollaborators.map((collab) => (
                   <button
+                    id={`btn-select-collaborator-${collab.uid}`}
                     key={collab.uid}
                     onClick={() => handleSelect(collab)}
                     className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors"

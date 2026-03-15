@@ -36,6 +36,7 @@ const MobileNav = ({
 
           return (
             <button
+              id={`btn-mobile-nav-${tab.id}`}
               key={tab.id}
               onClick={() => {
                 if (tab.action) {
@@ -73,6 +74,7 @@ const MobileNav = ({
         {/* Center FAB — New Task */}
         {canCreate && currentBoard && (
           <button
+            id="btn-mobile-nav-new-task"
             onClick={onNewTask}
             className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-xl active:scale-90 transition-all min-h-[52px] text-slate-400 dark:text-slate-500"
             aria-label="New task"
