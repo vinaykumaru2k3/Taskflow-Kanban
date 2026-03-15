@@ -19,8 +19,7 @@ import TeamPanel from './components/collaboration/TeamPanel';
 import NotificationPanel from './components/notifications/NotificationPanel';
 import CommentSection from './components/comments/CommentSection';
 import MobileNav from './components/MobileNav';
-import { PWAInstallBanner, PWAUpdateBanner, OfflineToast, OnlineToast } from './components/PWABanners';
-import { usePWA } from './hooks/usePWA';
+
 import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS, ROLES } from './utils/constants';
 import { canCreateTasks, canEditTask } from './lib/permissions';
 import { useAuth } from './hooks/useAuth';
@@ -58,34 +57,10 @@ const defaultFilters = {
 };
 
 export default function App() {
-  // Custom Hooks
   const { user, loading: authLoading, signInWithGoogle, signInWithEmail, signOut } = useAuth();
   const { boards, currentBoard, setCurrentBoard, createBoard, updateBoard, deleteBoard } = useBoards(user);
   const { theme, toggleTheme } = useTheme();
 
-  // ── PWA: install prompt, SW updates, online/offline ───────────────────
-  const {
-    isInstallable,
-    promptInstall,
-    isOnline,
-    hasUpdate,
-    applyUpdate,
-    dismissUpdate,
-  } = usePWA();
-  const [dismissedInstall, setDismissedInstall] = useState(false);
-  const [showOnlineToast, setShowOnlineToast] = useState(false);
-  const prevOnlineRef = useRef(isOnline);
-
-
-  // Show "Back online" toast for 3 seconds whenever connectivity restores
-  useEffect(() => {
-    if (!prevOnlineRef.current && isOnline) {
-      setShowOnlineToast(true);
-      const t = setTimeout(() => setShowOnlineToast(false), 3000);
-      return () => clearTimeout(t);
-    }
-    prevOnlineRef.current = isOnline;
-  }, [isOnline]);
 
   // Collaboration hooks
   const { 
@@ -1022,30 +997,7 @@ export default function App() {
         onReject={rejectInvite}
       />
 
-      {/* ── PWA Install Banner (shown when installable and not dismissed) ── */}
-      {isInstallable && !dismissedInstall && (
-        <PWAInstallBanner
-          onInstall={async () => {
-            const accepted = await promptInstall();
-            if (!accepted) setDismissedInstall(true);
-          }}
-          onDismiss={() => setDismissedInstall(true)}
-        />
-      )}
 
-      {/* ── SW Update Banner ── */}
-      {hasUpdate && (
-        <PWAUpdateBanner
-          onUpdate={applyUpdate}
-          onDismiss={dismissUpdate}
-        />
-      )}
-
-      {/* ── Offline Toast ── */}
-      {!isOnline && <OfflineToast />}
-
-      {/* ── Back Online Toast (auto-fades after 3s via state timer) ── */}
-      {showOnlineToast && <OnlineToast />}
 
     </div>
   );
