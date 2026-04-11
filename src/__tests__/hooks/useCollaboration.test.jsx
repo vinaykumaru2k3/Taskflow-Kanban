@@ -32,6 +32,12 @@ describe('useCollaboration Hook', () => {
     collection.mockReturnValue('mockCollection');
     doc.mockReturnValue('mockDoc');
     query.mockReturnValue('mockQuery');
+    
+    // Default mock for getDoc to prevent undefined "exists" method errors in checkBoardAndCollaborators
+    getDoc.mockResolvedValue({ 
+      exists: () => false,
+      data: () => ({})
+    });
   });
 
   it('should initialize with empty state', () => {
