@@ -594,20 +594,19 @@ export default function App() {
           boards={boards}
           sharedBoards={sharedBoards}
           currentBoard={currentBoard}
-          setCurrentBoard={(b) => { setCurrentBoard(b); setShowSidebar(false); }}
+          setCurrentBoard={(b) => { 
+            setCurrentBoard(b); 
+            if (window.innerWidth < 768) {
+              setShowSidebar(false); 
+            }
+          }}
           onAddBoard={() => { setEditingBoard(null); setBoardForm({ name: '', color: '#1e293b' }); setShowBoardModal(true); }}
           onEditBoard={openEditBoard}
           onDeleteBoard={confirmDeleteBoard}
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative bg-slate-50/30 dark:bg-[#0a0f1c]">
-          {/* Ambient Background Glow (Dark Mode only) */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none hidden dark:block">
-             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] mix-blend-screen" />
-             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-teal-500/10 rounded-full blur-[120px] mix-blend-screen" />
-             <div className="absolute top-[40%] left-[60%] w-[30%] h-[30%] bg-blue-600/5 rounded-full blur-[100px] mix-blend-screen" />
-          </div>
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative bg-slate-50/30 dark:bg-[#09090b]">
 
           <div className="flex-1 flex flex-col min-h-0 relative z-10">
             {/* [mobile] Add bottom padding so content isn't hidden behind the MobileNav */}

@@ -9,6 +9,9 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      colors: {
+        slate: colors.zinc,
+      },
       fontFamily: {
         sans: ['Poppins', 'sans-serif'],
       },

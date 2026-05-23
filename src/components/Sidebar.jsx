@@ -43,7 +43,7 @@ const Sidebar = ({
               <div
                 id={`board-item-${board.id}`}
                 key={board.id}
-                className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all border ${
+                className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-[transform,background-color,border-color] duration-200 hover:translate-x-0.5 border ${
                   isActive
                     ? 'bg-white dark:bg-white/10 border-slate-200/60 dark:border-slate-700/60 shadow-sm text-slate-900 dark:text-white'
                     : 'border-transparent hover:bg-white/60 dark:hover:bg-white/5 hover:border-slate-200/40 dark:hover:border-slate-800/60 text-slate-600 dark:text-slate-400'
@@ -117,10 +117,10 @@ const Sidebar = ({
               <div
                 id={`shared-board-item-${sharedBoard.id}`}
                 key={sharedBoard.id}
-                className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all border ${
+                className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-[transform,background-color,border-color] duration-200 hover:translate-x-0.5 border ${
                   isActive
                     ? 'bg-blue-50/80 dark:bg-blue-500/10 shadow-sm border-blue-100/50 dark:border-blue-500/20 text-blue-900 dark:text-blue-100'
-                    : 'border-transparent hover:bg-white/50 dark:hover:bg-white/5 hover:border-slate-200/40 dark:hover:border-slate-800/60 text-slate-600 dark:text-slate-400'
+                    : 'border-transparent hover:bg-white/60 dark:hover:bg-white/5 hover:border-slate-200/40 dark:hover:border-slate-800/60 text-slate-600 dark:text-slate-400'
                 }`}
                 onClick={() => setCurrentBoard(sharedBoard)}
                 title={`Shared by ${ownerName}`}
@@ -133,7 +133,7 @@ const Sidebar = ({
                   {initials}
                   <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[6px] font-bold border-2 ${
                     isActive
-                      ? 'bg-white dark:bg-[#0f172a] text-blue-600 dark:text-blue-400 border-blue-50 dark:border-[#0f172a]'
+                      ? 'bg-white dark:bg-[#18181b] text-blue-600 dark:text-blue-400 border-blue-50 dark:border-[#18181b]'
                       : 'bg-white dark:bg-slate-900 text-slate-400 border-white dark:border-slate-900'
                   }`}>
                     <Share2 size={6} />

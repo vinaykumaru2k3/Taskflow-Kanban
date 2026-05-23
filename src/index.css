@@ -144,7 +144,7 @@ body.modal-open {
   .dark .backdrop-blur-2xl,
   .dark .backdrop-blur-sm,
   .dark .backdrop-blur-lg {
-    background-color: rgba(15, 23, 42, 0.95);
+    background-color: rgba(24, 24, 27, 0.95);
   }
 }
 
@@ -184,4 +184,19 @@ img {
   height: auto;
   /* [safari] Smooth rendering */
   image-rendering: -webkit-optimize-contrast;
+}
+
+/* ── SVG Connector Flow Animation ── */
+.workflow-connector-flow {
+  animation: workflow-flow-dash 1.8s linear infinite;
+  will-change: stroke-dashoffset;
+}
+
+@keyframes workflow-flow-dash {
+  from {
+    stroke-dashoffset: 8;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }

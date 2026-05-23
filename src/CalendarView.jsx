@@ -213,7 +213,7 @@ const CalendarView = ({ tasks, onTaskClick }) => {
                     onTaskClick(task);
                     setSelectedDay(null);
                   }}
-                  className="group relative bg-white dark:bg-[#111928] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer overflow-hidden flex flex-col gap-3"
+                  className="group relative bg-white dark:bg-[#18181b] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer overflow-hidden flex flex-col gap-3"
                 >
                   <div className="flex justify-between items-start">
                     <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 pr-4">{task.title}</h4>

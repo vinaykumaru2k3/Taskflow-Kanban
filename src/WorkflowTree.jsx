@@ -195,7 +195,7 @@ function ConnectorLayer({ tasks, containerRef }) {
       </defs>
       {paths.map(({ id, d }) => (
         <g key={id}>
-          <path d={d} fill="none" stroke={EDGE_COLOR} strokeWidth="2" strokeOpacity="0.6" strokeDasharray="4 4" strokeLinecap="square" markerEnd={`url(#wt-arrow)`} />
+          <path className="workflow-connector-flow" d={d} fill="none" stroke={EDGE_COLOR} strokeWidth="2" strokeOpacity="0.6" strokeDasharray="4 4" strokeLinecap="square" markerEnd={`url(#wt-arrow)`} />
         </g>
       ))}
     </svg>
@@ -263,10 +263,10 @@ export default function WorkflowTree({ tasks }) {
 
 
   return (
-    <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-[#0f1115] relative overflow-hidden animate-in fade-in duration-300">
+    <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-[#09090b] relative overflow-hidden animate-in fade-in duration-300">
       
       {/* ── Top View Toggle ── */}
-      <div className="w-full pt-8 pb-6 shrink-0 z-20 flex justify-center border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111928]">
+      <div className="w-full pt-8 pb-6 shrink-0 z-20 flex justify-center border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#18181b]">
         <div className="inline-flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 overflow-x-auto max-w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <button
             id="btn-workflow-view-stages"
@@ -418,7 +418,7 @@ export default function WorkflowTree({ tasks }) {
                                   return (
                                     <div 
                                       key={task.id} 
-                                      className={`group flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-[#111928] border border-slate-200 dark:border-slate-800 border-l-4 ${theme} hover:shadow-md transition-all duration-200`}
+                                      className={`group flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-[#18181b] border border-slate-200 dark:border-slate-800 border-l-4 ${theme} hover:shadow-md transition-all duration-200`}
                                     >
                                       <div className="flex items-start justify-between gap-3">
                                         <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{task.title}</h4>
@@ -456,7 +456,7 @@ export default function WorkflowTree({ tasks }) {
           Dependency Tree View
       ────────────────────────────────────────────────────────────────*/}
       {viewMode === 'dependency' && (
-        <div className="flex-1 flex overflow-hidden min-h-0 relative z-10 bg-slate-50/50 dark:bg-[#0f1115]">
+        <div className="flex-1 flex overflow-hidden min-h-0 relative z-10 bg-slate-50/50 dark:bg-[#09090b]">
           {tasks.length === 0 ? (
             <div className="w-full flex items-center justify-center flex-col gap-3 opacity-60">
               <GitBranch size={32} className="text-slate-400" />
@@ -504,7 +504,7 @@ export default function WorkflowTree({ tasks }) {
                           key={task.id}
                           data-task-id={task.id}
                           onClick={() => setSelectedTask(isSelected ? null : task)}
-                          className={`relative w-full rounded-xl border-l-4 ${theme} border ${isSelected ? 'border-slate-800 dark:border-slate-300 ring-1 ring-slate-800 dark:ring-slate-300 shadow-md' : 'border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600'} bg-white dark:bg-[#111928] p-4 cursor-pointer transition-all flex-shrink-0`}
+                          className={`relative w-full rounded-xl border-l-4 ${theme} border ${isSelected ? 'border-slate-800 dark:border-slate-300 ring-1 ring-slate-800 dark:ring-slate-300 shadow-md' : 'border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600'} bg-white dark:bg-[#18181b] p-4 cursor-pointer transition-all flex-shrink-0`}
                         >
                           <div className="flex justify-between items-center mb-2">
                              <span className={`text-[10px] font-bold uppercase tracking-wide ${sc.text}`}>{STATUS_LABEL[task.status]}</span>
@@ -577,7 +577,7 @@ export default function WorkflowTree({ tasks }) {
               const todoPct = user.total > 0 ? Math.round((user.tasks['todo'] / user.total) * 100) : 0;
               
               return (
-                <div key={user.id} className="bg-white dark:bg-[#111928] border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+                <div key={user.id} className="bg-white dark:bg-[#18181b] border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
                   <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
                       {user.avatar ? (

@@ -25,7 +25,7 @@ const MobileNav = ({
   return (
     // [safari/ios] safe-area-inset-bottom ensures the nav clears the home indicator
     <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/90 dark:bg-[#0a0f1c]/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-slate-800/60"
+      className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/90 dark:bg-[#09090b]/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-slate-800/60"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       aria-label="Mobile navigation"
     >

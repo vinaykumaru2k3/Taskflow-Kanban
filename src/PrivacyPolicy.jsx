@@ -47,7 +47,7 @@ export default function PrivacyPolicy({ onBack }) {
         </button>
       )}
       
-      <div className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 md:p-12 shadow-sm relative overflow-hidden">
+      <div className="bg-white dark:bg-[#18181b] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 md:p-12 shadow-sm relative overflow-hidden">
         {/* Glow effect */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
         
@@ -70,7 +70,7 @@ export default function PrivacyPolicy({ onBack }) {
 
       <div className="space-y-4">
         {SECTIONS.map((section, idx) => (
-          <div key={idx} className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-6 md:p-8 shadow-sm">
+          <div key={idx} className="bg-white dark:bg-[#18181b] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-6 md:p-8 shadow-sm">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-md flex-shrink-0">
                 <section.icon size={20} />

@@ -13,7 +13,7 @@ export default function Support({ onBack }) {
           Back to Board
         </button>
       )}
-      <div className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 md:p-12 shadow-sm relative overflow-hidden text-center">
+      <div className="bg-white dark:bg-[#18181b] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 md:p-12 shadow-sm relative overflow-hidden text-center">
         {/* Glow effect */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
         
@@ -32,7 +32,7 @@ export default function Support({ onBack }) {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Support Form */}
-        <div className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 shadow-sm">
+        <div className="bg-white dark:bg-[#18181b] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 shadow-sm">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
             <MessageCircle size={20} className="text-slate-400" />
             Send a Request
@@ -63,7 +63,7 @@ export default function Support({ onBack }) {
 
         {/* Contact info */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 shadow-sm group hover:-translate-y-1 transition-all hover:border-blue-500/30">
+          <div className="bg-white dark:bg-[#18181b] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 shadow-sm group hover:-translate-y-1 transition-all hover:border-blue-500/30">
             <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4">
               <Mail size={20} />
             </div>
@@ -74,7 +74,7 @@ export default function Support({ onBack }) {
             <a href="mailto:support@taskflow.dev" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">support@taskflow.dev</a>
           </div>
 
-          <div className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 shadow-sm group hover:-translate-y-1 transition-all hover:border-amber-500/30">
+          <div className="bg-white dark:bg-[#18181b] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 shadow-sm group hover:-translate-y-1 transition-all hover:border-amber-500/30">
             <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
               <AlertTriangle size={20} />
             </div>

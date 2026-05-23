@@ -176,7 +176,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
   return (
     // [safari/mobile] Use min-h-svh (small viewport height) which excludes browser chrome.
     // Falls back to min-h-screen for non-supporting browsers.
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0a0f1c] selection:bg-blue-500/30 font-sans overflow-x-hidden transition-colors duration-300"
+    <div className="min-h-screen bg-slate-50 dark:bg-[#09090b] selection:bg-blue-500/30 font-sans overflow-x-hidden transition-colors duration-300"
       style={{ minHeight: '100svh' }}
     >
       
@@ -189,7 +189,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
 
       {/* Floating Glassmorphic Header */}
       <header className="fixed top-4 sm:top-6 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
-        <div className="pointer-events-auto w-full max-w-5xl flex items-center justify-between px-5 sm:px-6 py-3 rounded-2xl bg-white/70 dark:bg-[#0f172a]/70 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/50 shadow-2xl shadow-slate-200/20 dark:shadow-none transition-all duration-300">
+        <div className="pointer-events-auto w-full max-w-5xl flex items-center justify-between px-5 sm:px-6 py-3 rounded-2xl bg-white/70 dark:bg-[#18181b]/70 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/50 shadow-2xl shadow-slate-200/20 dark:shadow-none transition-all duration-300">
           <Logo />
           <div className="flex items-center gap-4 sm:gap-6">
             <button
@@ -222,13 +222,13 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-[#0a0f1c]/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-[#09090b]/80 backdrop-blur-sm"
           >
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative"
+              className="bg-white dark:bg-[#18181b] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative"
             >
               <div className="p-8">
                 <div className="flex items-center justify-between mb-8">
@@ -381,7 +381,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
       </AnimatePresence>
 
       {/* Hero Section */}
-      <main className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 lg:pb-32 bg-slate-50 dark:bg-[#0a0f1c]">
+      <main className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 lg:pb-32 bg-slate-50 dark:bg-[#09090b]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <FadeIn delay={0.1}>
             <h1 className="text-5xl sm:text-6xl lg:text-8xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.1] mb-6 max-w-5xl mx-auto mt-6">
@@ -419,11 +419,11 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
 
           {/* Product Dashboard Preview (Mockup) */}
           <FadeIn delay={0.3} className="mt-20 sm:mt-24 relative max-w-6xl mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent dark:from-[#0a0f1c] z-10 sm:h-auto sm:bottom-0 h-2/3 bottom-0" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent dark:from-[#09090b] z-10 sm:h-auto sm:bottom-0 h-2/3 bottom-0" />
             
             <div className="relative rounded-2xl sm:rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xl overflow-hidden will-change-transform">
               {/* Fake Browser Title Bar */}
-              <div className="h-12 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#0a0f1c] flex items-center px-4 gap-2">
+              <div className="h-12 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#09090b] flex items-center px-4 gap-2">
                 <div className="flex gap-1.5 pl-2">
                   <div className="w-3 h-3 rounded-full bg-red-400" />
                   <div className="w-3 h-3 rounded-full bg-amber-400" />
@@ -435,7 +435,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
               </div>
               
               {/* Mock App Body */}
-              <div className="p-4 sm:p-6 bg-slate-50/50 dark:bg-[#0a0f1c] grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-6 min-h-[400px]">
+              <div className="p-4 sm:p-6 bg-slate-50/50 dark:bg-[#09090b] grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-6 min-h-[400px]">
                 {/* Mock Column 1 */}
                 <div className="hidden sm:flex flex-col gap-3">
                   <div className="flex items-center justify-between mb-2">
@@ -443,7 +443,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                     <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs px-2 py-0.5 rounded-full">3</span>
                   </div>
                   <StaggerItem>
-                    <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800/80">
+                    <div className="bg-white dark:bg-[#18181b] p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800/80">
                       <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-700/60 rounded mb-3"></div>
                       <div className="h-3 w-1/2 bg-slate-100 dark:bg-slate-800 rounded mb-4"></div>
                       <div className="flex justify-between items-center">
@@ -453,7 +453,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                     </div>
                   </StaggerItem>
                   <StaggerItem>
-                    <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800/80">
+                    <div className="bg-white dark:bg-[#18181b] p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800/80">
                       <div className="h-4 w-5/6 bg-slate-200 dark:bg-slate-700 rounded mb-3"></div>
                       <div className="flex justify-between items-center mt-4">
                         <div className="h-6 w-20 bg-rose-100 dark:bg-rose-900/30 rounded"></div>
@@ -469,7 +469,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                     <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 text-xs px-2 py-0.5 rounded-full">2</span>
                   </div>
                   <StaggerItem>
-                    <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl shadow-md border-2 border-blue-500/20 dark:border-blue-500/30 transform sm:-rotate-2 sm:scale-105 transition-transform z-10">
+                    <div className="bg-white dark:bg-[#18181b] p-4 rounded-xl shadow-md border-2 border-blue-500/20 dark:border-blue-500/30 transform sm:-rotate-2 sm:scale-105 transition-transform z-10">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Design Team</span>
@@ -481,8 +481,8 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                       </div>
                       <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800">
                         <div className="flex -space-x-2">
-                          <div className="h-7 w-7 rounded-full bg-blue-100 border-2 border-white dark:border-[#0f172a] z-20 flex items-center justify-center text-[10px] font-bold text-blue-700">SK</div>
-                          <div className="h-7 w-7 rounded-full bg-amber-100 border-2 border-white dark:border-[#0f172a] z-10 flex items-center justify-center text-[10px] font-bold text-amber-700">JD</div>
+                          <div className="h-7 w-7 rounded-full bg-blue-100 border-2 border-white dark:border-[#18181b] z-20 flex items-center justify-center text-[10px] font-bold text-blue-700">SK</div>
+                          <div className="h-7 w-7 rounded-full bg-amber-100 border-2 border-white dark:border-[#18181b] z-10 flex items-center justify-center text-[10px] font-bold text-amber-700">JD</div>
                         </div>
                         <div className="flex items-center gap-1 text-slate-400">
                           <MessageSquare size={14} />
@@ -498,14 +498,14 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                    <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Review</span>
                    </div>
-                   <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800/80 h-32"></div>
+                   <div className="bg-white dark:bg-[#18181b] p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800/80 h-32"></div>
                 </div>
                 <div className="hidden sm:flex flex-col gap-3 opacity-30">
                    <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Done</span>
                    </div>
-                   <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800/80 h-24"></div>
-                   <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800/80 h-28"></div>
+                   <div className="bg-white dark:bg-[#18181b] p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800/80 h-24"></div>
+                   <div className="bg-white dark:bg-[#18181b] p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800/80 h-28"></div>
                 </div>
               </div>
             </div>
@@ -514,7 +514,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
       </main>
 
       {/* Logos Section */}
-      <section className="py-10 border-y border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-[#0a0f1c]">
+      <section className="py-10 border-y border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-[#09090b]">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-sm font-semibold text-slate-400 dark:text-slate-500 mb-6 uppercase tracking-wider">Powering next-gen teams</p>
           <div className="flex flex-wrap justify-center items-center gap-8 sm:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500 dark:opacity-40">
@@ -528,7 +528,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
       </section>
 
       {/* Features Section - Colored Base */}
-      <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-blue-50/50 dark:bg-[#0f172a]/50 relative z-10">
+      <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-blue-50/50 dark:bg-[#18181b]/50 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-24">
             <FadeIn>
@@ -558,7 +558,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                     </p>
                   </div>
                   {/* Hover gradient effect backing */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-white dark:from-[#0f172a] dark:to-[#0a0f1c] opacity-0 group-hover:opacity-100 transition-opacity z-0 pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-white dark:from-[#18181b] dark:to-[#09090b] opacity-0 group-hover:opacity-100 transition-opacity z-0 pointer-events-none" />
                 </div>
               </StaggerItem>
             ))}
@@ -567,12 +567,12 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
       </section>
 
       {/* Value Proposition / UI Detail */}
-      <section className="py-24 border-t border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-[#0a0f1c] overflow-hidden">
+      <section className="py-24 border-t border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-[#09090b] overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <FadeIn direction="right">
               <div className="max-w-lg">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center mb-6 text-white text-xl font-bold border-4 border-indigo-50 dark:border-[#0a0f1c] shadow-lg">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center mb-6 text-white text-xl font-bold border-4 border-indigo-50 dark:border-[#09090b] shadow-lg">
                   1
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-6 leading-tight">
@@ -610,7 +610,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
               
               <div className="relative z-10 grid gap-6">
                 <div 
-                  className="bg-white dark:bg-[#0f172a] p-6 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 transform md:-rotate-3 md:translate-x-12 translate-x-4 hover:scale-[1.02] hover:border-blue-500/30 transition-all duration-300 z-10 hover:z-20"
+                  className="bg-white dark:bg-[#18181b] p-6 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 transform md:-rotate-3 md:translate-x-12 translate-x-4 hover:scale-[1.02] hover:border-blue-500/30 transition-all duration-300 z-10 hover:z-20"
                 >
                   <div className="flex items-start gap-4">
                     <img src="https://i.pravatar.cc/150?u=sarah" alt="User" className="w-10 h-10 rounded-full bg-slate-200" />
@@ -623,7 +623,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                 </div>
                 
                 <div 
-                  className="bg-white dark:bg-[#0f172a] p-6 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 transform md:rotate-2 md:-translate-x-8 hover:scale-[1.02] hover:border-blue-500/30 transition-all duration-300 z-10 hover:z-20"
+                  className="bg-white dark:bg-[#18181b] p-6 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 transform md:rotate-2 md:-translate-x-8 hover:scale-[1.02] hover:border-blue-500/30 transition-all duration-300 z-10 hover:z-20"
                 >
                   <div className="flex justify-between items-center mb-4">
                     <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Task Assigned</h4>
@@ -644,7 +644,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-[#0F172A]">
+      <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-[#18181b]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <FadeIn>
@@ -656,7 +656,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
           <StaggerContainer className="grid md:grid-cols-3 gap-6 sm:gap-8">
             {testimonials.map((test, index) => (
               <StaggerItem key={index}>
-                <div className="bg-white dark:bg-[#0a0f1c] p-8 rounded-3xl border border-slate-200/60 dark:border-slate-800 shadow-sm h-full flex flex-col justify-between hover:-translate-y-1 transition-transform group hover:border-slate-300 dark:hover:border-slate-600">
+                <div className="bg-white dark:bg-[#09090b] p-8 rounded-3xl border border-slate-200/60 dark:border-slate-800 shadow-sm h-full flex flex-col justify-between hover:-translate-y-1 transition-transform group hover:border-slate-300 dark:hover:border-slate-600">
                   <div>
                     <div className="flex gap-1 text-amber-400 mb-6">
                       <Star size={16} fill="currentColor" />
@@ -718,7 +718,7 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a0f1c]">
+      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#09090b]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <Logo size="text-lg" />

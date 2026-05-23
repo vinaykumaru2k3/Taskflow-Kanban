@@ -7,11 +7,19 @@ const Toast = ({ message, type = 'error', onClose }) => {
     return () => clearTimeout(timer);
   }, [onClose]);
 
-  const bgStyle = type === 'success' 
-    ? 'bg-emerald-600 dark:bg-emerald-950 border-emerald-500 text-white dark:text-emerald-300 shadow-emerald-500/10' 
+  const containerStyle = 'bg-white/95 dark:bg-zinc-900/95 text-slate-800 dark:text-zinc-100 border-slate-200/80 dark:border-zinc-800 shadow-xl shadow-slate-100/40 dark:shadow-zinc-950/65';
+  
+  const accentBorder = type === 'success' 
+    ? 'border-l-4 border-l-emerald-500' 
     : type === 'warning'
-    ? 'bg-amber-600 dark:bg-amber-950 border-amber-500 text-white dark:text-amber-300 shadow-amber-500/10'
-    : 'bg-rose-600 dark:bg-rose-950 border-rose-500 text-white dark:text-rose-300 shadow-rose-500/10';
+    ? 'border-l-4 border-l-amber-500'
+    : 'border-l-4 border-l-rose-500';
+
+  const iconColor = type === 'success' 
+    ? 'text-emerald-500' 
+    : type === 'warning'
+    ? 'text-amber-500'
+    : 'text-rose-500';
 
   const Icon = type === 'success' 
     ? CheckCircle2 
@@ -20,10 +28,10 @@ const Toast = ({ message, type = 'error', onClose }) => {
     : AlertCircle;
 
   return (
-    <div className={`flex items-center gap-3 px-4 py-3.5 border rounded-xl shadow-xl backdrop-blur-md animate-in slide-in-from-bottom-5 fade-in duration-300 ${bgStyle}`}>
-      <Icon size={16} className="flex-shrink-0" />
+    <div className={`flex items-center gap-3 pl-3 pr-4 py-3.5 border rounded-xl backdrop-blur-md animate-in slide-in-from-bottom-5 fade-in duration-300 ${containerStyle} ${accentBorder}`}>
+      <Icon size={16} className={`flex-shrink-0 ${iconColor}`} />
       <span className="text-xs font-bold flex-1 leading-snug">{message}</span>
-      <button onClick={onClose} className="hover:opacity-75 p-0.5 rounded transition-all active:scale-90 flex-shrink-0">
+      <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-0.5 rounded transition-all active:scale-90 flex-shrink-0">
         <X size={14} />
       </button>
     </div>

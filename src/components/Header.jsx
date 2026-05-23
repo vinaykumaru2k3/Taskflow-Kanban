@@ -69,7 +69,7 @@ const Header = ({
   return (
     // [safari] position: sticky with -webkit-sticky prefix for older Safari versions
     <header
-      className="bg-white/80 dark:bg-[#0a0f1c]/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/60 px-4 md:px-6 lg:px-8 py-3 sticky top-0 z-40 transition-colors duration-300"
+      className="bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/60 px-4 md:px-6 lg:px-8 py-3 sticky top-0 z-40 transition-colors duration-300"
       style={{ position: '-webkit-sticky', top: 0 }}
     >
       <div className="flex items-center justify-between gap-4">
