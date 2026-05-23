@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { 
   collection, 
   query, 
+  where,
   orderBy, 
   onSnapshot, 
   addDoc, 
   updateDoc, 
   deleteDoc, 
   doc, 
+  getDocs,
+  writeBatch,
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -81,9 +84,46 @@ export const useBoards = (user) => {
   const deleteBoard = async (boardId) => {
     if (!user) return;
     try {
-      await deleteDoc(doc(db, 'users', user.uid, 'boards', boardId));
+      const batch = writeBatch(db);
+
+      // 1. Delete the board document
+      batch.delete(doc(db, 'users', user.uid, 'boards', boardId));
+
+      // 2. Query and delete all tasks associated with this board (from owner's tasks subcollection)
+      const tasksQuery = query(
+        collection(db, 'users', user.uid, 'tasks'),
+        where('boardId', '==', boardId)
+      );
+      const tasksSnap = await getDocs(tasksQuery);
+      tasksSnap.forEach((taskDoc) => {
+        batch.delete(taskDoc.ref);
+      });
+
+      // 3. Query and delete all comments associated with this board
+      const commentsQuery = query(
+        collection(db, 'comments'),
+        where('boardId', '==', boardId)
+      );
+      const commentsSnap = await getDocs(commentsQuery);
+      commentsSnap.forEach((commentDoc) => {
+        batch.delete(commentDoc.ref);
+      });
+
+      // 4. Query and delete all members in boards/{boardId}/members
+      const membersQuery = collection(db, 'boards', boardId, 'members');
+      const membersSnap = await getDocs(membersQuery);
+      membersSnap.forEach((memberDoc) => {
+        const memberUid = memberDoc.id;
+        if (memberUid !== user.uid) {
+          batch.delete(doc(db, 'users', memberUid, 'sharedBoards', boardId));
+        }
+        batch.delete(memberDoc.ref);
+      });
+
+      await batch.commit();
+      console.log(`Cascading delete successful for board: ${boardId}`);
     } catch (err) {
-      console.error('Error deleting board:', err);
+      console.error('Error cascading delete board:', err);
       throw err;
     }
   };

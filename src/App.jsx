@@ -13,7 +13,9 @@ const Support       = lazy(() => import('./Support'));
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import KanbanBoard from './components/KanbanBoard';
-import Modal from './components/Modal';
+import TaskModal from './components/modals/TaskModal';
+import BoardModal from './components/modals/BoardModal';
+import DeleteBoardModal from './components/modals/DeleteBoardModal';
 import ArchivedTasksModal from './components/ArchivedTasksModal';
 import TeamPanel from './components/collaboration/TeamPanel';
 import NotificationPanel from './components/notifications/NotificationPanel';
@@ -29,6 +31,8 @@ import { useCollaboration } from './hooks/useCollaboration';
 import { useNotifications } from './hooks/useNotifications';
 import { useComments } from './hooks/useComments';
 import { useTheme } from './hooks/useTheme';
+import { hasDependencyCycle } from './utils/dependencyValidation';
+import Toast from './components/Toast';
 
 // [perf] Generic debounce hook to throttle expensive handlers (search, resize)
 function useDebounce(value, delay) {
@@ -58,6 +62,27 @@ const defaultFilters = {
 
 export default function App() {
   const { user, loading: authLoading, signInWithGoogle, signInWithEmail, signOut } = useAuth();
+  
+  // Toast notifications state
+  const [toasts, setToasts] = useState([]);
+  
+  const addToast = useCallback((message, type = 'error') => {
+    const id = Date.now() + Math.random().toString();
+    setToasts(prev => [...prev, { id, message, type }]);
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  useEffect(() => {
+    window.showToast = (message, type = 'error') => {
+      addToast(message, type);
+    };
+    return () => {
+      delete window.showToast;
+    };
+  }, [addToast]);
   const { boards, currentBoard, setCurrentBoard, createBoard, updateBoard, deleteBoard } = useBoards(user);
   const { theme, toggleTheme } = useTheme();
 
@@ -243,6 +268,13 @@ export default function App() {
     e.preventDefault();
     if (!canEdit) return; // viewers cannot save
     if (!taskForm.title.trim()) return;
+    
+    // Check for dependency cycles before saving
+    if (hasDependencyCycle(tasks, editingTask, taskForm.blockedBy, taskForm.blocks)) {
+      window.showToast("Error: Saving this task would create a circular dependency cycle. Please resolve the cycle before saving.", "error");
+      return;
+    }
+
     try {
       let assigneeData = { assigneeId: null, assigneeName: null, assigneeAvatar: null };
       if (taskForm.assigneeId) {
@@ -433,7 +465,7 @@ export default function App() {
       setShowNotifications(false);
     } catch (err) {
       console.error('Failed to accept invite:', err);
-      alert('Failed to accept invite: ' + (err.message || 'Unknown error'));
+      window.showToast?.('Failed to accept invite: ' + (err.message || 'Unknown error'), 'error');
     }
   };
 
@@ -667,309 +699,52 @@ export default function App() {
         currentBoard={currentBoard}
       />
 
-      {/* Task Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTask(null); }} title={editingTask ? (canEdit ? 'Update Entry' : 'View Entry') : 'New Entry'}>
-        <form onSubmit={handleSaveTask} className="space-y-5">
-          {/* Read-only notice for viewers */}
-          {!canEdit && (
-            <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
-              <Eye size={14} className="text-slate-400 flex-shrink-0" />
-              <p className="text-xs font-bold text-slate-400">You have <span className="text-slate-600 dark:text-slate-300">Viewer</span> access — this board is read-only.</p>
-            </div>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Title</label>
-              <input id="input-task-title" required disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-semibold text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Task title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Priority</label>
-              <select id="select-task-priority" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value})}>
-                {Object.keys(PRIORITIES).map(p => (<option key={p} value={p}>{PRIORITIES[p].label}</option>))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assignee</label>
-              <select id="select-task-assignee" disabled={!canAssign} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.assigneeId || ''} onChange={e => setTaskForm({...taskForm, assigneeId: e.target.value})}>
-                <option value="">Unassigned</option>
-                <option value={user?.uid}>{user?.displayName || user?.email} (You)</option>
-                {teamMembers.map(m => (
-                  <option key={m.uid} value={m.uid}>{m.displayName || m.email}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Description</label>
-            <textarea id="textarea-task-desc" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all min-h-[100px] resize-none disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Contextual details..." value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} />
-          </div>
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Deadline</label>
-            <input id="input-task-deadline" type="date" disabled={!canEdit} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed" value={taskForm.dueDate} onChange={e => setTaskForm({...taskForm, dueDate: e.target.value})} />
-          </div>
-          
-          {/* Dependencies Section */}
-          {canEdit && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Blocked By</label>
-                <select id="select-task-blocked-by" multiple disabled={!canEdit} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed h-40" value={taskForm.blockedBy || []} onClick={e => {
-                  if (e.target.tagName === 'OPTION') {
-                    const clickedValue = e.target.value;
-                    const current = taskForm.blockedBy || [];
-                    const newValue = current.includes(clickedValue) 
-                      ? current.filter(id => id !== clickedValue) 
-                      : [...current, clickedValue];
-                    setTaskForm({...taskForm, blockedBy: newValue});
-                  }
-                }}>
-                  {filteredTasks.filter(t => t.id !== editingTask).map(t => (
-                    <option key={t.id} value={t.id}>{t.title}</option>
-                  ))}
-                </select>
-                <p className="text-[9px] text-slate-400 mt-1">Click to select/deselect tasks</p>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Blocks</label>
-                <select id="select-task-blocks" multiple disabled={!canEdit} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed h-40" value={taskForm.blocks || []} onClick={e => {
-                  if (e.target.tagName === 'OPTION') {
-                    const clickedValue = e.target.value;
-                    const current = taskForm.blocks || [];
-                    const newValue = current.includes(clickedValue) 
-                      ? current.filter(id => id !== clickedValue) 
-                      : [...current, clickedValue];
-                    setTaskForm({...taskForm, blocks: newValue});
-                  }
-                }}>
-                  {filteredTasks.filter(t => t.id !== editingTask).map(t => (
-                    <option key={t.id} value={t.id}>{t.title}</option>
-                  ))}
-                </select>
-                <p className="text-[9px] text-slate-400 mt-1">Click to select/deselect tasks</p>
-              </div>
-            </div>
-          )}
-          
-          {/* Tags Section */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Tag size={12} /> Labels
-              </label>
-            </div>
-            
-            {/* Selected Tags */}
-            {taskForm.tags && taskForm.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {taskForm.tags.map((tag, idx) => {
-                  const color = TAG_COLORS.find(c => c.id === tag.colorId) || TAG_COLORS[0];
-                  return (
-                    <span 
-                      key={idx} 
-                      className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md border ${color.bg} ${color.text} ${color.border}`}
-                    >
-                      {tag.label}
-                      <button 
-                        id={`btn-remove-tag-${tag.id}`}
-                        type="button"
-                        onClick={() => handleRemoveTag(tag.id)}
-                        className="hover:opacity-70"
-                      >
-                        <X size={10} />
-                      </button>
-                    </span>
-                  );
-                })}
-              </div>
-            )}
-            
-            {/* Tag Selector — hidden for viewers */}
-            {canEdit && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {DEFAULT_TAGS.map((tag) => {
-                  const color = TAG_COLORS.find(c => c.id === tag.colorId) || TAG_COLORS[0];
-                  const isSelected = taskForm.tags?.some(t => t.id === tag.id);
-                  return (
-                    <button
-                      id={`btn-toggle-tag-${tag.id}`}
-                      key={tag.id}
-                      type="button"
-                      onClick={() => isSelected ? handleRemoveTag(tag.id) : handleAddTag(tag)}
-                      className={`text-[10px] font-bold px-2.5 py-1 rounded-md border transition-all ${
-                        isSelected 
-                          ? `${color.bg} ${color.text} ${color.border} ring-2 ring-offset-1 ring-slate-400` 
-                          : `bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:border-slate-600`
-                      }`}
-                    >
-                      {tag.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            
-            {/* Custom Tag Creator — hidden for viewers */}
-            {canEdit && (
-              <div className="border-t border-slate-100 dark:border-slate-800 pt-3 mt-3">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">Create Custom Label</p>
-                <div className="flex gap-2">
-                  <input
-                    id="input-custom-tag-name"
-                    type="text"
-                    placeholder="Label name..."
-                    value={customTagInput}
-                    onChange={(e) => setCustomTagInput(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-100 focus:border-slate-400 outline-none transition-all"
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleCreateCustomTag())}
-                  />
-                  <div className="flex gap-1">
-                    {TAG_COLORS.slice(0, 5).map((color) => (
-                      <button
-                        id={`btn-custom-tag-color-${color.id}`}
-                        key={color.id}
-                        type="button"
-                        onClick={() => setCustomTagColor(color.id)}
-                        className={`w-6 h-6 rounded-md ${color.bg} border-2 transition-all ${
-                          customTagColor === color.id ? color.border : 'border-transparent'
-                        }`}
-                        title={color.id}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    id="btn-create-custom-tag"
-                    type="button"
-                    onClick={handleCreateCustomTag}
-                    disabled={!customTagInput.trim()}
-                    className="px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Checklist</label>
-              {canEdit && (
-                <button id="btn-add-subtask" type="button" onClick={handleAddSubtask} className="text-[10px] font-black text-slate-900 dark:text-slate-100 hover:opacity-70 flex items-center gap-1">
-                  <Plus size={12} /> Add Item
-                </button>
-              )}
-            </div>
-            <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
-              {taskForm.subtasks?.map((sub, idx) => (
-                <div key={sub.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl group/sub border border-transparent hover:border-slate-200 dark:border-slate-700 transition-all">
-                  <button id={`btn-toggle-subtask-${sub.id}`} type="button" disabled={!canEdit} onClick={() => canEdit && toggleSubtask(sub.id)} className={`transition-colors ${sub.completed ? 'text-slate-900 dark:text-slate-100' : 'text-slate-300'} ${!canEdit ? 'cursor-default' : ''}`}>
-                    {sub.completed ? <CheckCircle2 size={18} strokeWidth={2.5} /> : <Circle size={18} strokeWidth={2.5} />}
-                  </button>
-                  <input id={`input-subtask-${sub.id}`} disabled={!canEdit} className={`flex-1 bg-transparent border-none text-xs font-bold outline-none disabled:cursor-not-allowed ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'}`} value={sub.text} placeholder="Item description..." onChange={(e) => { const updated = [...taskForm.subtasks]; updated[idx].text = e.target.value; setTaskForm({...taskForm, subtasks: updated}); }} />
-                  {canEdit && (
-                    <button id={`btn-remove-subtask-${sub.id}`} type="button" onClick={() => removeSubtask(sub.id)} className="opacity-0 group-hover/sub:opacity-100 text-slate-400 hover:text-rose-500 transition-all">
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {editingTask && (
-            <CommentSection 
-              comments={comments}
-              currentUser={user}
-              onAddComment={addComment}
-              onDeleteComment={deleteComment}
-              onUpdateComment={updateComment}
-              collaborators={teamMembers || []}
-              canComment={!!userRole} 
-              scrollToCommentId={pendingAction?.commentId}
-              onScrollComplete={() => setPendingAction(null)}
-            />
-          )}
+      <TaskModal
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setEditingTask(null); }}
+        editingTask={editingTask}
+        canEdit={canEdit}
+        canAssign={canAssign}
+        taskForm={taskForm}
+        setTaskForm={setTaskForm}
+        handleSaveTask={handleSaveTask}
+        user={user}
+        teamMembers={teamMembers}
+        filteredTasks={filteredTasks}
+        customTagInput={customTagInput}
+        setCustomTagInput={setCustomTagInput}
+        customTagColor={customTagColor}
+        setCustomTagColor={setCustomTagColor}
+        handleCreateCustomTag={handleCreateCustomTag}
+        handleAddTag={handleAddTag}
+        handleRemoveTag={handleRemoveTag}
+        handleAddSubtask={handleAddSubtask}
+        toggleSubtask={toggleSubtask}
+        removeSubtask={removeSubtask}
+        comments={comments}
+        addComment={addComment}
+        deleteComment={deleteComment}
+        updateComment={updateComment}
+        userRole={userRole}
+        pendingAction={pendingAction}
+        setPendingAction={setPendingAction}
+      />
 
-          {canEdit ? (
-            <button id="btn-submit-task" type="submit" className="w-full bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
-              {editingTask ? 'Update Entry' : 'Create Entry'}
-              <ChevronRight size={16} />
-            </button>
-          ) : (
-            <button id="btn-close-task-modal" type="button" onClick={() => { setIsModalOpen(false); setPendingAction(null); }} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2">
-              Close
-            </button>
-          )}
-        </form>
-      </Modal>
+      <BoardModal
+        isOpen={showBoardModal}
+        onClose={() => { setShowBoardModal(false); setEditingBoard(null); setBoardForm({ name: '', color: '#1e293b' }); }}
+        editingBoard={editingBoard}
+        boardForm={boardForm}
+        setBoardForm={setBoardForm}
+        onSaveBoard={onSaveBoard}
+      />
 
-      {/* Simplified Board Modal */}
-      <Modal 
-        isOpen={showBoardModal} 
-        onClose={() => { setShowBoardModal(false); setEditingBoard(null); setBoardForm({ name: '', color: '#1e293b' }); }} 
-        title={editingBoard ? 'Update Protocol' : 'New Board'}
-      >
-        <form onSubmit={onSaveBoard} className="space-y-8">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Board Name</label>
-              <Layers size={14} className="text-slate-300" />
-            </div>
-            <input 
-              id="input-board-name"
-              required 
-              autoFocus
-              className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-xl text-base font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-300 focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900/10 dark:focus:border-slate-600 outline-none transition-all" 
-              placeholder="e.g., Sprint Planning" 
-              value={boardForm.name} 
-              onChange={e => setBoardForm({...boardForm, name: e.target.value})} 
-            />
-            <p className="mt-3 text-[10px] text-slate-400 font-medium leading-relaxed">
-              This board will follow the default <span className="text-slate-900 dark:text-slate-100 font-bold">Monochrome Protocol</span>.
-            </p>
-          </div>
-          <div className="pt-2">
-            <button id="btn-submit-board" type="submit" className="w-full bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
-              {editingBoard ? 'Apply Changes' : 'Initialize Board'}
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Updated Delete Protocol Modal */}
-      <Modal 
-        isOpen={deleteConfirm.show} 
-        onClose={() => setDeleteConfirm({ show: false, boardId: null, boardName: '' })} 
-        title="Delete Protocol"
-      >
-        <div className="text-center py-2">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
-            <Trash2 size={28} className="text-slate-900 dark:text-slate-100" strokeWidth={2.5} />
-          </div>
-          <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 mb-2 tracking-tight">Permanently Remove Board?</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-[260px] mx-auto leading-relaxed">
-            This will erase <span className="text-slate-900 dark:text-slate-100 font-bold">"{deleteConfirm.boardName}"</span> and all associated data.
-          </p>
-          <div className="flex flex-col gap-3">
-            <button 
-              id="btn-confirm-delete-board"
-              onClick={onConfirmDeleteBoard}
-              className="w-full px-4 py-3.5 bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-rose-600 dark:hover:bg-rose-500 hover:text-white dark:hover:text-white text-white font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 group"
-            >
-              Confirm Deletion
-              <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </button>
-            <button 
-              id="btn-cancel-delete-board"
-              onClick={() => setDeleteConfirm({ show: false, boardId: null, boardName: '' })}
-              className="w-full px-4 py-3 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 dark:text-slate-100 font-bold text-xs uppercase tracking-widest transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </Modal>
+      <DeleteBoardModal
+        isOpen={deleteConfirm.show}
+        onClose={() => setDeleteConfirm({ show: false, boardId: null, boardName: '' })}
+        boardName={deleteConfirm.boardName}
+        onConfirm={onConfirmDeleteBoard}
+      />
 
       {/* Archived Tasks Modal */}
       <ArchivedTasksModal 
@@ -1006,7 +781,18 @@ export default function App() {
         onReject={rejectInvite}
       />
 
-
+      {/* Toast Overlay Container */}
+      <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-3 max-w-sm pointer-events-none">
+        {toasts.map(toast => (
+          <div key={toast.id} className="pointer-events-auto">
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => removeToast(toast.id)}
+            />
+          </div>
+        ))}
+      </div>
 
     </div>
   );

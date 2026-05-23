@@ -10,7 +10,9 @@ import {
   updateDoc, 
   deleteDoc,
   serverTimestamp,
-  doc
+  doc,
+  getDocs,
+  writeBatch
 } from 'firebase/firestore';
 
 // Mock firebase modules
@@ -32,6 +34,14 @@ describe('useBoards Hook', () => {
     onSnapshot.mockReturnValue(vi.fn()); // cleanup function
     collection.mockReturnValue('mockCollection');
     doc.mockReturnValue('mockDoc');
+    writeBatch.mockReturnValue({
+      delete: vi.fn(),
+      commit: vi.fn().mockResolvedValue()
+    });
+    getDocs.mockResolvedValue({
+      forEach: vi.fn(),
+      docs: []
+    });
   });
 
   it('should initialize with empty state and loading true', () => {
@@ -94,15 +104,21 @@ describe('useBoards Hook', () => {
     expect(updateDoc).toHaveBeenCalled();
   });
 
-  it('should call deleteDoc when deleting a board', async () => {
-    deleteDoc.mockResolvedValue();
+  it('should call writeBatch and commit when deleting a board (cascading)', async () => {
+    const mockBatch = {
+      delete: vi.fn(),
+      commit: vi.fn().mockResolvedValue()
+    };
+    writeBatch.mockReturnValue(mockBatch);
+
     const { result } = renderHook(() => useBoards(mockUser));
     
     await act(async () => {
       await result.current.deleteBoard('board1');
     });
     
-    expect(deleteDoc).toHaveBeenCalled();
+    expect(writeBatch).toHaveBeenCalled();
+    expect(mockBatch.commit).toHaveBeenCalled();
   });
 
   it('should handle null user gracefully', () => {
