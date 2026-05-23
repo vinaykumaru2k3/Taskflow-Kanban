@@ -11,6 +11,7 @@ import {
   deleteDoc,
   serverTimestamp,
   doc,
+  getDoc,
   getDocs,
   writeBatch
 } from 'firebase/firestore';
@@ -37,6 +38,10 @@ describe('useBoards Hook', () => {
     writeBatch.mockReturnValue({
       delete: vi.fn(),
       commit: vi.fn().mockResolvedValue()
+    });
+    getDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ name: 'Board 1', color: '#ff0000' })
     });
     getDocs.mockResolvedValue({
       forEach: vi.fn(),

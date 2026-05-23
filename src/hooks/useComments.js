@@ -90,7 +90,7 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
     } catch (error) {
       console.error('[useComments] Error adding comment:', error);
       window.showToast?.('Failed to add comment: ' + error.message, 'error');
-      throw error;
+      return { success: false, error: error.message };
     }
   };
 

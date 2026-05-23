@@ -18,28 +18,28 @@ export function hasDependencyCycle(tasks, proposedTaskId, proposedBlockedBy = []
   }
 
   // Helper to add a directed edge u -> v (u blocks v)
+  // Ensure that both u and v exist as valid task nodes in the graph
   const addEdge = (u, v) => {
+    if (!allTaskIds.has(u) || !allTaskIds.has(v)) return;
     if (!adj.has(u)) adj.set(u, new Set());
     adj.get(u).add(v);
   };
 
-  // Populate graph edges
+  // Populate graph edges for existing tasks, ignoring the proposed task's old state
   tasks.forEach(task => {
-    const isProposed = task.id === proposedTaskId;
-    const blockedBy = isProposed ? proposedBlockedBy : (task.blockedBy || []);
-    const blocks = isProposed ? proposedBlocks : (task.blocks || []);
+    if (task.id === proposedTaskId) return;
 
-    blockedBy.forEach(blockerId => {
+    (task.blockedBy || []).forEach(blockerId => {
       addEdge(blockerId, task.id);
     });
 
-    blocks.forEach(blockedId => {
+    (task.blocks || []).forEach(blockedId => {
       addEdge(task.id, blockedId);
     });
   });
 
-  // If proposedTaskId is a new task (not yet in the tasks list)
-  if (proposedTaskId && !tasks.some(t => t.id === proposedTaskId)) {
+  // Add edges for the proposed task version (works uniformly for new or existing tasks)
+  if (proposedTaskId) {
     proposedBlockedBy.forEach(blockerId => {
       addEdge(blockerId, proposedTaskId);
     });
