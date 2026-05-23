@@ -295,6 +295,34 @@ export default function App() {
       // Prevent stale task form state from inadvertently wiping out active dynamic properties 
       delete finalTask.commentCount;
 
+      let triggerConfettiNeeded = false;
+      if (editingTask) {
+        const oldTask = tasks.find(t => t.id === editingTask);
+        if (oldTask) {
+          // 1. Check if status changed to 'done'
+          if (oldTask.status !== 'done' && finalTask.status === 'done') {
+            triggerConfettiNeeded = true;
+          }
+          // 2. Check if subtask list just became fully completed
+          const oldSubtasks = oldTask.subtasks || [];
+          const newSubtasks = finalTask.subtasks || [];
+          const wasFullyCompleted = oldSubtasks.length > 0 && oldSubtasks.every(s => s.completed);
+          const isFullyCompleted = newSubtasks.length > 0 && newSubtasks.every(s => s.completed);
+          if (!wasFullyCompleted && isFullyCompleted) {
+            triggerConfettiNeeded = true;
+          }
+        }
+      } else {
+        // 3. Direct creation in 'done' state or with completed checklist
+        if (finalTask.status === 'done') {
+          triggerConfettiNeeded = true;
+        }
+        const newSubtasks = finalTask.subtasks || [];
+        if (newSubtasks.length > 0 && newSubtasks.every(s => s.completed)) {
+          triggerConfettiNeeded = true;
+        }
+      }
+
       if (editingTask) {
         const oldTask = tasks.find(t => t.id === editingTask);
         await updateTask(editingTask, finalTask, oldTask);
@@ -304,6 +332,10 @@ export default function App() {
       setIsModalOpen(false);
       setEditingTask(null);
       setTaskForm(initialTaskState);
+
+      if (triggerConfettiNeeded) {
+        import('./utils/confetti').then(({ triggerConfetti }) => triggerConfetti());
+      }
     } catch (err) { console.error(err); }
   };
 
@@ -325,7 +357,12 @@ export default function App() {
       }
     }
     
+    const previousStatus = task?.status;
     await updateTask(id, { status });
+
+    if (previousStatus !== 'done' && status === 'done') {
+      import('./utils/confetti').then(({ triggerConfetti }) => triggerConfetti());
+    }
   };
 
   // --- Subtask Handlers ---

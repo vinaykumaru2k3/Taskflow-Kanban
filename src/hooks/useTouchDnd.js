@@ -30,6 +30,8 @@ export function useTouchDnd({ onDrop, enabled = true }) {
   const startPosRef = useRef(null); // { x, y }
   const offsetRef = useRef({ x: 0, y: 0 }); // pointer offset within card
   const listenersCleanupRef = useRef(null); // stores cleanup for global event listeners
+  const rafRef = useRef(null);              // requestAnimationFrame handle for throttling
+  const overColumnIdRef = useRef(null);     // tracks last column without triggering re-renders
 
   // ──────────────────────────────────────────────────────────────────────
   // Helpers
@@ -164,8 +166,17 @@ export function useTouchDnd({ onDrop, enabled = true }) {
 
       moveGhost(e.clientX, e.clientY);
 
-      const colId = getColumnAt(e.clientX, e.clientY);
-      setOverColumnId(colId);
+      // Throttle the column-hit detection + React state update to one frame
+      // to avoid a full board re-render on every pointermove (60-120/s).
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        const colId = getColumnAt(e.clientX, e.clientY);
+        if (colId !== overColumnIdRef.current) {
+          overColumnIdRef.current = colId;
+          setOverColumnId(colId);
+        }
+      });
     };
 
     const onPointerUp = (e) => {
@@ -179,6 +190,12 @@ export function useTouchDnd({ onDrop, enabled = true }) {
 
     const cleanup = (clientX, clientY, drop) => {
       clearTimeout(timerRef.current);
+
+      // Cancel any in-flight animation frame from the move throttle
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
 
       if (sourceRef.current?.element) {
         sourceRef.current.element.style.opacity = '';
@@ -195,6 +212,7 @@ export function useTouchDnd({ onDrop, enabled = true }) {
       setDragging(false);
       setDragTaskId(null);
       setOverColumnId(null);
+      overColumnIdRef.current = null;
       sourceRef.current = null;
       startPosRef.current = null;
 

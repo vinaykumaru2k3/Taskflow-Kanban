@@ -1,7 +1,70 @@
+import { motion } from 'framer-motion';
+import { useState } from 'react';
 import { Trash2, AlertCircle, CheckSquare, Calendar, Archive, Eye, MessageSquare, Link2 } from 'lucide-react';
 import { PRIORITIES, TAG_COLORS } from '../utils/constants';
 
+// ─── Drag-image helper (module-level, created once) ──────────────────────────
+//
+// The browser's HTML5 DnD snapshot engine cannot composite backdrop-blur,
+// so cards with backdrop-blur-lg render as partially-transparent/invisible
+// ghosts. Instead we inject a cheap flat rectangle that matches the card's
+// look without any filter effects. Creating a lightweight div is orders of
+// magnitude faster than cloneNode(true) on a complex React subtree.
+//
+function buildDragGhost(sourceEl, clientX, clientY) {
+  const rect = sourceEl.getBoundingClientRect();
+
+  // Detect dark mode from the document root class
+  const isDark = document.documentElement.classList.contains('dark');
+
+  const ghost = document.createElement('div');
+  ghost.style.cssText = [
+    `width:${rect.width}px`,
+    `height:${rect.height}px`,
+    'position:fixed',
+    'top:-9999px',
+    'left:-9999px',
+    `background:${isDark ? '#1e293b' : '#ffffff'}`,
+    'border-radius:12px',
+    'border:2px solid rgba(100,116,139,0.3)',
+    'box-shadow:0 20px 40px rgba(0,0,0,0.25)',
+    'opacity:0.95',
+    'pointer-events:none',
+    'overflow:hidden',
+    'display:flex',
+    'align-items:center',
+    'justify-content:center',
+    'padding:16px',
+  ].join(';');
+
+  // Inner label — quick visual cue without a full DOM clone
+  const label = document.createElement('span');
+  const titleEl = sourceEl.querySelector('h4');
+  label.textContent = titleEl ? titleEl.textContent : '';
+  label.style.cssText = [
+    'font-size:13px',
+    'font-weight:700',
+    `color:${isDark ? '#e2e8f0' : '#1e293b'}`,
+    'white-space:nowrap',
+    'overflow:hidden',
+    'text-overflow:ellipsis',
+    'max-width:100%',
+  ].join(';');
+  ghost.appendChild(label);
+
+  document.body.appendChild(ghost);
+
+  return {
+    ghost,
+    offsetX: clientX - rect.left,
+    offsetY: clientY - rect.top,
+  };
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = false, touchHandlers = {} }) => {
+  const [isDragging, setIsDragging] = useState(false);
   const priority = PRIORITIES[task.priority] || PRIORITIES.low;
   const subtasksCount = task.subtasks?.length || 0;
   const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0;
@@ -14,23 +77,57 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
     return color;
   };
 
+  // Priority-based border class (computed once, used in two branches)
+  const priorityBorder =
+    priority.label === 'Urgent' ? 'border-rose-500/50 dark:border-rose-500/40 shadow-sm shadow-rose-500/10 dark:shadow-rose-500/5' :
+    priority.label === 'High'   ? 'border-orange-500/50 dark:border-orange-500/40 shadow-sm shadow-orange-500/10 dark:shadow-orange-500/5' :
+    priority.label === 'Medium' ? 'border-blue-500/50 dark:border-blue-500/40 shadow-sm shadow-blue-500/10 dark:shadow-blue-500/5' :
+                                  'border-slate-200/60 dark:border-slate-700/50 shadow-sm';
+
   return (
-    <div
+    <motion.div
       id={`task-card-${task.id}`}
       draggable={!readOnly}
-      onDragStart={readOnly ? undefined : (e) => onDragStart(e, task.id)}
+      onDragStart={readOnly ? undefined : (e) => {
+        setIsDragging(true);
+        onDragStart(e, task.id);
+
+        // Guard: jsdom (test env) does not implement dataTransfer.setDragImage
+        if (e.dataTransfer?.setDragImage) {
+          const { ghost, offsetX, offsetY } = buildDragGhost(e.currentTarget, e.clientX, e.clientY);
+          e.dataTransfer.setDragImage(ghost, offsetX, offsetY);
+          // Browser captures the image synchronously before the next frame;
+          // remove the ghost element immediately after to keep the DOM clean.
+          requestAnimationFrame(() => ghost.remove());
+        }
+      }}
+      onDragEnd={() => setIsDragging(false)}
       onClick={() => onEdit(task)}
-      // [perf] Only transition transform and box-shadow (both GPU-composited) to avoid layout reflow on hover.
-      // will-change:transform creates a compositor layer, so hover animations are smooth in all browsers, incl. Safari.
-      className={`group bg-white/95 dark:bg-white/[0.04] backdrop-blur-lg border-2 rounded-xl p-4 transition-[transform,box-shadow] duration-200 hover:shadow-md hover:-translate-y-0.5 overflow-hidden flex flex-col ${readOnly ? 'cursor-default' : 'cursor-pointer'} ${
-        priority.label === 'Urgent' ? 'border-rose-500/50 dark:border-rose-500/40 shadow-sm shadow-rose-500/10 dark:shadow-rose-500/5' :
-        priority.label === 'High' ? 'border-orange-500/50 dark:border-orange-500/40 shadow-sm shadow-orange-500/10 dark:shadow-orange-500/5' :
-        priority.label === 'Medium' ? 'border-blue-500/50 dark:border-blue-500/40 shadow-sm shadow-blue-500/10 dark:shadow-blue-500/5' :
-        'border-slate-200/60 dark:border-slate-700/50 shadow-sm'
+      // Use transition-colors (not transition-all) to avoid the browser
+      // watching every CSS property for changes during drag.
+      className={`group backdrop-blur-lg border-2 rounded-xl p-4 transition-colors duration-200 overflow-hidden flex flex-col ${readOnly ? 'cursor-default' : 'cursor-pointer'} ${
+        isDragging
+          // Intentional placeholder: dashed outline at reduced opacity so
+          // the user can see exactly which slot the card is coming from.
+          ? 'bg-slate-100/60 dark:bg-slate-800/40 border-dashed border-slate-300 dark:border-slate-600 opacity-40 shadow-none'
+          : `bg-white/95 dark:bg-white/[0.04] hover:shadow-md ${priorityBorder}`
       }`}
       // [touch] Merge touch DnD handlers from useTouchDnd (pointer events + touch-action)
       {...touchHandlers}
       style={{ willChange: 'transform', ...(touchHandlers.style || {}) }}
+      // Disable spring animations entirely while dragging — Framer Motion's
+      // pointer-event tracking competes with the native DnD system.
+      whileHover={isDragging ? {} : {
+        scale: 1.015,
+        y: -3,
+        rotate: 0.5,
+        transition: { type: 'spring', stiffness: 350, damping: 20 }
+      }}
+      whileTap={isDragging ? {} : {
+        scale: 0.985,
+        rotate: -1,
+        transition: { type: 'spring', stiffness: 450, damping: 15 }
+      }}
     >
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-2 flex-wrap">
@@ -91,14 +188,14 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
                 <button
                   id={`btn-archive-task-${task.id}`}
                   onClick={(e) => { e.stopPropagation(); onArchive(task.id); }}
-                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-300 dark:hover:text-slate-300 rounded-lg transition-all"
+                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-300 dark:hover:text-slate-300 rounded-lg transition-colors"
                   title="Archive task"
                 >
                   <Archive size={14} />
                 </button>
               )}
               {onDelete && (
-                <button id={`btn-delete-task-${task.id}`} onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-all">
+                <button id={`btn-delete-task-${task.id}`} onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors">
                   <Trash2 size={14} />
                 </button>
               )}
@@ -160,7 +257,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
