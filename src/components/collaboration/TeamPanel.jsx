@@ -92,7 +92,7 @@ const TeamPanel = ({
       setConfirmRemove(null);
     } catch (err) {
       console.error(err);
-      alert(err.message || 'Failed to remove member');
+      window.showToast?.(err.message || 'Failed to remove member', 'error');
     } finally {
       setRemovingId(null);
     }

@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react';
 import { 
   collection, 
   query, 
+  where,
   orderBy, 
   onSnapshot, 
   addDoc, 
   updateDoc, 
   deleteDoc, 
   doc, 
+  getDoc,
+  getDocs,
+  writeBatch,
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -81,9 +85,59 @@ export const useBoards = (user) => {
   const deleteBoard = async (boardId) => {
     if (!user) return;
     try {
-      await deleteDoc(doc(db, 'users', user.uid, 'boards', boardId));
+      const boardRef = doc(db, 'users', user.uid, 'boards', boardId);
+      const boardSnap = await getDoc(boardRef);
+      if (!boardSnap.exists()) {
+        throw new Error('Board does not exist');
+      }
+
+      const refsToDelete = [boardRef];
+
+      // 2. Query and delete all tasks associated with this board (from owner's tasks subcollection)
+      const tasksQuery = query(
+        collection(db, 'users', user.uid, 'tasks'),
+        where('boardId', '==', boardId)
+      );
+      const tasksSnap = await getDocs(tasksQuery);
+      tasksSnap.forEach((taskDoc) => {
+        refsToDelete.push(taskDoc.ref);
+      });
+
+      // 3. Query and delete all comments associated with this board
+      const commentsQuery = query(
+        collection(db, 'comments'),
+        where('boardId', '==', boardId)
+      );
+      const commentsSnap = await getDocs(commentsQuery);
+      commentsSnap.forEach((commentDoc) => {
+        refsToDelete.push(commentDoc.ref);
+      });
+
+      // 4. Query and delete all members in boards/{boardId}/members
+      const membersQuery = collection(db, 'boards', boardId, 'members');
+      const membersSnap = await getDocs(membersQuery);
+      membersSnap.forEach((memberDoc) => {
+        const memberUid = memberDoc.id;
+        if (memberUid !== user.uid) {
+          refsToDelete.push(doc(db, 'users', memberUid, 'sharedBoards', boardId));
+        }
+        refsToDelete.push(memberDoc.ref);
+      });
+
+      // 5. Delete in chunks of MAX_BATCH_SIZE (Firestore commit limits to 500 operations)
+      const MAX_BATCH_SIZE = 500;
+      for (let i = 0; i < refsToDelete.length; i += MAX_BATCH_SIZE) {
+        const chunkBatch = writeBatch(db);
+        const chunk = refsToDelete.slice(i, i + MAX_BATCH_SIZE);
+        chunk.forEach(ref => {
+          chunkBatch.delete(ref);
+        });
+        await chunkBatch.commit();
+      }
+
+      console.log(`Cascading delete successful for board: ${boardId}`);
     } catch (err) {
-      console.error('Error deleting board:', err);
+      console.error('Error cascading delete board:', err);
       throw err;
     }
   };

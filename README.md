@@ -27,7 +27,13 @@
 ### Modern UI/UX
 - **Dark/Light Mode** - Hand-crafted frosted glassmorphism designs with dynamic responsive gradients
 - **Animations** - Micro-interactions powered by CSS and Framer Motion
-- **SaaS Polish** - Smooth toast notifications, modal dialogs, empty states, and contextual banners
+- **SaaS Polish** - Custom-styled, animated toast notifications, modal dialogs, empty states, and contextual banners
+- **Autocomplete Multi-Select** - Searchable tag autocomplete widget for editing task dependencies, replacing legacy select inputs.
+
+### Data Safety & Integrity (New)
+- **Cascading Board Deletes** - Safely removes all associated tasks, comments, collaborator members, and sharing references when deleting a board.
+- **Dependency Cycle Guard** - Detects and prevents circular dependencies (e.g. Task A blocking Task B and vice-versa) to secure Workflow visualizations.
+- **Non-blocking Dialogs** - Replaced all thread-blocking browser `alert()` popups with global UI toast alerts.
 
 ## 🛠️ Tech Stack
 
@@ -80,6 +86,7 @@ taskflow-kanban/
 │   └── manifest.json                # PWA manifest
 ├── src/
 │   ├── components/                  # Reusable UI (Sidebar, KanbanBoard, MobileNav, PWABanners...)
+│   │   └── modals/                  # Specific custom modals (TaskModal, BoardModal, DeleteBoardModal)
 │   ├── hooks/                       # Custom hooks (useTasks, useAuth, usePWA, useTouchDnd...)
 │   ├── lib/                         # Permissions and logic helpers
 │   ├── utils/                       # Constants, date formatters

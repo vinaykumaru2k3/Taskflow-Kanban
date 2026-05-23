@@ -86,7 +86,7 @@ export default function Documentation({ onBack }) {
           Back to Board
         </button>
       )}
-      <div className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 md:p-12 shadow-sm relative overflow-hidden">
+      <div className="bg-white dark:bg-[#18181b] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 md:p-12 shadow-sm relative overflow-hidden">
         {/* Glow effect */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
         
@@ -109,7 +109,7 @@ export default function Documentation({ onBack }) {
               placeholder="Search documentation..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-[#0a0f1c] focus:border-blue-500/50 outline-none transition-all shadow-sm" 
+              className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-[#09090b] focus:border-blue-500/50 outline-none transition-all shadow-sm" 
             />
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function Documentation({ onBack }) {
 
       <div className="grid md:grid-cols-2 gap-6">
         {filteredSections.map((section, idx) => (
-          <div key={idx} className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 shadow-sm hover:shadow-md hover:border-blue-500/30 transition-all group">
+          <div key={idx} className="bg-white dark:bg-[#18181b] rounded-3xl border border-slate-200/50 dark:border-slate-800/60 p-8 shadow-sm hover:shadow-md hover:border-blue-500/30 transition-all group">
             <button 
               onClick={() => toggleSection(section.id)}
               className="w-full flex items-center gap-4 mb-4"

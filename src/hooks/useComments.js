@@ -44,7 +44,7 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
       setLoading(false);
     }, (error) => {
       console.error("[useComments] Firestore onSnapshot Error:", error);
-      alert("Comments Error: " + error.message);
+      window.showToast?.("Comments Error: " + error.message, 'error');
       setLoading(false);
     });
 
@@ -89,8 +89,8 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
       return { success: true };
     } catch (error) {
       console.error('[useComments] Error adding comment:', error);
-      alert('Failed to add comment: ' + error.message);
-      throw error;
+      window.showToast?.('Failed to add comment: ' + error.message, 'error');
+      return { success: false, error: error.message };
     }
   };
 

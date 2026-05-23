@@ -48,8 +48,10 @@ const CommentSection = ({
         }
       });
       
-      await onAddComment(newComment, mentions);
-      setNewComment('');
+      const res = await onAddComment(newComment, mentions);
+      if (res?.success) {
+        setNewComment('');
+      }
     } catch (error) {
       console.error('Error adding comment:', error);
     } finally {
