@@ -136,6 +136,7 @@ export default function App() {
   const [showTeamPanel, setShowTeamPanel] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingTask, setEditingTask] = useState(null);
+  const isSavingRef = useRef(false); // double-submit guard for handleSaveTask
 
   const [showStats, setShowStats] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
@@ -268,6 +269,8 @@ export default function App() {
     e.preventDefault();
     if (!canEdit) return; // viewers cannot save
     if (!taskForm.title.trim()) return;
+    // Double-submit guard: ignore rapid re-clicks while Firestore write is in-flight
+    if (isSavingRef.current) return;
     
     // Check for dependency cycles before saving
     if (hasDependencyCycle(tasks, editingTask, taskForm.blockedBy, taskForm.blocks)) {
@@ -275,6 +278,7 @@ export default function App() {
       return;
     }
 
+    isSavingRef.current = true;
     try {
       let assigneeData = { assigneeId: null, assigneeName: null, assigneeAvatar: null };
       if (taskForm.assigneeId) {
@@ -336,7 +340,12 @@ export default function App() {
       if (triggerConfettiNeeded) {
         import('./utils/confetti').then(({ triggerConfetti }) => triggerConfetti());
       }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+      window.showToast('Failed to save task. Please try again.', 'error');
+    } finally {
+      isSavingRef.current = false;
+    }
   };
 
   const handleDragStart = (e, id) => { e.dataTransfer.setData('taskId', id); };
@@ -351,9 +360,10 @@ export default function App() {
       const blockedByTasks = tasks.filter(t => task.blockedBy.includes(t.id) && t.status !== 'done');
       if (blockedByTasks.length > 0) {
         const taskNames = blockedByTasks.map(t => t.title).join(', ');
-        if (!confirm(`Warning: This task is blocked by incomplete tasks: ${taskNames}. Continue anyway?`)) {
-          return;
-        }
+        // Non-blocking warning toast instead of confirm() — lets the user
+        // see the warning without freezing the UI thread.
+        window.showToast(`Warning: "${task.title}" is blocked by incomplete tasks: ${taskNames}. Move anyway or resolve blockers first.`, 'warning');
+        return;
       }
     }
     

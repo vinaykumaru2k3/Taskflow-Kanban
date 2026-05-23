@@ -1,7 +1,16 @@
-import { Archive, RotateCcw, Trash2, CheckCircle2, AlertCircle, CheckSquare, Calendar } from 'lucide-react';
+import { useEffect } from 'react';
+import { Archive, RotateCcw, Trash2, CheckCircle2, CheckSquare, Calendar, X } from 'lucide-react';
 import { PRIORITIES } from '../utils/constants';
 
 const ArchivedTasksModal = ({ isOpen, onClose, tasks, onRestore, onDelete }) => {
+  // Lock body scroll while the modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = original; };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -28,9 +37,10 @@ const ArchivedTasksModal = ({ isOpen, onClose, tasks, onRestore, onDelete }) => 
           <button 
             id="btn-close-archived-modal"
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-300 transition-colors"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            aria-label="Close archived tasks"
           >
-            <Trash2 size={20} />
+            <X size={20} />
           </button>
         </div>
 
