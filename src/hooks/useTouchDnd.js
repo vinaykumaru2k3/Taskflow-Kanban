@@ -32,6 +32,7 @@ export function useTouchDnd({ onDrop, enabled = true }) {
   const listenersCleanupRef = useRef(null); // stores cleanup for global event listeners
   const rafRef = useRef(null);              // requestAnimationFrame handle for throttling
   const overColumnIdRef = useRef(null);     // tracks last column without triggering re-renders
+  const mountedRef = useRef(true);
 
   // ──────────────────────────────────────────────────────────────────────
   // Helpers
@@ -110,10 +111,18 @@ export function useTouchDnd({ onDrop, enabled = true }) {
     if (!enabled) return {};
 
     const onPointerDown = (e) => {
+      if (dragging) return; // Prevent re-entrancy
       // Only react to touch/pen — mouse has native DnD
       if (e.pointerType === 'mouse') return;
       // Only primary pointer
       if (!e.isPrimary) return;
+
+      // Clean up any existing listeners/timer first to prevent memory leaks or multiple timers
+      clearTimeout(timerRef.current);
+      if (listenersCleanupRef.current) {
+        listenersCleanupRef.current();
+        listenersCleanupRef.current = null;
+      }
 
       startPosRef.current = { x: e.clientX, y: e.clientY };
       sourceRef.current = { taskId, element: e.currentTarget };
@@ -137,14 +146,20 @@ export function useTouchDnd({ onDrop, enabled = true }) {
         document.removeEventListener('pointermove', handleStartMove);
         document.removeEventListener('pointerup', handleStartUp);
         document.removeEventListener('pointercancel', handleStartUp);
+        if (listenersCleanupRef.current === cleanupTempListeners) {
+          listenersCleanupRef.current = null;
+        }
       };
 
       document.addEventListener('pointermove', handleStartMove);
       document.addEventListener('pointerup', handleStartUp);
       document.addEventListener('pointercancel', handleStartUp);
 
+      listenersCleanupRef.current = cleanupTempListeners;
+
       // 300 ms long-press threshold
       timerRef.current = setTimeout(() => {
+        if (!mountedRef.current) return;
         cleanupTempListeners();
         const el = sourceRef.current?.element;
         if (!el) return;
@@ -258,12 +273,16 @@ export function useTouchDnd({ onDrop, enabled = true }) {
   }, [enabled, createGhost, moveGhost, removeGhost, getColumnAt, onDrop]);
 
   // Cleanup on unmount
-  useEffect(() => () => {
-    clearTimeout(timerRef.current);
-    removeGhost();
-    if (listenersCleanupRef.current) {
-      listenersCleanupRef.current();
-    }
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearTimeout(timerRef.current);
+      removeGhost();
+      if (listenersCleanupRef.current) {
+        listenersCleanupRef.current();
+      }
+    };
   }, [removeGhost]);
 
   return {

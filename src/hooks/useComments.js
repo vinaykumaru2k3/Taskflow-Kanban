@@ -103,6 +103,16 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention, sho
 
     try {
       const commentRef = doc(db, 'comments', commentId);
+      const commentSnap = await getDoc(commentRef);
+
+      if (!commentSnap.exists()) {
+        throw new Error('Comment not found');
+      }
+
+      if (commentSnap.data().authorId !== user.uid) {
+        throw new Error('Unauthorized to update this comment');
+      }
+
       await updateDoc(commentRef, {
         content: text.trim(),
         mentions,
@@ -113,7 +123,7 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention, sho
     } catch (error) {
       console.error('Error updating comment:', error);
       showToast?.('Failed to update comment: ' + error.message, 'error');
-      throw error;
+      return { success: false, error: error.message };
     }
   };
 
@@ -125,12 +135,22 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention, sho
 
     try {
       const commentRef = doc(db, 'comments', commentId);
+      const commentSnap = await getDoc(commentRef);
+
+      if (!commentSnap.exists()) {
+        throw new Error('Comment not found');
+      }
+
+      if (commentSnap.data().authorId !== user.uid) {
+        throw new Error('Unauthorized to delete this comment');
+      }
+
       await deleteDoc(commentRef);
       return { success: true };
     } catch (error) {
       console.error('Error deleting comment:', error);
       showToast?.('Failed to delete comment: ' + error.message, 'error');
-      throw error;
+      return { success: false, error: error.message };
     }
   };
 

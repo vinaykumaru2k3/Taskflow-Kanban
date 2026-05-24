@@ -16,6 +16,7 @@ import KanbanBoard from './components/KanbanBoard';
 import TaskModal from './components/modals/TaskModal';
 import BoardModal from './components/modals/BoardModal';
 import DeleteBoardModal from './components/modals/DeleteBoardModal';
+import DeleteTaskModal from './components/modals/DeleteTaskModal';
 import ArchivedTasksModal from './components/ArchivedTasksModal';
 import TeamPanel from './components/collaboration/TeamPanel';
 import NotificationPanel from './components/notifications/NotificationPanel';
@@ -193,6 +194,8 @@ export default function App() {
   const [boardForm, setBoardForm] = useState({ name: '', color: '#1e293b' });
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, boardId: null, boardName: '' });
   const [isDeletingBoard, setIsDeletingBoard] = useState(false);
+  const [deleteTaskConfirm, setDeleteTaskConfirm] = useState({ show: false, taskId: null, taskTitle: '' });
+  const [isDeletingTask, setIsDeletingTask] = useState(false);
   const initialTaskState = { title: '', description: '', priority: 'medium', status: 'todo', dueDate: '', tags: [], subtasks: [], assigneeId: '', blockedBy: [], blocks: [] };
   const [taskForm, setTaskForm] = useState(initialTaskState);
 
@@ -240,6 +243,30 @@ export default function App() {
       addToast('Failed to delete board: ' + err.message, 'error');
     } finally {
       setIsDeletingBoard(false);
+    }
+  };
+
+  const handleDeleteTaskTrigger = (taskId) => {
+    const task = tasks.find(t => t.id === taskId);
+    setDeleteTaskConfirm({
+      show: true,
+      taskId,
+      taskTitle: task?.title || 'this task'
+    });
+  };
+
+  const onConfirmDeleteTask = async () => {
+    if (!deleteTaskConfirm.taskId || isDeletingTask) return;
+    setIsDeletingTask(true);
+    try {
+      await deleteTask(deleteTaskConfirm.taskId);
+      setDeleteTaskConfirm({ show: false, taskId: null, taskTitle: '' });
+      addToast('Task deleted successfully', 'success');
+    } catch (err) {
+      console.error('Error deleting task:', err);
+      addToast('Failed to delete task: ' + err.message, 'error');
+    } finally {
+      setIsDeletingTask(false);
     }
   };
 
@@ -724,7 +751,7 @@ export default function App() {
                     onDragStart={canEdit ? handleDragStart : () => {}}
                     onDrop={canEdit ? handleDrop : () => {}}
                     onEditTask={handleOpenEditTask}
-                    onDeleteTask={canEdit ? deleteTask : null}
+                    onDeleteTask={canEdit ? handleDeleteTaskTrigger : null}
                     onAddTask={canCreate ? handleAddTaskToColumn : null}
                     onArchiveTask={canEdit ? archiveTask : null}
                     readOnly={!canEdit}
@@ -830,13 +857,21 @@ export default function App() {
         isLoading={isDeletingBoard}
       />
 
+      <DeleteTaskModal
+        isOpen={deleteTaskConfirm.show}
+        onClose={() => setDeleteTaskConfirm({ show: false, taskId: null, taskTitle: '' })}
+        taskTitle={deleteTaskConfirm.taskTitle}
+        onConfirm={onConfirmDeleteTask}
+        isLoading={isDeletingTask}
+      />
+
       {/* Archived Tasks Modal */}
       <ArchivedTasksModal 
         isOpen={showArchived}
         onClose={() => setShowArchived(false)}
         tasks={archivedTasks}
         onRestore={restoreTask}
-        onDelete={deleteTask}
+        onDelete={handleDeleteTaskTrigger}
       />
 
       <TeamPanel
