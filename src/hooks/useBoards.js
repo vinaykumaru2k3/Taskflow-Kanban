@@ -104,7 +104,8 @@ export const useBoards = (user) => {
           refsToDelete.push(taskDoc.ref);
         });
       } catch (err) {
-        console.warn('Failed to query tasks for cascading board delete:', err);
+        console.error('Failed to query tasks for cascading board delete:', err);
+        throw err;
       }
 
       // 3. Query and delete all comments associated with this board
@@ -118,7 +119,8 @@ export const useBoards = (user) => {
           refsToDelete.push(commentDoc.ref);
         });
       } catch (err) {
-        console.warn('Failed to query comments for cascading board delete:', err);
+        console.error('Failed to query comments for cascading board delete:', err);
+        throw err;
       }
 
       // 4. Query and delete all members in boards/{boardId}/members
@@ -133,7 +135,8 @@ export const useBoards = (user) => {
           refsToDelete.push(memberDoc.ref);
         });
       } catch (err) {
-        console.warn('Failed to query members for cascading board delete:', err);
+        console.error('Failed to query members for cascading board delete:', err);
+        throw err;
       }
 
       // 5. Delete in chunks of MAX_BATCH_SIZE (Firestore commit limits to 500 operations)

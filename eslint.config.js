@@ -13,6 +13,7 @@ export default [
         navigator: true,
         console: true,
         localStorage: true,
+        // Built-in browser APIs are set to false to prevent overriding (read-only for security consistency)
         setTimeout: false,
         clearTimeout: false,
         setInterval: false,

@@ -115,6 +115,13 @@ export function useTouchDnd({ onDrop, enabled = true }) {
       // Only primary pointer
       if (!e.isPrimary) return;
 
+      // Clean up any existing listeners/timer first to prevent memory leaks or multiple timers
+      clearTimeout(timerRef.current);
+      if (listenersCleanupRef.current) {
+        listenersCleanupRef.current();
+        listenersCleanupRef.current = null;
+      }
+
       startPosRef.current = { x: e.clientX, y: e.clientY };
       sourceRef.current = { taskId, element: e.currentTarget };
 
@@ -137,11 +144,16 @@ export function useTouchDnd({ onDrop, enabled = true }) {
         document.removeEventListener('pointermove', handleStartMove);
         document.removeEventListener('pointerup', handleStartUp);
         document.removeEventListener('pointercancel', handleStartUp);
+        if (listenersCleanupRef.current === cleanupTempListeners) {
+          listenersCleanupRef.current = null;
+        }
       };
 
       document.addEventListener('pointermove', handleStartMove);
       document.addEventListener('pointerup', handleStartUp);
       document.addEventListener('pointercancel', handleStartUp);
+
+      listenersCleanupRef.current = cleanupTempListeners;
 
       // 300 ms long-press threshold
       timerRef.current = setTimeout(() => {
