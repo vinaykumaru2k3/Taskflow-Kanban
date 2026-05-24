@@ -186,7 +186,9 @@ img {
   /* [cross-browser] Prevent layout shift from images */
   max-width: 100%;
   height: auto;
-  /* [safari] Smooth rendering */
+  /* [cross-browser] Standard fallback — all browsers */
+  image-rendering: auto;
+  /* [safari/webkit] Sharper rendering in WebKit; overrides 'auto' only where recognised */
   image-rendering: -webkit-optimize-contrast;
 }
 
@@ -197,7 +199,9 @@ img {
 
 /* ── Edge flow animation (dashed dependency lines) ──────────────────────── */
 /* [maintenance] dashoffset 9 = sum of strokeDasharray "5 4". Update together. */
-.workflow-edge-flow {
+/* .workflow-connector-flow is a backward-compat alias — both share one rule.  */
+.workflow-edge-flow,
+.workflow-connector-flow {
   animation: workflow-flow-dash 2s linear infinite;
   /* [perf] Hint compositor to only animate this property */
   will-change: stroke-dashoffset;
@@ -243,10 +247,4 @@ img {
 .dark .workflow-canvas-backdrop {
   background-color: #09090b;
   background-image: radial-gradient(circle, rgba(100,116,139,0.25) 1px, transparent 1px);
-}
-
-/* ── Old class alias (keep for forward compat) ───────────────────────────── */
-.workflow-connector-flow {
-  animation: workflow-flow-dash 2s linear infinite;
-  will-change: stroke-dashoffset;
 }

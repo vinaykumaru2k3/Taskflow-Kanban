@@ -3,57 +3,100 @@
  * No side-effects, no React imports. Safe to unit-test in isolation.
  */
 
-// ── buildDepthMap ─────────────────────────────────────────────────────────────
+// ── buildDepthMap ──────────────────────────────────────────────────────────────────
 /**
- * DFS depth-map for dependency tree layout.
- * Depth 0 = root (no blockers). Handles circular references safely.
+ * Iterative longest-path depth map using Kahn's BFS topological sort.
+ * Replaces the previous recursive DFS that cloned a visited Set per parent,
+ * giving O(V²) memory in diamond-dependency graphs.
+ *
+ * Complexity: O(V + E) time, O(V + E) space. No recursion.
+ * Cycles: nodes in a cycle never reach in-degree 0 and are assigned depth 0.
+ *
+ * Depth 0 = root (no blockers present in the task list).
  *
  * @param {Array<{id:string, blockedBy?:string[], blocks?:string[]}>} tasks
  * @returns {Map<string, number>}
  */
 export function buildDepthMap(tasks) {
-  const depthMap = new Map();
-  // Build parent→children adjacency (who blocks whom)
-  const parentIds = new Map();
+  const taskIds         = new Set(tasks.map(t => t.id));
+  const depthMap        = new Map();
+  const childToParents  = new Map(); // id → Set<parentId>
+  const parentToChildren = new Map(); // id → parentId[]
 
   tasks.forEach(t => {
-    if (!parentIds.has(t.id)) parentIds.set(t.id, new Set());
-    (t.blockedBy || []).forEach(bid => parentIds.get(t.id).add(bid));
+    if (!childToParents.has(t.id))    childToParents.set(t.id, new Set());
+    if (!parentToChildren.has(t.id)) parentToChildren.set(t.id, []);
+
+    // blockedBy: t depends on bid → bid is a parent of t
+    (t.blockedBy || []).forEach(bid => {
+      if (!taskIds.has(bid)) return;
+      childToParents.get(t.id).add(bid);
+      if (!parentToChildren.has(bid)) parentToChildren.set(bid, []);
+      parentToChildren.get(bid).push(t.id);
+    });
+
+    // blocks: t blocks bid → t is a parent of bid
     (t.blocks || []).forEach(bid => {
-      if (!parentIds.has(bid)) parentIds.set(bid, new Set());
-      parentIds.get(bid).add(t.id);
+      if (!taskIds.has(bid)) return;
+      if (!childToParents.has(bid))    childToParents.set(bid, new Set());
+      if (!parentToChildren.has(t.id)) parentToChildren.set(t.id, []);
+      childToParents.get(bid).add(t.id);
+      parentToChildren.get(t.id).push(bid);
     });
   });
 
-  function depth(id, visited) {
-    if (depthMap.has(id)) return depthMap.get(id);
-    // Cycle guard: if we've visited this node in the current DFS path, return 0
-    if (visited.has(id)) return 0;
-    visited.add(id);
-    const parents = parentIds.get(id) || new Set();
-    if (parents.size === 0) {
-      depthMap.set(id, 0);
-      return 0;
-    }
-    // Recurse with a NEW visited set for each parent to allow diamond dependencies
-    const max = Math.max(...[...parents].map(pid => depth(pid, new Set(visited))));
-    const d = max + 1;
-    depthMap.set(id, d);
-    return d;
+  // Seed queue with roots (in-degree 0)
+  const inDegree = new Map();
+  tasks.forEach(t => inDegree.set(t.id, childToParents.get(t.id)?.size ?? 0));
+
+  const queue = [];
+  tasks.forEach(t => {
+    if (inDegree.get(t.id) === 0) { depthMap.set(t.id, 0); queue.push(t.id); }
+  });
+
+  // BFS in topological order; propagate longest-path depth
+  let head = 0;
+  while (head < queue.length) {
+    const nodeId    = queue[head++];
+    const nodeDepth = depthMap.get(nodeId) ?? 0;
+
+    (parentToChildren.get(nodeId) || []).forEach(childId => {
+      // Keep the maximum depth seen so far (longest path)
+      const candidate = nodeDepth + 1;
+      if (!depthMap.has(childId) || depthMap.get(childId) < candidate) {
+        depthMap.set(childId, candidate);
+      }
+      const remaining = (inDegree.get(childId) ?? 1) - 1;
+      inDegree.set(childId, remaining);
+      if (remaining === 0) queue.push(childId);
+    });
   }
 
-  tasks.forEach(t => depth(t.id, new Set()));
+  // Nodes never dequeued are in cycles — assign depth 0 safely
+  tasks.forEach(t => { if (!depthMap.has(t.id)) depthMap.set(t.id, 0); });
+
   return depthMap;
 }
 
-// ── computeCriticalPath ───────────────────────────────────────────────────────
+// ── computeCriticalPath ──────────────────────────────────────────────────────────
 /**
- * Finds the critical path — the longest chain of task dependencies.
- * Uses a walk-back from the deepest nodes to root.
+ * Finds the single longest dependency chain (critical path).
+ *
+ * The previous implementation walked back from ALL deepest-level tasks and
+ * marked every reachable node as critical, which included multiple parallel
+ * paths and made the definition ambiguous.
+ *
+ * New algorithm: greedy single-path trace.
+ *   1. Find the one task with the greatest depth (first by iteration order).
+ *   2. Walk backward, always choosing the parent with the HIGHEST depth.
+ *   3. Stop when we reach a root (depth 0, no parents).
+ *
+ * This guarantees exactly one highlighted chain — the longest one.
+ * If multiple chains share the same maximum length, the first found is used.
  *
  * @param {Array} tasks
  * @param {Map<string, number>} depthMap - from buildDepthMap()
- * @returns {Set<string>} task IDs on the critical path
+ * @returns {Set<string>} task IDs on the single critical path
  */
 export function computeCriticalPath(tasks, depthMap) {
   if (!depthMap || depthMap.size === 0) return new Set();
@@ -61,24 +104,34 @@ export function computeCriticalPath(tasks, depthMap) {
   const maxDepth = Math.max(0, ...[...depthMap.values()]);
   if (maxDepth === 0) return new Set();
 
-  const taskById = new Map(tasks.map(t => [t.id, t]));
+  const taskById    = new Map(tasks.map(t => [t.id, t]));
   const criticalSet = new Set();
 
-  // Walk back from each deepest-level task through its blocker chain
-  function walkBack(taskId, visited) {
-    if (visited.has(taskId)) return;
-    visited.add(taskId);
-    criticalSet.add(taskId);
-    const task = taskById.get(taskId);
-    if (!task) return;
-    (task.blockedBy || []).forEach(bid => {
-      if (taskById.has(bid)) walkBack(bid, visited);
-    });
+  // 1. Seed: find the single deepest node
+  let currentId = null;
+  for (const [id, d] of depthMap) {
+    if (d === maxDepth) { currentId = id; break; }
   }
 
-  tasks
-    .filter(t => depthMap.get(t.id) === maxDepth)
-    .forEach(t => walkBack(t.id, new Set()));
+  // 2. Greedy walk-back: always take the highest-depth parent
+  while (currentId !== null) {
+    criticalSet.add(currentId);
+    const task = taskById.get(currentId);
+    if (!task) break;
+
+    const parents = (task.blockedBy || []).filter(bid => taskById.has(bid));
+    if (parents.length === 0) break;
+
+    // Pick parent with greatest depth (on the critical path)
+    let bestParent = null;
+    let bestDepth  = -1;
+    parents.forEach(pid => {
+      const pd = depthMap.get(pid) ?? -1;
+      if (pd > bestDepth) { bestDepth = pd; bestParent = pid; }
+    });
+
+    currentId = bestParent;
+  }
 
   return criticalSet;
 }
