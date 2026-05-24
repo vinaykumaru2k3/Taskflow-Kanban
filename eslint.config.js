@@ -17,6 +17,8 @@ export default [
         clearTimeout: false,
         setInterval: false,
         clearInterval: false,
+        requestAnimationFrame: false,
+        cancelAnimationFrame: false,
         confirm: false,
         alert: false,
         fetch: false,

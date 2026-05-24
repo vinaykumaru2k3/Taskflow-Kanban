@@ -20,14 +20,19 @@ const CommentSection = ({
   const [mentionSearch, setMentionSearch] = useState('');
   const commentRefs = useRef({});
 
+  const onScrollCompleteRef = useRef(onScrollComplete);
+  useEffect(() => {
+    onScrollCompleteRef.current = onScrollComplete;
+  });
+
   useEffect(() => {
     if (scrollToCommentId && commentRefs.current[scrollToCommentId]) {
       commentRefs.current[scrollToCommentId].scrollIntoView({ behavior: 'smooth', block: 'center' });
-      if (onScrollComplete) {
-        setTimeout(onScrollComplete, 1000);
+      if (onScrollCompleteRef.current) {
+        setTimeout(() => onScrollCompleteRef.current?.(), 1000);
       }
     }
-  }, [scrollToCommentId, comments, onScrollComplete]);
+  }, [scrollToCommentId, comments]);
 
   const filteredCollaborators = collaborators.filter(c => 
     c.displayName?.toLowerCase().includes(mentionSearch.toLowerCase()) ||
@@ -59,6 +64,12 @@ const CommentSection = ({
     }
   };
 
+  const [activeMentionIndex, setActiveMentionIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveMentionIndex(0);
+  }, [mentionSearch]);
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault(); // Prevent modal's outer form from submitting
@@ -74,12 +85,33 @@ const CommentSection = ({
     }
   };
 
+  const handleMentionSearchKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveMentionIndex(prev => (prev + 1) % filteredCollaborators.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveMentionIndex(prev => (prev - 1 + filteredCollaborators.length) % filteredCollaborators.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const selectedUser = filteredCollaborators[activeMentionIndex];
+      if (selectedUser) {
+        insertMention(selectedUser);
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setShowMentions(false);
+      document.getElementById('input-new-comment')?.focus();
+    }
+  };
+
   const insertMention = (user) => {
     const lastAtIndex = newComment.lastIndexOf('@');
     const newText = newComment.slice(0, lastAtIndex) + `@${user.displayName || user.email} `;
     setNewComment(newText);
     setShowMentions(false);
     setMentionSearch('');
+    document.getElementById('input-new-comment')?.focus();
   };
 
   const startEditing = (comment) => {
@@ -192,16 +224,24 @@ const CommentSection = ({
   };
 
   const formatTime = (date) => {
-    if (!date) return '';
+    if (!date) return 'Just now';
     const now = new Date();
-    const commentDate = date.toDate ? date.toDate() : new Date(date);
+    let commentDate;
+    try {
+      commentDate = date.toDate ? date.toDate() : new Date(date);
+      if (isNaN(commentDate.getTime())) {
+        return 'Just now';
+      }
+    } catch (e) {
+      return 'Just now';
+    }
     const diff = now - commentDate;
     
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'Just now';
+    if (isNaN(minutes) || minutes < 1) return 'Just now';
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
     if (days < 7) return `${days}d ago`;
@@ -350,18 +390,23 @@ const CommentSection = ({
                       placeholder="Search..."
                       value={mentionSearch}
                       onChange={(e) => setMentionSearch(e.target.value)}
+                      onKeyDown={handleMentionSearchKeyDown}
                       className="w-full px-2 py-1 bg-slate-50 dark:bg-slate-800 rounded text-xs focus:outline-none"
                       autoFocus
                     />
                   </div>
                   <div className="max-h-32 overflow-y-auto">
-                    {filteredCollaborators.map((user) => (
+                    {filteredCollaborators.map((user, index) => (
                       <button
                         id={`btn-mention-user-${user.uid}`}
                         key={user.uid}
                         type="button"
                         onClick={() => insertMention(user)}
-                        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 text-left"
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
+                          index === activeMentionIndex 
+                            ? 'bg-slate-100 dark:bg-slate-800' 
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                        }`}
                       >
                         {user.photoURL ? (
                           <img src={user.photoURL} alt="" className="w-5 h-5 rounded-full" />

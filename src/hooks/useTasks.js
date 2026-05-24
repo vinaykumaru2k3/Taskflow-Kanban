@@ -54,8 +54,8 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
         throw new Error('Unauthorized task creation');
       }
 
-      // Validate assignee is a team member
-      if (taskData.assigneeId) {
+      // Validate assignee is a team member (bypass check if assignee is the board owner)
+      if (taskData.assigneeId && taskData.assigneeId !== taskOwnerId) {
         const memberRef = doc(db, 'boards', currentBoard.id, 'members', taskData.assigneeId);
         const memberSnap = await getDoc(memberRef);
         if (!memberSnap.exists()) {
@@ -96,8 +96,8 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
           throw new Error('Unauthorized task update');
         }
 
-        // Validate assignee is a team member if being assigned
-        if (taskData.assigneeId && currentBoard) {
+        // Validate assignee is a team member if being assigned (bypass check if assignee is the board owner)
+        if (taskData.assigneeId && currentBoard && taskData.assigneeId !== taskOwnerId) {
           const memberRef = doc(db, 'boards', currentBoard.id, 'members', taskData.assigneeId);
           const memberSnap = await getDoc(memberRef);
           if (!memberSnap.exists()) {

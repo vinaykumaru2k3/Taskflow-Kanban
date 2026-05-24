@@ -54,7 +54,7 @@ const TaskModal = ({
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Title</label>
+            <label htmlFor="input-task-title" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Title</label>
             <input 
               id="input-task-title" 
               required 
@@ -66,7 +66,7 @@ const TaskModal = ({
             />
           </div>
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Priority</label>
+            <label htmlFor="select-task-priority" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Priority</label>
             <select 
               id="select-task-priority" 
               disabled={!canEdit} 
@@ -80,7 +80,7 @@ const TaskModal = ({
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assignee</label>
+            <label htmlFor="select-task-assignee" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assignee</label>
             <select 
               id="select-task-assignee" 
               disabled={!canAssign} 
@@ -90,7 +90,7 @@ const TaskModal = ({
             >
               <option value="">Unassigned</option>
               <option value={user?.uid}>{user?.displayName || user?.email} (You)</option>
-              {teamMembers.map(m => (
+              {teamMembers.filter(m => m.uid !== user?.uid).map(m => (
                 <option key={m.uid} value={m.uid}>{m.displayName || m.email}</option>
               ))}
             </select>
@@ -98,7 +98,7 @@ const TaskModal = ({
         </div>
 
         <div>
-          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Description</label>
+          <label htmlFor="textarea-task-desc" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Description</label>
           <textarea 
             id="textarea-task-desc" 
             disabled={!canEdit} 
@@ -110,7 +110,7 @@ const TaskModal = ({
         </div>
 
         <div>
-          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Deadline</label>
+          <label htmlFor="input-task-deadline" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Deadline</label>
           <input 
             id="input-task-deadline" 
             type="date" 
@@ -158,11 +158,11 @@ const TaskModal = ({
           {/* Selected Tags */}
           {taskForm.tags && taskForm.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
-              {taskForm.tags.map((tag, idx) => {
+              {taskForm.tags.map((tag) => {
                 const color = TAG_COLORS.find(c => c.id === tag.colorId) || TAG_COLORS[0];
                 return (
                   <span 
-                    key={idx} 
+                    key={tag.id || tag.label} 
                     className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md border ${color.bg} ${color.text} ${color.border}`}
                   >
                     {tag.label}
@@ -280,8 +280,7 @@ const TaskModal = ({
                   value={sub.text || ''} 
                   placeholder="Item description..." 
                   onChange={(e) => { 
-                    const updated = [...taskForm.subtasks]; 
-                    updated[idx].text = e.target.value; 
+                    const updated = taskForm.subtasks.map((s, i) => i === idx ? { ...s, text: e.target.value } : s); 
                     setTaskForm({...taskForm, subtasks: updated}); 
                   }} 
                 />
