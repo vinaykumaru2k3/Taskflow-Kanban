@@ -136,8 +136,10 @@ const CommentSection = ({
         }
       });
       
-      await onUpdateComment(commentId, editText, mentions);
-      cancelEditing();
+      const res = await onUpdateComment(commentId, editText, mentions);
+      if (res?.success) {
+        cancelEditing();
+      }
     } catch (error) {
       console.error('Error updating comment:', error);
     }

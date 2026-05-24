@@ -129,9 +129,7 @@ export const useBoards = (user) => {
         const membersSnap = await getDocs(membersQuery);
         membersSnap.forEach((memberDoc) => {
           const memberUid = memberDoc.id;
-          if (memberUid !== user.uid) {
-            refsToDelete.push(doc(db, 'users', memberUid, 'sharedBoards', boardId));
-          }
+          refsToDelete.push(doc(db, 'users', memberUid, 'sharedBoards', boardId));
           refsToDelete.push(memberDoc.ref);
         });
       } catch (err) {

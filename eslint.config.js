@@ -11,8 +11,8 @@ export default [
         window: true,
         document: true,
         navigator: true,
-        console: true,
-        localStorage: true,
+        console: false,
+        localStorage: false,
         // Built-in browser APIs are set to false to prevent overriding (read-only for security consistency)
         setTimeout: false,
         clearTimeout: false,

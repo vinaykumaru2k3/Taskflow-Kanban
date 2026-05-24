@@ -140,7 +140,9 @@ export function triggerConfetti() {
     } else {
       // Clean up event listeners and canvas node completely
       window.removeEventListener('resize', resizeHandler);
-      canvas.remove();
+      if (canvas.parentNode) {
+        canvas.remove();
+      }
       canvas = null;
       ctx = null;
       resizeHandler = null;
@@ -150,7 +152,7 @@ export function triggerConfetti() {
   };
 
   // Start animation loop if not already running
-  if (!animationFrameId) {
+  if (!animationFrameId && particles.length > 0) {
     update();
   }
 }

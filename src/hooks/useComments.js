@@ -123,7 +123,7 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention, sho
     } catch (error) {
       console.error('Error updating comment:', error);
       showToast?.('Failed to update comment: ' + error.message, 'error');
-      throw error;
+      return { success: false, error: error.message };
     }
   };
 
@@ -150,7 +150,7 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention, sho
     } catch (error) {
       console.error('Error deleting comment:', error);
       showToast?.('Failed to delete comment: ' + error.message, 'error');
-      throw error;
+      return { success: false, error: error.message };
     }
   };
 
