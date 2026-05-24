@@ -336,14 +336,18 @@ function ConnectorLayer({ tasks, innerRef, zoom, selectedTaskId, criticalPathIds
     rafRef.current = requestAnimationFrame(recalc);
   }, [recalc]);
 
-  // Recalculate on mount and whenever deps change
+  // Recalculate on mount and whenever deps change.
+  // zoom is included explicitly: when zoom changes the DOM transform updates
+  // synchronously via applyCanvasTransform, but we still need a new rAF pass
+  // to recompute getBoundingClientRect in the new coordinate space.
   useLayoutEffect(() => {
     scheduleRecalc();
     // Staggered retries for async DOM paint
     const t1 = setTimeout(scheduleRecalc, 80);
     const t2 = setTimeout(scheduleRecalc, 350);
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [scheduleRecalc]);
+   
+  }, [scheduleRecalc, zoom]);
 
   // Observe DOM mutations (task node additions/removals) and resize
   useEffect(() => {
@@ -550,9 +554,9 @@ const DonutChart = memo(function DonutChart({ done, review, inProgress, todo, to
       {/* Track */}
       <circle cx={cx} cy={cy} r={R} fill="none" stroke="#e2e8f0" strokeWidth={STROKE} className="dark:stroke-slate-800" />
       {/* Segments */}
-      {segments.map((s, i) => (
+      {segments.map((s) => (
         <circle
-          key={i} cx={cx} cy={cy} r={R} fill="none"
+          key={s.color} cx={cx} cy={cy} r={R} fill="none"
           stroke={s.color} strokeWidth={STROKE}
           strokeDasharray={`${s.dash} ${s.gap}`}
           transform={`rotate(${s.rot} ${cx} ${cy})`}
@@ -575,16 +579,16 @@ const DonutChart = memo(function DonutChart({ done, review, inProgress, todo, to
    HealthBanner — board health at a glance
    ───────────────────────────────────────────────────────────────────────────── */
 function HealthBanner({ tasks }) {
+  // tasks is already pre-filtered (activeTasks) — no need to re-filter archived
   const stats = useMemo(() => {
-    const active = tasks.filter(t => !t.archived);
-    const done   = active.filter(t => t.status === 'done').length;
-    const total  = active.length;
-    const now    = new Date();
+    const done  = tasks.filter(t => t.status === 'done').length;
+    const total = tasks.length;
+    const now   = new Date();
     const weekEnd = new Date(now);
     weekEnd.setDate(now.getDate() + 7);
 
-    const overdue = active.filter(t => t.status !== 'done' && isOverdue(t.dueDate)).length;
-    const dueWeek = active.filter(t => {
+    const overdue = tasks.filter(t => t.status !== 'done' && isOverdue(t.dueDate)).length;
+    const dueWeek = tasks.filter(t => {
       if (!t.dueDate || t.status === 'done') return false;
       try {
         const d = new Date(t.dueDate);
@@ -766,9 +770,11 @@ function ArcPipeline({ metrics, activeId, onSelect, totalTasks }) {
    ───────────────────────────────────────────────────────────────────────────── */
 export default function WorkflowTree({ tasks }) {
   /* ── View state ── */
-  const [viewMode,      setViewMode]      = useState('stages');
-  const [activeStageId, setActiveStageId] = useState(COLUMNS[0]?.id || 'todo');
-  const [selectedTask,  setSelectedTask]  = useState(null);
+  const [viewMode,       setViewMode]       = useState('stages');
+  const [activeStageId,  setActiveStageId]  = useState(COLUMNS[0]?.id || 'todo');
+  // selectedTaskId only — we re-derive the full object from filteredTasks each render
+  // so the panel never shows stale data when a task is edited/deleted upstream.
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
 
   /* ── Search & filter ── */
   const [searchQuery,    setSearchQuery]    = useState('');
@@ -851,6 +857,13 @@ export default function WorkflowTree({ tasks }) {
     return [...map.values()].sort((a, b) => b.total - a.total);
   }, [activeTasks]);
 
+  // Derive the live task object from filteredTasks on every render.
+  // This prevents stale data in the detail panel when tasks are edited externally.
+  const selectedTask = useMemo(
+    () => (selectedTaskId ? filteredTasks.find(t => t.id === selectedTaskId) ?? null : null),
+    [selectedTaskId, filteredTasks],
+  );
+
   const totalActiveTasks = activeTasks.length || 1;
 
   /* ── Selected task path tracing ── */
@@ -882,6 +895,8 @@ export default function WorkflowTree({ tasks }) {
     e.preventDefault();
     isDragging.current = true;
     dragStart.current  = { x: e.clientX - panRef.current.x, y: e.clientY - panRef.current.y };
+    // Update cursor reactively via DOM attribute — avoids re-render on every pointermove
+    if (backdropRef.current) backdropRef.current.style.cursor = 'grabbing';
   }, []);
 
   const handlePointerMove = useCallback((e) => {
@@ -898,6 +913,7 @@ export default function WorkflowTree({ tasks }) {
     if (!isDragging.current) return;
     isDragging.current = false;
     dragStart.current  = null;
+    if (backdropRef.current) backdropRef.current.style.cursor = 'grab';
     // Sync React state so minimap re-renders with correct viewport rect
     setPan({ ...panRef.current });
   }, []);
@@ -911,7 +927,7 @@ export default function WorkflowTree({ tasks }) {
   }, []);
 
   const handleNodeSelect = useCallback((task) => {
-    setSelectedTask(prev => prev?.id === task.id ? null : task);
+    setSelectedTaskId(prev => prev === task.id ? null : task.id);
   }, []);
 
   // Sync canvas transform when zoom changes (e.g., via buttons)
@@ -1065,9 +1081,10 @@ export default function WorkflowTree({ tasks }) {
                 totalTasks={totalActiveTasks}
               />
 
+              {/* AnimatePresence requires real children (not null) to track exit animations.
+                  Filter to the single active col before mapping so exit fires correctly. */}
               <AnimatePresence mode="wait">
-                {stageMetrics.map(col => {
-                  if (col.id !== activeStageId) return null;
+                {stageMetrics.filter(col => col.id === activeStageId).map(col => {
                   const pct = Math.round((col.total / totalActiveTasks) * 100);
 
                   return (
@@ -1174,7 +1191,9 @@ export default function WorkflowTree({ tasks }) {
                 <div
                   ref={backdropRef}
                   className="flex-1 relative overflow-hidden workflow-canvas-backdrop"
-                  style={{ cursor: isDragging.current ? 'grabbing' : 'grab', userSelect: 'none' }}
+                  // cursor is driven by a data attribute toggled via DOM so we avoid
+                  // forcing a React re-render on every pointermove during drag.
+                  style={{ cursor: 'grab', userSelect: 'none' }}
                   onPointerDown={handlePointerDown}
                   onPointerMove={handlePointerMove}
                   onPointerUp={handlePointerUp}
@@ -1278,7 +1297,7 @@ export default function WorkflowTree({ tasks }) {
 
                 {/* ── Task Details Side Panel ── */}
                 <AnimatePresence>
-                  {selectedTask && (
+                  {selectedTask && selectedTaskId && (
                     <motion.aside
                       key="details-panel"
                       initial={{ width: 0, opacity: 0 }}
@@ -1296,7 +1315,7 @@ export default function WorkflowTree({ tasks }) {
                           </span>
                           <button
                             id="btn-close-task-details"
-                            onClick={() => setSelectedTask(null)}
+                            onClick={() => setSelectedTaskId(null)}
                             className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
                             aria-label="Close details panel"
                           >
@@ -1366,7 +1385,7 @@ export default function WorkflowTree({ tasks }) {
                               <ul className="space-y-1.5" role="list">
                                 {(selectedTask.subtasks || []).map((s, i) => (
                                   <li key={i} className="flex items-start gap-2">
-                                    <div className={`w-3.5 h-3.5 rounded flex-shrink-0 mt-px flex items-center justify-center flex-shrink-0 ${s.completed ? 'bg-emerald-500' : 'border border-slate-300 dark:border-slate-600'}`}>
+                                    <div className={`w-3.5 h-3.5 rounded flex-shrink-0 mt-px flex items-center justify-center ${s.completed ? 'bg-emerald-500' : 'border border-slate-300 dark:border-slate-600'}`}>
                                       {s.completed && <span className="text-white text-[8px] leading-none">✓</span>}
                                     </div>
                                     <span className={`text-xs leading-tight ${s.completed ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>
