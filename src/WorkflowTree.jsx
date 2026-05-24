@@ -692,9 +692,8 @@ function ArcPipeline({ metrics, activeId, onSelect, totalTasks }) {
               <circle
                 cx={CX[i]} cy={CY} r={R}
                 fill={isAct ? cfg.dot : 'white'}
-                className={isAct ? '' : 'dark:fill-[#18181b]'}
+                className={isAct ? '' : 'dark:fill-[#18181b] dark:stroke-slate-700'}
                 stroke={isAct ? cfg.dot : '#e2e8f0'}
-                className2="dark:stroke-slate-700"
                 strokeWidth="2"
                 style={isAct ? { filter: `drop-shadow(0 0 8px ${cfg.glow})`, transition: 'all 0.25s ease' } : { transition: 'all 0.25s ease' }}
               />
@@ -784,12 +783,15 @@ export default function WorkflowTree({ tasks }) {
 
   const stageMetrics = useMemo(() => COLUMNS.map(col => {
     const colTasks = activeTasks.filter(t => t.status === col.id);
+    const cfg = STATUS_CFG[col.id] || STATUS_CFG['todo'];
     return {
       ...col,
       total: colTasks.length,
       tasks: colTasks,
       urgent: colTasks.filter(t => t.priority === 'urgent').length,
       high:   colTasks.filter(t => t.priority === 'high').length,
+      // icon is NOT on COLUMNS — pull it from STATUS_CFG so empty-state renders correctly
+      icon: cfg.Icon,
     };
   }), [activeTasks]);
 
