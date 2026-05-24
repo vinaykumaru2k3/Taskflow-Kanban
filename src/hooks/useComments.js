@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
-export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => {
+export const useComments = (user, boardId, taskId, taskTitle, notifyMention, showToast) => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -22,6 +22,7 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
   useEffect(() => {
     if (!boardId || !taskId) {
       setComments([]);
+      setLoading(false);
       return;
     }
 
@@ -44,7 +45,7 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
       setLoading(false);
     }, (error) => {
       console.error("[useComments] Firestore onSnapshot Error:", error);
-      window.showToast?.("Comments Error: " + error.message, 'error');
+      showToast?.("Comments Error: " + error.message, 'error');
       setLoading(false);
     });
 
@@ -89,7 +90,7 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
       return { success: true };
     } catch (error) {
       console.error('[useComments] Error adding comment:', error);
-      window.showToast?.('Failed to add comment: ' + error.message, 'error');
+      showToast?.('Failed to add comment: ' + error.message, 'error');
       return { success: false, error: error.message };
     }
   };
@@ -102,16 +103,6 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
 
     try {
       const commentRef = doc(db, 'comments', commentId);
-      const commentSnap = await getDoc(commentRef);
-      
-      if (!commentSnap.exists()) {
-        throw new Error('Comment not found');
-      }
-      
-      if (commentSnap.data().authorId !== user.uid) {
-        throw new Error('Unauthorized to update this comment');
-      }
-
       await updateDoc(commentRef, {
         content: text.trim(),
         mentions,
@@ -121,6 +112,7 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
       return { success: true };
     } catch (error) {
       console.error('Error updating comment:', error);
+      showToast?.('Failed to update comment: ' + error.message, 'error');
       throw error;
     }
   };
@@ -133,20 +125,11 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention) => 
 
     try {
       const commentRef = doc(db, 'comments', commentId);
-      const commentSnap = await getDoc(commentRef);
-      
-      if (!commentSnap.exists()) {
-        throw new Error('Comment not found');
-      }
-      
-      if (commentSnap.data().authorId !== user.uid) {
-        throw new Error('Unauthorized to delete this comment');
-      }
-
       await deleteDoc(commentRef);
       return { success: true };
     } catch (error) {
       console.error('Error deleting comment:', error);
+      showToast?.('Failed to delete comment: ' + error.message, 'error');
       throw error;
     }
   };

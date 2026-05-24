@@ -233,7 +233,7 @@ function ColumnHeader({ col, count }) {
 }
 
 function AddTaskButton({ col, onAddTask }) {
-  if (!onAddTask || col.id !== 'todo') return null;
+  if (!onAddTask) return null;
   return (
     <button
       id={`btn-add-task-${col.id}`}

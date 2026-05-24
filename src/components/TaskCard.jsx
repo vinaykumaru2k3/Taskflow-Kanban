@@ -94,11 +94,18 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
 
         // Guard: jsdom (test env) does not implement dataTransfer.setDragImage
         if (e.dataTransfer?.setDragImage) {
-          const { ghost, offsetX, offsetY } = buildDragGhost(e.currentTarget, e.clientX, e.clientY);
-          e.dataTransfer.setDragImage(ghost, offsetX, offsetY);
-          // Browser captures the image synchronously before the next frame;
-          // remove the ghost element immediately after to keep the DOM clean.
-          requestAnimationFrame(() => ghost.remove());
+          let ghost;
+          try {
+            const result = buildDragGhost(e.currentTarget, e.clientX, e.clientY);
+            ghost = result.ghost;
+            e.dataTransfer.setDragImage(ghost, result.offsetX, result.offsetY);
+          } catch (err) {
+            console.error('Failed to set drag image:', err);
+          } finally {
+            if (ghost) {
+              requestAnimationFrame(() => ghost.remove());
+            }
+          }
         }
       }}
       onDragEnd={() => setIsDragging(false)}
@@ -147,7 +154,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
             }`}
             title={`Priority: ${priority.label}`}
           >
-            TSK-{task.id.slice(0, 4).toUpperCase()}
+            TSK-{task.id?.slice(0, 4).toUpperCase() || ''}
           </span>
 
           {isOverdue && (
@@ -188,14 +195,21 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
                 <button
                   id={`btn-archive-task-${task.id}`}
                   onClick={(e) => { e.stopPropagation(); onArchive(task.id); }}
-                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-300 dark:hover:text-slate-300 rounded-lg transition-colors"
+                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg transition-colors"
                   title="Archive task"
+                  aria-label="Archive task"
                 >
                   <Archive size={14} />
                 </button>
               )}
               {onDelete && (
-                <button id={`btn-delete-task-${task.id}`} onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors">
+                <button 
+                  id={`btn-delete-task-${task.id}`} 
+                  onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} 
+                  className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"
+                  title="Delete task"
+                  aria-label="Delete task"
+                >
                   <Trash2 size={14} />
                 </button>
               )}
@@ -210,11 +224,11 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
       {/* Tags */}
       {task.tags && task.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
-          {task.tags.map((tag, idx) => {
+          {task.tags.map((tag) => {
             const color = getTagColor(tag.colorId);
             return (
               <span 
-                key={idx} 
+                key={tag.id || tag.label} 
                 className={`text-[9px] font-bold px-2 py-0.5 rounded-md border ${color.bg} ${color.text} ${color.border}`}
               >
                 {tag.label}

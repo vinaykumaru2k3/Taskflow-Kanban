@@ -3,14 +3,6 @@ import { Archive, RotateCcw, Trash2, CheckCircle2, CheckSquare, Calendar, X } fr
 import { PRIORITIES } from '../utils/constants';
 
 const ArchivedTasksModal = ({ isOpen, onClose, tasks, onRestore, onDelete }) => {
-  // Lock body scroll while the modal is open
-  useEffect(() => {
-    if (!isOpen) return;
-    const original = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = original; };
-  }, [isOpen]);
-
   if (!isOpen) return null;
 
   return (

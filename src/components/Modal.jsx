@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 
 const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-3xl' }) => {
   const closeButtonRef = useRef(null);
+  const modalRef = useRef(null);
 
   // [a11y] Focus the close button when the modal opens for keyboard/screen-reader accessibility
   useEffect(() => {
@@ -11,26 +12,42 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-3xl' }) => 
     }
   }, [isOpen]);
 
-  // [cross-browser] Close on Escape key — works in all browsers
+  // [cross-browser] Close on Escape key and Trap Focus — works in all browsers
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key === 'Tab') {
+        const modalEl = modalRef.current;
+        if (!modalEl) return;
+        const focusableElements = modalEl.querySelectorAll(
+          'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]'
+        );
+        if (focusableElements.length === 0) return;
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          // If Shift + Tab and focus is on the first element, wrap to last
+          if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else {
+          // If Tab and focus is on the last element, wrap to first
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
-
-  // [ux] Lock body scroll when modal is open so the parent layout scrollbar
-  // doesn't appear alongside the modal's own internal scrollbar.
-  // Saves and restores the original overflow value so nested modals don't
-  // permanently clear the lock when they close first.
-  useEffect(() => {
-    if (!isOpen) return;
-    const original = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = original; };
-  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -38,9 +55,10 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-3xl' }) => 
     // Overlay covers the full viewport (inset-0) so the header and its
     // scrollbar are also hidden behind the backdrop.
     <div
+      ref={modalRef}
       role="dialog"
       aria-modal="true"
-      aria-label={title}
+      aria-labelledby="modal-title"
       className="fixed inset-0 z-[50] flex items-center justify-center p-4 md:p-6 bg-slate-900/50 dark:bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-200"
       // [cross-browser] Clicking backdrop closes modal
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -51,7 +69,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-3xl' }) => 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h3>
+          <h3 id="modal-title" className="text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h3>
           <button
             id="btn-close-modal"
             ref={closeButtonRef}

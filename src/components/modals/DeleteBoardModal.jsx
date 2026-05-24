@@ -6,7 +6,8 @@ const DeleteBoardModal = ({
   isOpen,
   onClose,
   boardName,
-  onConfirm
+  onConfirm,
+  isLoading = false
 }) => {
   return (
     <Modal 
@@ -26,15 +27,17 @@ const DeleteBoardModal = ({
           <button 
             id="btn-confirm-delete-board"
             onClick={onConfirm}
-            className="w-full px-4 py-3.5 bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-rose-600 dark:hover:bg-rose-500 hover:text-white dark:hover:text-white text-white font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 group"
+            disabled={isLoading}
+            className="w-full px-4 py-3.5 bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-rose-600 dark:hover:bg-rose-500 hover:text-white dark:hover:text-white text-white font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Confirm Deletion
-            <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            {isLoading ? 'Deleting...' : 'Confirm Deletion'}
+            {!isLoading && <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />}
           </button>
           <button 
             id="btn-cancel-delete-board"
             onClick={onClose}
-            className="w-full px-4 py-3 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 dark:text-slate-100 font-bold text-xs uppercase tracking-widest transition-colors"
+            disabled={isLoading}
+            className="w-full px-4 py-3 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 dark:text-slate-100 font-bold text-xs uppercase tracking-widest transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Cancel
           </button>

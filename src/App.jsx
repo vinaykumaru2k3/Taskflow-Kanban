@@ -178,9 +178,13 @@ export default function App() {
   const [filters, setFilters] = useState(() => {
     const saved = localStorage.getItem('taskflow-filters');
     if (saved) {
-      const parsed = JSON.parse(saved);
-      // Merge with defaults to ensure all properties exist
-      return { ...defaultFilters, ...parsed };
+      try {
+        const parsed = JSON.parse(saved);
+        // Merge with defaults to ensure all properties exist
+        return { ...defaultFilters, ...parsed };
+      } catch (err) {
+        console.error('Failed to parse filters from localStorage:', err);
+      }
     }
     return defaultFilters;
   });
@@ -188,6 +192,7 @@ export default function App() {
   // Form States
   const [boardForm, setBoardForm] = useState({ name: '', color: '#1e293b' });
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, boardId: null, boardName: '' });
+  const [isDeletingBoard, setIsDeletingBoard] = useState(false);
   const initialTaskState = { title: '', description: '', priority: 'medium', status: 'todo', dueDate: '', tags: [], subtasks: [], assigneeId: '', blockedBy: [], blocks: [] };
   const [taskForm, setTaskForm] = useState(initialTaskState);
 
@@ -198,16 +203,7 @@ export default function App() {
     addComment,
     updateComment,
     deleteComment
-  } = useComments(user, currentBoard?.id, editingTask, taskForm?.title, notifyMention);
-
-  // Robustly sync comment limits back to tasks when reading the comments snapshot 
-  useEffect(() => {
-    if (!editingTask || commentsLoading || !comments) return;
-    const currentTask = tasks.find(t => t.id === editingTask);
-    if (currentTask && currentTask.commentCount !== comments.length) {
-      updateTask(editingTask, { commentCount: comments.length });
-    }
-  }, [comments, commentsLoading, editingTask, tasks]);
+  } = useComments(user, currentBoard?.id, editingTask, taskForm?.title, notifyMention, addToast);
 
 
 
@@ -218,10 +214,10 @@ export default function App() {
     if (!boardForm.name.trim()) return;
     try {
       if (editingBoard) {
-        await updateBoard(editingBoard, { name: boardForm.name, color: '#1e293b' });
+        await updateBoard(editingBoard, { name: boardForm.name, color: boardForm.color });
         setEditingBoard(null);
       } else {
-        await createBoard({ name: boardForm.name, color: '#1e293b' });
+        await createBoard({ name: boardForm.name, color: boardForm.color });
       }
       setShowBoardModal(false);
       setBoardForm({ name: '', color: '#1e293b' });
@@ -233,9 +229,17 @@ export default function App() {
   };
 
   const onConfirmDeleteBoard = async () => {
-    if (deleteConfirm.boardId) {
+    if (!deleteConfirm.boardId || isDeletingBoard) return;
+    setIsDeletingBoard(true);
+    try {
       await deleteBoard(deleteConfirm.boardId);
       setDeleteConfirm({ show: false, boardId: null, boardName: '' });
+      addToast('Board deleted successfully', 'success');
+    } catch (err) {
+      console.error('Error deleting board:', err);
+      addToast('Failed to delete board: ' + err.message, 'error');
+    } finally {
+      setIsDeletingBoard(false);
     }
   };
 
@@ -342,7 +346,7 @@ export default function App() {
       }
     } catch (err) {
       console.error(err);
-      window.showToast('Failed to save task. Please try again.', 'error');
+      addToast('Failed to save task. Please try again.', 'error');
     } finally {
       isSavingRef.current = false;
     }
@@ -356,18 +360,20 @@ export default function App() {
     if (!id) return;
     
     const task = tasks.find(t => t.id === id);
-    if (task?.blockedBy?.length > 0 && status === 'done') {
+    if (!task) return;
+    
+    if (task.blockedBy?.length > 0 && status === 'done') {
       const blockedByTasks = tasks.filter(t => task.blockedBy.includes(t.id) && t.status !== 'done');
       if (blockedByTasks.length > 0) {
         const taskNames = blockedByTasks.map(t => t.title).join(', ');
         // Non-blocking warning toast instead of confirm() — lets the user
         // see the warning without freezing the UI thread.
-        window.showToast(`Warning: "${task.title}" is blocked by incomplete tasks: ${taskNames}. Move anyway or resolve blockers first.`, 'warning');
+        addToast(`Warning: "${task.title}" is blocked by incomplete tasks: ${taskNames}. Move anyway or resolve blockers first.`, 'warning');
         return;
       }
     }
     
-    const previousStatus = task?.status;
+    const previousStatus = task.status;
     await updateTask(id, { status });
 
     if (previousStatus !== 'done' && status === 'done') {
@@ -419,6 +425,18 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('taskflow-filters', JSON.stringify(filters));
   }, [filters]);
+
+  // Centralized effect to reset board if shared board is deleted/uninvited
+  useEffect(() => {
+    if (!currentBoard || !user) return;
+    const isSharedBoard = currentBoard.ownerId && currentBoard.ownerId !== user.uid;
+    if (isSharedBoard) {
+      const exists = sharedBoards.some(b => b.id === currentBoard.id);
+      if (!exists && sharedBoards.length > 0) {
+        setCurrentBoard(boards[0] || null);
+      }
+    }
+  }, [sharedBoards, currentBoard, boards, user, setCurrentBoard]);
 
   // Priority order for sorting
   const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
@@ -559,10 +577,11 @@ export default function App() {
   }, [tasks, pendingAction]);
 
   const stats = useMemo(() => {
-    const total = tasks.length;
-    const completed = tasks.filter(t => t.status === 'done').length;
-    const urgent = tasks.filter(t => t.priority === 'urgent' && t.status !== 'done').length;
-    const overdue = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done').length;
+    const activeTasks = tasks.filter(t => !t.archived);
+    const total = activeTasks.length;
+    const completed = activeTasks.filter(t => t.status === 'done').length;
+    const urgent = activeTasks.filter(t => t.priority === 'urgent' && t.status !== 'done').length;
+    const overdue = activeTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done').length;
     return { total, completed, urgent, overdue };
   }, [tasks]);
 
@@ -747,7 +766,7 @@ export default function App() {
 
       <TaskModal
         isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setEditingTask(null); }}
+        onClose={() => { setIsModalOpen(false); setEditingTask(null); setPendingAction(null); }}
         editingTask={editingTask}
         canEdit={canEdit}
         canAssign={canAssign}
@@ -768,8 +787,26 @@ export default function App() {
         toggleSubtask={toggleSubtask}
         removeSubtask={removeSubtask}
         comments={comments}
-        addComment={addComment}
-        deleteComment={deleteComment}
+        addComment={async (text, mentions) => {
+          const res = await addComment(text, mentions);
+          if (res?.success) {
+            const currentTask = tasks.find(t => t.id === editingTask);
+            if (currentTask) {
+              await updateTask(editingTask, { commentCount: (currentTask.commentCount || 0) + 1 });
+            }
+          }
+          return res;
+        }}
+        deleteComment={async (commentId) => {
+          const res = await deleteComment(commentId);
+          if (res?.success) {
+            const currentTask = tasks.find(t => t.id === editingTask);
+            if (currentTask) {
+              await updateTask(editingTask, { commentCount: Math.max(0, (currentTask.commentCount || 0) - 1) });
+            }
+          }
+          return res;
+        }}
         updateComment={updateComment}
         userRole={userRole}
         pendingAction={pendingAction}
@@ -790,6 +827,7 @@ export default function App() {
         onClose={() => setDeleteConfirm({ show: false, boardId: null, boardName: '' })}
         boardName={deleteConfirm.boardName}
         onConfirm={onConfirmDeleteBoard}
+        isLoading={isDeletingBoard}
       />
 
       {/* Archived Tasks Modal */}

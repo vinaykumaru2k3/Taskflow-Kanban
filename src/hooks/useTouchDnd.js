@@ -118,8 +118,34 @@ export function useTouchDnd({ onDrop, enabled = true }) {
       startPosRef.current = { x: e.clientX, y: e.clientY };
       sourceRef.current = { taskId, element: e.currentTarget };
 
+      const handleStartMove = (moveEvt) => {
+        if (!moveEvt.isPrimary) return;
+        const dx = Math.abs(moveEvt.clientX - startPosRef.current.x);
+        const dy = Math.abs(moveEvt.clientY - startPosRef.current.y);
+        if (dx > 8 || dy > 8) {
+          clearTimeout(timerRef.current);
+          cleanupTempListeners();
+        }
+      };
+
+      const handleStartUp = () => {
+        clearTimeout(timerRef.current);
+        cleanupTempListeners();
+      };
+
+      const cleanupTempListeners = () => {
+        document.removeEventListener('pointermove', handleStartMove);
+        document.removeEventListener('pointerup', handleStartUp);
+        document.removeEventListener('pointercancel', handleStartUp);
+      };
+
+      document.addEventListener('pointermove', handleStartMove);
+      document.addEventListener('pointerup', handleStartUp);
+      document.addEventListener('pointercancel', handleStartUp);
+
       // 300 ms long-press threshold
       timerRef.current = setTimeout(() => {
+        cleanupTempListeners();
         const el = sourceRef.current?.element;
         if (!el) return;
 
