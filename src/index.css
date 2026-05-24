@@ -190,23 +190,63 @@ img {
   image-rendering: -webkit-optimize-contrast;
 }
 
-/* ── SVG Connector Flow Animation ── */
-.workflow-connector-flow {
-  animation: workflow-flow-dash 1.8s linear infinite;
+/* ════════════════════════════════════════════════════════════════════════════
+   Workflow Tab — Animations & Utilities
+   All classes are scoped to the workflow module to avoid global collisions.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Edge flow animation (dashed dependency lines) ──────────────────────── */
+/* [maintenance] dashoffset 9 = sum of strokeDasharray "5 4". Update together. */
+.workflow-edge-flow {
+  animation: workflow-flow-dash 2s linear infinite;
+  /* [perf] Hint compositor to only animate this property */
   will-change: stroke-dashoffset;
 }
 
-/* 
-   [maintenance-note] The workflow-flow-dash keyframe assumes a dash-array pattern of 8px total 
-   (e.g., '4 4' = 4px dash + 4px gap). If you change strokeDasharray in WorkflowTree.jsx, 
-   ensure this keyframe start offset matches the sum of the dash + gap length (e.g. 8) 
-   to maintain a seamless looping flow.
-*/
 @keyframes workflow-flow-dash {
-  from {
-    stroke-dashoffset: 8;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
+  from { stroke-dashoffset: 9; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* ── Critical path edge (amber pulsing glow) ─────────────────────────────── */
+.workflow-critical-edge {
+  animation: workflow-critical-pulse 2.4s ease-in-out infinite;
+  will-change: stroke-opacity;
+}
+
+@keyframes workflow-critical-pulse {
+  0%,  100% { stroke-opacity: 0.85; }
+  50%       { stroke-opacity: 0.40; }
+}
+
+/* ── Critical path node card ring ────────────────────────────────────────── */
+.workflow-critical-node {
+  box-shadow:
+    0 0 0 2px rgba(251, 146, 60, 0.25),
+    0 0 12px 0   rgba(251, 146, 60, 0.10);
+  animation: workflow-node-glow 3s ease-in-out infinite;
+}
+
+@keyframes workflow-node-glow {
+  0%,  100% { box-shadow: 0 0 0 2px rgba(251,146,60,0.25), 0 0 12px rgba(251,146,60,0.10); }
+  50%       { box-shadow: 0 0 0 2px rgba(251,146,60,0.45), 0 0 20px rgba(251,146,60,0.20); }
+}
+
+/* ── Canvas dot-grid backdrop ────────────────────────────────────────────── */
+/* [perf] Uses CSS background-image (GPU-composited), never triggers layout. */
+.workflow-canvas-backdrop {
+  background-color: #f8fafc;
+  background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.dark .workflow-canvas-backdrop {
+  background-color: #09090b;
+  background-image: radial-gradient(circle, rgba(100,116,139,0.25) 1px, transparent 1px);
+}
+
+/* ── Old class alias (keep for forward compat) ───────────────────────────── */
+.workflow-connector-flow {
+  animation: workflow-flow-dash 2s linear infinite;
+  will-change: stroke-dashoffset;
 }
