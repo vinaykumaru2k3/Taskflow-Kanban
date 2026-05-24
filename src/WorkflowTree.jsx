@@ -658,71 +658,108 @@ function HealthBanner({ tasks }) {
    ArcPipeline — SVG-connected stage selector
    ───────────────────────────────────────────────────────────────────────────── */
 function ArcPipeline({ metrics, activeId, onSelect, totalTasks }) {
-  const CX  = [80, 210, 370, 500];
-  const CY  = 44;
-  const R   = 20;
-  const W   = 580;
-  const H   = 90;
-
-  const donePct = totalTasks > 0
-    ? (metrics.find(m => m.id === 'done')?.total || 0) / totalTasks
-    : 0;
-
-  const lineStart = CX[0];
-  const lineEnd   = CX[CX.length - 1];
-  const fillEnd   = lineStart + (lineEnd - lineStart) * donePct;
-
   return (
-    <div className="w-full max-w-xl mx-auto mb-8 flex-shrink-0">
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" overflow="visible" role="presentation">
-        {/* Track line */}
-        <line x1={lineStart} y1={CY} x2={lineEnd} y2={CY} stroke="currentColor" strokeWidth="2"
-          className="text-slate-200 dark:text-slate-800" strokeLinecap="round" />
-        {/* Progress fill */}
-        <line x1={lineStart} y1={CY} x2={fillEnd} y2={CY} stroke="#10b981" strokeWidth="3"
-          strokeLinecap="round"
-          style={{ transition: 'x2 1.2s ease' }} />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8 flex-shrink-0">
+      {metrics.map(col => {
+        const cfg    = STATUS_CFG[col.id] || STATUS_CFG['todo'];
+        const Icon   = cfg.Icon;
+        const isActive = col.id === activeId;
+        const pct    = totalTasks > 0 ? Math.round((col.total / totalTasks) * 100) : 0;
 
-        {metrics.map((col, i) => {
-          const cfg  = STATUS_CFG[col.id] || STATUS_CFG['todo'];
-          const isAct = col.id === activeId;
-          return (
-            <g key={col.id} onClick={() => onSelect(col.id)} style={{ cursor: 'pointer' }}>
-              <circle cx={CX[i]} cy={CY} r={R + 6} fill="transparent" />
-              <circle
-                cx={CX[i]} cy={CY} r={R}
-                fill={isAct ? cfg.dot : 'white'}
-                className={isAct ? '' : 'dark:fill-[#18181b] dark:stroke-slate-700'}
-                stroke={isAct ? cfg.dot : '#e2e8f0'}
-                strokeWidth="2"
-                style={isAct ? { filter: `drop-shadow(0 0 8px ${cfg.glow})`, transition: 'all 0.25s ease' } : { transition: 'all 0.25s ease' }}
+        return (
+          <motion.button
+            key={col.id}
+            id={`btn-stage-${col.id}`}
+            onClick={() => onSelect(col.id)}
+            whileHover={{ y: -3, transition: { duration: 0.15 } }}
+            whileTap={{ scale: 0.97 }}
+            aria-pressed={isActive}
+            className={[
+              'relative flex flex-col gap-3 p-4 rounded-2xl border-2 text-left overflow-hidden transition-colors duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50',
+              isActive
+                ? 'shadow-lg'
+                : 'bg-white dark:bg-[#18181b] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md',
+            ].join(' ')}
+            style={isActive ? {
+              borderColor: cfg.dot,
+              background: `linear-gradient(135deg, ${cfg.dot}12 0%, ${cfg.dot}06 100%)`,
+            } : {}}
+          >
+            {/* Animated top accent bar */}
+            {isActive && (
+              <motion.div
+                layoutId="stage-accent-bar"
+                className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl"
+                style={{ background: `linear-gradient(90deg, ${cfg.dot}, ${cfg.dot}88)` }}
+                transition={{ type: 'spring', stiffness: 400, damping: 35 }}
               />
-              {/* Label */}
-              <text x={CX[i]} y={CY + R + 16} textAnchor="middle" fontSize="11"
-                fontWeight={isAct ? '800' : '600'}
-                fill={isAct ? 'currentColor' : '#94a3b8'}>
-                {col.title}
-              </text>
-              <text x={CX[i]} y={CY + R + 29} textAnchor="middle" fontSize="9" fill="#94a3b8" fontWeight="600">
-                {col.total}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+            )}
 
-      {/* Accessible buttons (invisible overlay aligned to circles) */}
-      <div className="sr-only">
-        {metrics.map(col => (
-          <button key={col.id} id={`btn-stage-${col.id}`} onClick={() => onSelect(col.id)}
-            aria-pressed={col.id === activeId}>
-            {col.title}: {col.total} tasks
-          </button>
-        ))}
-      </div>
+            {/* Icon bubble + task count */}
+            <div className="flex items-center justify-between">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200"
+                style={{
+                  backgroundColor: isActive ? `${cfg.dot}25` : `${cfg.dot}15`,
+                  boxShadow: isActive ? `0 0 0 1px ${cfg.dot}30` : 'none',
+                }}
+              >
+                <Icon
+                  size={19}
+                  style={{ color: cfg.dot }}
+                  aria-hidden="true"
+                />
+              </div>
+
+              <span
+                className="text-3xl font-black tabular-nums leading-none"
+                style={{ color: isActive ? cfg.dot : undefined }}
+              >
+                {col.total}
+              </span>
+            </div>
+
+            {/* Stage label + board share */}
+            <div className="min-w-0">
+              <p
+                className="text-sm font-bold leading-tight truncate"
+                style={{ color: isActive ? cfg.dot : undefined }}
+              >
+                {isActive ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: cfg.dot }}
+                      aria-hidden="true"
+                    />
+                    {col.title}
+                  </span>
+                ) : (
+                  <span className="text-slate-600 dark:text-slate-400">{col.title}</span>
+                )}
+              </p>
+              <p className="text-[10px] font-semibold text-slate-400 mt-0.5 tabular-nums">
+                {pct}% of board
+              </p>
+            </div>
+
+            {/* Mini progress bar */}
+            <div className="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ backgroundColor: cfg.dot }}
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.9, ease: 'easeOut', delay: 0.05 }}
+              />
+            </div>
+          </motion.button>
+        );
+      })}
     </div>
   );
 }
+
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Main: WorkflowTree
