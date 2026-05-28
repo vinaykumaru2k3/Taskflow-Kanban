@@ -61,6 +61,28 @@ function buildDragGhost(sourceEl, clientX, clientY) {
   };
 }
 
+const AssigneeAvatar = ({ task }) => {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <div 
+      className="mr-1 ring-2 ring-slate-100 dark:ring-slate-800 rounded-full flex-shrink-0 bg-slate-200 dark:bg-slate-700 w-5 h-5 flex items-center justify-center text-[9px] font-bold text-slate-500 overflow-hidden" 
+      title={task.assigneeName ? `Assigned to ${task.assigneeName}` : 'Assigned (member removed)'}
+    >
+      {task.assigneeAvatar && !imgError ? (
+        <img 
+          src={task.assigneeAvatar} 
+          alt={task.assigneeName || 'Former member'} 
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        (task.assigneeName?.[0] || '?').toUpperCase()
+      )}
+    </div>
+  );
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = false, touchHandlers = {} }) => {
@@ -165,24 +187,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
         </div>
         <div className="flex items-center gap-1">
           {task.assigneeId && (
-            <div 
-              className="mr-1 ring-2 ring-slate-100 dark:ring-slate-800 rounded-full flex-shrink-0 bg-slate-200 dark:bg-slate-700 w-5 h-5 flex items-center justify-center text-[9px] font-bold text-slate-500 overflow-hidden" 
-              title={task.assigneeName ? `Assigned to ${task.assigneeName}` : 'Assigned (member removed)'}
-            >
-              {task.assigneeAvatar ? (
-                <img 
-                  src={task.assigneeAvatar} 
-                  alt={task.assigneeName || 'Former member'} 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.parentElement.textContent = '?';
-                  }}
-                />
-              ) : (
-                (task.assigneeName?.[0] || '?').toUpperCase()
-              )}
-            </div>
+            <AssigneeAvatar task={task} />
           )}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {readOnly ? (

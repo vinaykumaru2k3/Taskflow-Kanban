@@ -6,11 +6,13 @@ export const useTheme = () => {
       let savedTheme;
       try {
         savedTheme = localStorage.getItem('theme');
-      } catch (e) {
+      } catch {
         savedTheme = null;
       }
       
-      if (savedTheme) {
+      // [fix] Validate the stored value — an arbitrary string passed to
+      // classList.add (e.g. one with spaces) throws a DOMException.
+      if (savedTheme === 'light' || savedTheme === 'dark') {
         return savedTheme;
       }
       if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -28,7 +30,7 @@ export const useTheme = () => {
     
     try {
       localStorage.setItem('theme', theme);
-    } catch (e) {
+    } catch {
       // Ignore write errors to localStorage
     }
   }, [theme]);

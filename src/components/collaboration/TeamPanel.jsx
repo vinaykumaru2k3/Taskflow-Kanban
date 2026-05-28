@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Crown, Trash2, UserPlus, Mail, ChevronDown, Users, Shield, Pencil, Eye, Loader2, Copy, Check } from 'lucide-react';
+import { useState } from 'react';
+import { X, Crown, Trash2, UserPlus, ChevronDown, Users, Shield, Pencil, Eye, Loader2, Copy, Check } from 'lucide-react';
 import { ROLES } from '../../utils/constants';
 
 const ROLE_CONFIG = {
@@ -227,7 +227,6 @@ const TeamPanel = ({
             <ul className="space-y-0.5">
               {teamMembers.map((member) => {
                 const rc         = ROLE_CONFIG[member.role] || ROLE_CONFIG[ROLES.VIEWER];
-                const RI         = rc.icon;
                 const isYou      = member.uid === currentUser?.uid;
                 const isOwnerRow = member.role === ROLES.OWNER;
                 const removing   = removingId === member.uid;
@@ -240,7 +239,7 @@ const TeamPanel = ({
 
                 return (
                   <li
-                    key={member.id}
+                    key={member.uid} // [fix] was member.id which is undefined; the data model uses .uid
                     className="flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group/member relative"
                   >
                     {/* Avatar */}

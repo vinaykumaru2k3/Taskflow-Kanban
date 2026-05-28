@@ -53,21 +53,29 @@ export const useAuth = () => {
   };
 
   useEffect(() => {
+    // [fix] mounted-flag prevents state updates on unmounted component or
+    // out-of-order updates when a second auth event fires during an await.
+    let active = true;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Update user document in Firestore
         await updateUserDocument(firebaseUser);
       }
-      setUser(firebaseUser);
-      setLoading(false);
+      if (active) {
+        setUser(firebaseUser);
+        setLoading(false);
+      }
     });
-    return () => unsubscribe();
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   const handleGoogleSignIn = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      await updateUserDocument(result.user);
+      // [fix] Don't call updateUserDocument here — onAuthStateChanged fires
+      // after signInWithPopup succeeds and handles the document write.
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Google sign-in error:", error);
       throw error;
@@ -83,7 +91,7 @@ export const useAuth = () => {
       } else {
         userCredential = await signInWithEmailAndPassword(auth, email, password);
       }
-      await updateUserDocument(userCredential.user);
+      // [fix] Don't call updateUserDocument here — onAuthStateChanged handles it.
     } catch (error) {
       console.error("Email sign-in error:", error);
       throw error;
@@ -93,7 +101,8 @@ export const useAuth = () => {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      setUser(null);
+      // [fix] Don't set user to null manually — onAuthStateChanged fires with
+      // null automatically after signOut and handles the state update.
     } catch (error) {
       console.error("Sign out error:", error);
     }

@@ -1,4 +1,4 @@
-import React from 'react';
+// React JSX transform handles JSX without explicit import (React 17+)
 import { Eye, Tag, X, Plus, Trash2, CheckCircle2, Circle, ChevronRight } from 'lucide-react';
 import Modal from '../Modal';
 import CommentSection from '../comments/CommentSection';
@@ -262,7 +262,7 @@ const TaskModal = ({
             )}
           </div>
           <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
-            {taskForm.subtasks?.map((sub, idx) => (
+            {taskForm.subtasks?.map((sub) => (
               <div key={sub.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl group/sub border border-transparent hover:border-slate-200 dark:border-slate-700 transition-all">
                 <button 
                   id={`btn-toggle-subtask-${sub.id}`} 
@@ -280,7 +280,9 @@ const TaskModal = ({
                   value={sub.text || ''} 
                   placeholder="Item description..." 
                   onChange={(e) => { 
-                    const updated = taskForm.subtasks.map((s, i) => i === idx ? { ...s, text: e.target.value } : s); 
+                    // [fix] Match subtask by sub.id not array index — index is wrong
+                    // if subtasks are ever reordered.
+                    const updated = taskForm.subtasks.map(s => s.id === sub.id ? { ...s, text: e.target.value } : s); 
                     setTaskForm({...taskForm, subtasks: updated}); 
                   }} 
                 />

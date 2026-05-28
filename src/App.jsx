@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
-import { Plus, Trash2, CheckCircle2, Circle, ChevronRight, Layers, Archive, X, Tag, Eye } from 'lucide-react';
+import { Layers, Plus } from 'lucide-react';
+import { increment } from 'firebase/firestore';
 
 // [perf] Lazy-load heavy page-level components so the main Kanban view loads immediately.
 const Landing       = lazy(() => import('./Landing'));
@@ -20,11 +21,10 @@ import DeleteTaskModal from './components/modals/DeleteTaskModal';
 import ArchivedTasksModal from './components/ArchivedTasksModal';
 import TeamPanel from './components/collaboration/TeamPanel';
 import NotificationPanel from './components/notifications/NotificationPanel';
-import CommentSection from './components/comments/CommentSection';
 import MobileNav from './components/MobileNav';
 
-import { PRIORITIES, TAG_COLORS, DEFAULT_TAGS, ROLES } from './utils/constants';
-import { canCreateTasks, canEditTask } from './lib/permissions';
+import { DEFAULT_TAGS, ROLES } from './utils/constants';
+import { canCreateTasks } from './lib/permissions';
 import { useAuth } from './hooks/useAuth';
 import { useBoards } from './hooks/useBoards';
 import { useTasks } from './hooks/useTasks';
@@ -61,6 +61,9 @@ const defaultFilters = {
   tag: 'all', // 'all' or tag id
 };
 
+// [fix] Defined outside component so useMemo doesn't need it in deps.
+const PRIORITY_ORDER = { urgent: 4, high: 3, medium: 2, low: 1 };
+
 export default function App() {
   const { user, loading: authLoading, signInWithGoogle, signInWithEmail, signOut } = useAuth();
   
@@ -68,7 +71,8 @@ export default function App() {
   const [toasts, setToasts] = useState([]);
   
   const addToast = useCallback((message, type = 'error') => {
-    const id = Date.now() + Math.random().toString();
+    // [fix] window.crypto.randomUUID() — use explicit window object to satisfy no-undef
+    const id = window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
     setToasts(prev => [...prev, { id, message, type }]);
   }, []);
 
@@ -90,7 +94,6 @@ export default function App() {
 
   // Collaboration hooks
   const { 
-    collaborators,
     teamMembers,
     sharedBoards, 
     shareBoard,
@@ -98,8 +101,6 @@ export default function App() {
     rejectInvite,
     removeCollaborator, 
     updateCollaboratorRole,
-    getUserRoleForBoard,
-    isBoardOwner 
   } = useCollaboration(user, currentBoard);
 
   // Notifications hook
@@ -202,7 +203,6 @@ export default function App() {
   // Comments hook
   const {
     comments,
-    loading: commentsLoading,
     addComment,
     updateComment,
     deleteComment
@@ -212,9 +212,14 @@ export default function App() {
 
   // --- Board Handlers ---
 
+  const isSavingBoardRef = useRef(false); // double-submit guard for onSaveBoard
+
   const onSaveBoard = async (e) => {
     e.preventDefault();
     if (!boardForm.name.trim()) return;
+    // [fix] Double-submit guard — identical to handleSaveTask's isSavingRef
+    if (isSavingBoardRef.current) return;
+    isSavingBoardRef.current = true;
     try {
       if (editingBoard) {
         await updateBoard(editingBoard, { name: boardForm.name, color: boardForm.color });
@@ -224,7 +229,12 @@ export default function App() {
       }
       setShowBoardModal(false);
       setBoardForm({ name: '', color: '#1e293b' });
-    } catch (error) { console.error(error); }
+    } catch (error) {
+      console.error(error);
+      addToast('Failed to save board: ' + (error.message || 'Unknown error'), 'error');
+    } finally {
+      isSavingBoardRef.current = false;
+    }
   };
 
   const confirmDeleteBoard = (board) => {
@@ -393,18 +403,20 @@ export default function App() {
       const blockedByTasks = tasks.filter(t => task.blockedBy.includes(t.id) && t.status !== 'done');
       if (blockedByTasks.length > 0) {
         const taskNames = blockedByTasks.map(t => t.title).join(', ');
-        // Non-blocking warning toast instead of confirm() — lets the user
-        // see the warning without freezing the UI thread.
         addToast(`Warning: "${task.title}" is blocked by incomplete tasks: ${taskNames}. Move anyway or resolve blockers first.`, 'warning');
         return;
       }
     }
     
     const previousStatus = task.status;
-    await updateTask(id, { status });
-
-    if (previousStatus !== 'done' && status === 'done') {
-      import('./utils/confetti').then(({ triggerConfetti }) => triggerConfetti());
+    try {
+      await updateTask(id, { status });
+      if (previousStatus !== 'done' && status === 'done') {
+        import('./utils/confetti').then(({ triggerConfetti }) => triggerConfetti());
+      }
+    } catch (err) {
+      console.error('handleDrop updateTask failed:', err);
+      addToast('Failed to move task. Please try again.', 'error');
     }
   };
 
@@ -448,9 +460,12 @@ export default function App() {
 
   // --- Memoized Data ---
 
-  // Persist filters to localStorage
+  // Persist filters to localStorage — debounced to avoid a write on every keystroke
   useEffect(() => {
-    localStorage.setItem('taskflow-filters', JSON.stringify(filters));
+    const timer = setTimeout(() => {
+      localStorage.setItem('taskflow-filters', JSON.stringify(filters));
+    }, 400);
+    return () => clearTimeout(timer);
   }, [filters]);
 
   // Centralized effect to reset board if shared board is deleted/uninvited
@@ -466,7 +481,7 @@ export default function App() {
   }, [sharedBoards, currentBoard, boards, user, setCurrentBoard]);
 
   // Priority order for sorting
-  const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
+  // [fix] PRIORITY_ORDER is now a module-level constant (see top of file)
 
   const filteredTasks = useMemo(() => {
     let result = tasks.filter(t =>
@@ -496,7 +511,7 @@ export default function App() {
       let comparison = 0;
       
       if (filters.sortBy === 'priority') {
-        comparison = (priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0);
+        comparison = (PRIORITY_ORDER[a.priority] || 0) - (PRIORITY_ORDER[b.priority] || 0);
       } else if (filters.sortBy === 'dueDate') {
         const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
         const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
@@ -598,7 +613,9 @@ export default function App() {
         setEditingTask(task.id);
         setTaskForm({ ...task });
         setIsModalOpen(true);
-        // pendingAction is kept for CommentSection to scroll, it clears itself or we can clear it on modal close
+        // [fix] Clear taskId so this effect doesn't re-fire on every task
+        // snapshot update while the modal is open.
+        setPendingAction(prev => prev ? { ...prev, taskId: null } : null);
       }
     }
   }, [tasks, pendingAction]);
@@ -815,22 +832,20 @@ export default function App() {
         removeSubtask={removeSubtask}
         comments={comments}
         addComment={async (text, mentions) => {
+          if (!editingTask) return; // [fix] guard stale editingTask
           const res = await addComment(text, mentions);
           if (res?.success) {
-            const currentTask = tasks.find(t => t.id === editingTask);
-            if (currentTask) {
-              await updateTask(editingTask, { commentCount: (currentTask.commentCount || 0) + 1 });
-            }
+            // [fix] Use Firestore atomic increment to avoid read-modify-write race
+            await updateTask(editingTask, { commentCount: increment(1) });
           }
           return res;
         }}
         deleteComment={async (commentId) => {
+          if (!editingTask) return; // [fix] guard stale editingTask
           const res = await deleteComment(commentId);
           if (res?.success) {
-            const currentTask = tasks.find(t => t.id === editingTask);
-            if (currentTask) {
-              await updateTask(editingTask, { commentCount: Math.max(0, (currentTask.commentCount || 0) - 1) });
-            }
+            // [fix] Use Firestore atomic increment(decrement) to avoid race
+            await updateTask(editingTask, { commentCount: increment(-1) });
           }
           return res;
         }}
@@ -907,7 +922,8 @@ export default function App() {
             <Toast
               message={toast.message}
               type={toast.type}
-              onClose={() => removeToast(toast.id)}
+              toastId={toast.id}
+              onClose={removeToast}
             />
           </div>
         ))}

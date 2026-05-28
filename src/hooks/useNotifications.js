@@ -97,13 +97,18 @@ export const useNotifications = (user) => {
       );
       
       const snapshot = await getDocs(q);
-      const batch = writeBatch(db);
-      
-      snapshot.forEach((d) => {
-        batch.update(d.ref, { read: true, readAt: serverTimestamp() });
-      });
-      
-      await batch.commit();
+      if (snapshot.empty) return;
+
+      // [fix] Chunk into batches of 500 to stay under Firestore's operation limit
+      const MAX_BATCH_SIZE = 500;
+      const docs = snapshot.docs;
+      for (let i = 0; i < docs.length; i += MAX_BATCH_SIZE) {
+        const batch = writeBatch(db);
+        docs.slice(i, i + MAX_BATCH_SIZE).forEach((d) => {
+          batch.update(d.ref, { read: true, readAt: serverTimestamp() });
+        });
+        await batch.commit();
+      }
     } catch (err) {
       console.error('Error marking all notifications as read:', err);
     }
