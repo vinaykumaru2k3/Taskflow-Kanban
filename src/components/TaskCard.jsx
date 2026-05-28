@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Trash2, AlertCircle, CheckSquare, Calendar, Archive, Eye, MessageSquare, Link2 } from 'lucide-react';
 import { PRIORITIES, TAG_COLORS } from '../utils/constants';
@@ -176,23 +176,24 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
           </div>
         </div>
 
-        {/* ── Description — slides in on hover ─────────────────────────── */}
-        <AnimatePresence initial={false}>
-          {showExpanded && (
-            <motion.div
-              key="desc"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
-              className="overflow-hidden"
-            >
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-4 -mt-1">
-                {task.description}
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* ── Description — CSS transition (no layout reflow on exit) ────── */}
+        {hasDescription && (
+          <div
+            style={{
+              maxHeight: showExpanded ? '120px' : '0px',
+              opacity:   showExpanded ? 1 : 0,
+              overflow:  'hidden',
+              // Slightly faster exit so collapsing feels crisp, not laggy
+              transition: showExpanded
+                ? 'max-height 0.22s ease, opacity 0.18s ease'
+                : 'max-height 0.18s ease, opacity 0.12s ease',
+            }}
+          >
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-4">
+              {task.description}
+            </p>
+          </div>
+        )}
 
         {/* Row 2: Tags */}
         {hasTags && (
