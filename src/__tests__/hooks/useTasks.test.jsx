@@ -67,7 +67,7 @@ describe('useTasks Hook', () => {
   });
 
   it('should call addDoc when creating a task', async () => {
-    addDoc.mockResolvedValue();
+    addDoc.mockResolvedValue({ id: 'newTaskId' });
     const { result } = renderHook(() => useTasks(mockUser, mockBoard));
     
     await act(async () => {
