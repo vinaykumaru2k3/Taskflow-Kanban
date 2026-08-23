@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
-    branches: ['**']
+    # Avoid running the full CI on direct pushes to `main` to prevent
+    # duplicate builds/deploys; `deploy.yml` handles pushes to `main`.
+    branches-ignore: [ 'main' ]
   pull_request:
     branches: ['**']
 
