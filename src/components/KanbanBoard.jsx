@@ -33,7 +33,11 @@ const KanbanBoard = ({
   const handleTouchDrop = useCallback(
     (taskId, targetColumnId) => {
       // Fake a DnD event compatible with the existing handler in App.jsx
-      const fakeEvent = { dataTransfer: { getData: () => taskId } };
+      const fakeEvent = {
+        preventDefault: () => {},
+        stopPropagation: () => {},
+        dataTransfer: { getData: () => taskId },
+      };
       onDrop(fakeEvent, targetColumnId);
     },
     [onDrop]
@@ -87,11 +91,7 @@ const KanbanBoard = ({
               key={col.id}
               {...desktopColumnProps(col)}
               data-column-id={col.id}
-              className={`flex flex-col rounded-xl transition-all duration-150 ${
-                dropHighlight
-                  ? 'ring-2 ring-blue-500/40 bg-blue-50/30 dark:bg-blue-500/5'
-                  : ''
-              }`}
+              className={`flex flex-col rounded-xl transition-all duration-150`}
               style={{ contain: 'layout style' }}
             >
               <ColumnHeader col={col} count={colTasks.length} />
@@ -156,11 +156,7 @@ const KanbanBoard = ({
               <div
                 key={col.id}
                 data-column-id={col.id}
-                className={`space-y-3 min-h-[300px] transition-all duration-150 ${
-                  dropHighlight
-                    ? 'ring-2 ring-blue-500/40 rounded-xl p-2 bg-blue-50/20 dark:bg-blue-500/5'
-                    : ''
-                }`}
+                className={`space-y-3 min-h-[300px] transition-all duration-150`}
               >
                 {colTasks.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-16 text-slate-300 dark:text-slate-700">

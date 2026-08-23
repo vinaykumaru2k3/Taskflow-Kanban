@@ -40,6 +40,7 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
       const items = [];
       snapshot.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
       setTasks(items);
+      console.info(`Tasks snapshot updated for board ${currentBoard.id}: ${items.length} tasks`);
     }, (err) => {
       console.error('Error fetching tasks:', err);
       setTasks([]);
@@ -72,6 +73,7 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
         archived: false,
         createdAt: serverTimestamp() 
       });
+      console.info('createTask: created task', docRef.id, 'on board', currentBoard.id);
 
       if (taskData.assigneeId && notifyAssignment && taskData.assigneeId !== user.uid) {
         // [fix] await with .catch so rejection is surfaced, not silently swallowed
@@ -107,9 +109,10 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
         }
 
         await updateDoc(doc(db, 'users', taskOwnerId, 'tasks', taskId), {
-            ...taskData,
-            updatedAt: serverTimestamp()
+          ...taskData,
+          updatedAt: serverTimestamp()
         });
+        console.info('updateTask: updated task', taskId, 'on board', currentBoard.id);
 
         // if an assignment changed, notify new assignee (fire-and-forget with logged error)
         if (
@@ -141,6 +144,7 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
     }
     try { 
         await deleteDoc(doc(db, 'users', taskOwnerId, 'tasks', taskId)); 
+        console.info('deleteTask: deleted task', taskId, 'from board', currentBoard.id);
     } catch (err) { 
         console.error("Error deleting task:", err); 
         throw err;

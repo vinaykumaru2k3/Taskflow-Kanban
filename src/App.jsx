@@ -65,7 +65,7 @@ const defaultFilters = {
 const PRIORITY_ORDER = { urgent: 4, high: 3, medium: 2, low: 1 };
 
 export default function App() {
-  const { user, loading: authLoading, signInWithGoogle, signInWithEmail, signOut } = useAuth();
+  const { user, loading: authLoading, signingIn, signInWithGoogle, signInWithEmail, signOut } = useAuth();
   
   // Toast notifications state
   const [toasts, setToasts] = useState([]);
@@ -645,7 +645,7 @@ export default function App() {
           <div className="w-10 h-10 border-2 border-slate-300 dark:border-slate-600 border-t-slate-900 dark:border-t-white rounded-full animate-spin" />
         </div>
       }>
-        <Landing onGoogleSignIn={signInWithGoogle} onEmailSignIn={signInWithEmail} isLoading={false} />
+        <Landing onGoogleSignIn={signInWithGoogle} onEmailSignIn={signInWithEmail} isLoading={authLoading || signingIn} />
       </Suspense>
     );
   }
@@ -684,8 +684,7 @@ export default function App() {
         teamMemberCount={teamMembers.length}
         onShowNotifications={() => setShowNotifications(true)}
         unreadNotificationsCount={unreadCount}
-        theme={theme}
-        toggleTheme={toggleTheme}
+        // theme/toggleTheme removed — app is light-only now
       />
 
       {/* Main Area - Sidebar + Content */}

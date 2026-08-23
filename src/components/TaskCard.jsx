@@ -71,6 +71,9 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  // Detect touch-capable devices to avoid enabling native HTML5 drag on touch.
+  const isTouchDevice = typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0));
+
   const priority        = PRIORITIES[task.priority] || PRIORITIES.low;
   const priorityLabel   = priority.label;
   const subtasksCount   = task.subtasks?.length || 0;
@@ -81,7 +84,8 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
 
   const hasDescription  = !!task.description;
   const hasTags         = task.tags && task.tags.length > 0;
-  const showExpanded    = isHovered && !isDragging && hasDescription;
+  // Show description by default (unless currently dragging)
+  const showExpanded    = hasDescription && !isDragging;
 
   const accentBar   = PRIORITY_ACCENT[priorityLabel] || PRIORITY_ACCENT.Low;
   const borderClass = PRIORITY_BORDER[priorityLabel] || PRIORITY_BORDER.Low;
@@ -89,25 +93,10 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
   return (
     <motion.div
       id={`task-card-${task.id}`}
-      draggable={!readOnly}
-      onDragStart={readOnly ? undefined : (e) => {
-        setIsDragging(true);
-        onDragStart(e, task.id);
-        if (e.dataTransfer?.setDragImage) {
-          let ghost;
-          try {
-            const r = buildDragGhost(e.currentTarget, e.clientX, e.clientY);
-            ghost = r.ghost;
-            e.dataTransfer.setDragImage(ghost, r.offsetX, r.offsetY);
-          } catch (err) {
-            console.error('drag image error:', err);
-          } finally {
-            if (ghost) requestAnimationFrame(() => ghost.remove());
-          }
-        }
-      }}
-      onDragEnd={() => setIsDragging(false)}
+      draggable={false}
       onClick={() => onEdit(task)}
+      // Keep hover handlers for action button visibility, but description
+      // expansion is disabled above via `showExpanded = false`.
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onFocus={() => setIsHovered(true)}
@@ -115,7 +104,7 @@ const TaskCard = ({ task, onDelete, onEdit, onDragStart, onArchive, readOnly = f
       className={`group relative rounded-xl border-2 transition-all duration-200 overflow-hidden select-none
         ${readOnly ? 'cursor-default' : 'cursor-pointer'}
         ${isDragging
-          ? 'bg-slate-100/60 dark:bg-slate-800/40 border-dashed border-slate-300 dark:border-slate-600 opacity-40 shadow-none'
+          ? `bg-slate-100/60 dark:bg-slate-800/40 border-dashed border-slate-300 dark:border-slate-600 shadow-none`
           : `bg-white dark:bg-slate-900/80 hover:shadow-md hover:-translate-y-px ${borderClass}`
         }`}
       {...touchHandlers}

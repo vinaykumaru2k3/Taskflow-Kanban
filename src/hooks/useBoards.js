@@ -33,6 +33,7 @@ export const useBoards = (user) => {
       const items = [];
       snapshot.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
       setBoards(items);
+      console.info(`Boards snapshot updated for user ${user.uid}: ${items.length} boards`);
       setLoading(false);
     });
     return () => unsubscribe();
@@ -70,6 +71,7 @@ export const useBoards = (user) => {
         ...boardData,
         createdAt: serverTimestamp(),
       });
+      console.info('createBoard: board created for user', user.uid);
     } catch (err) {
       console.error('Error creating board:', err);
       throw err;
@@ -80,6 +82,7 @@ export const useBoards = (user) => {
     if (!user) return;
     try {
       await updateDoc(doc(db, 'users', user.uid, 'boards', boardId), boardData);
+      console.info('updateBoard: updated board', boardId, 'for user', user.uid);
     } catch (err) {
       console.error('Error updating board:', err);
       throw err;
@@ -152,7 +155,7 @@ export const useBoards = (user) => {
         await chunkBatch.commit();
       }
 
-      console.log(`Cascading delete successful for board: ${boardId}`);
+      console.info(`Cascading delete successful for board: ${boardId}`);
     } catch (err) {
       console.error('Error cascading delete board:', err);
       throw err;
