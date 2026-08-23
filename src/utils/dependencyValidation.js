@@ -11,11 +11,13 @@
 export function hasDependencyCycle(tasks, proposedTaskId, proposedBlockedBy = [], proposedBlocks = []) {
   // 1. Build adjacency list of task dependencies.
   const adj = new Map();
+
+  // [fix] For new tasks proposedTaskId is null. Use a sentinel so their
+  // proposed edges are still added to the graph and the cycle check works.
+  const effectiveId = proposedTaskId ?? '__new__';
+
   const allTaskIds = new Set(tasks.map(t => t.id));
-  
-  if (proposedTaskId) {
-    allTaskIds.add(proposedTaskId);
-  }
+  allTaskIds.add(effectiveId);
 
   // Helper to add a directed edge u -> v (u blocks v)
   // Ensure that both u and v exist as valid task nodes in the graph
@@ -27,7 +29,7 @@ export function hasDependencyCycle(tasks, proposedTaskId, proposedBlockedBy = []
 
   // Populate graph edges for existing tasks, ignoring the proposed task's old state
   tasks.forEach(task => {
-    if (task.id === proposedTaskId) return;
+    if (task.id === effectiveId) return;
 
     (task.blockedBy || []).forEach(blockerId => {
       addEdge(blockerId, task.id);
@@ -38,44 +40,48 @@ export function hasDependencyCycle(tasks, proposedTaskId, proposedBlockedBy = []
     });
   });
 
-  // Add edges for the proposed task version (works uniformly for new or existing tasks)
-  if (proposedTaskId) {
-    proposedBlockedBy.forEach(blockerId => {
-      addEdge(blockerId, proposedTaskId);
-    });
-    proposedBlocks.forEach(blockedId => {
-      addEdge(proposedTaskId, blockedId);
-    });
-  }
+  // Add edges for the proposed task (works for both new and existing tasks)
+  proposedBlockedBy.forEach(blockerId => { addEdge(blockerId, effectiveId); });
+  proposedBlocks.forEach(blockedId => { addEdge(effectiveId, blockedId); });
 
-  // 2. DFS cycle detection
-  // Visited states: 0 = unvisited, 1 = visiting (in recursion stack), 2 = fully visited
-  const visited = new Map();
-  
-  function dfs(u) {
-    visited.set(u, 1); // visiting
-    
-    const neighbors = adj.get(u);
-    if (neighbors) {
-      for (const v of neighbors) {
-        const state = visited.get(v) || 0;
-        if (state === 1) {
-          return true; // Cycle found (back-edge)
+  // 2. Iterative DFS cycle detection (Kahn-style coloring with explicit stack).
+  // [fix] Replaces recursive DFS to prevent call stack overflow on deep graphs
+  // (10,000+ tasks in a single chain).
+  // Colors: 0 = unvisited, 1 = in current DFS stack, 2 = fully visited
+  const color = new Map();
+
+  for (const startId of allTaskIds) {
+    if ((color.get(startId) ?? 0) === 2) continue;
+
+    // Each stack frame: [nodeId, iteratorIndex] so we can resume iteration
+    const stack = [];
+    const stackSet = new Set(); // nodes currently in DFS stack
+
+    stack.push({ id: startId, neighbors: [...(adj.get(startId) || [])], idx: 0 });
+    stackSet.add(startId);
+    color.set(startId, 1);
+
+    while (stack.length > 0) {
+      const frame = stack[stack.length - 1];
+
+      if (frame.idx < frame.neighbors.length) {
+        const neighbor = frame.neighbors[frame.idx++];
+        const neighborColor = color.get(neighbor) ?? 0;
+
+        if (neighborColor === 1 || stackSet.has(neighbor)) {
+          return true; // Back-edge → cycle
         }
-        if (state === 0) {
-          if (dfs(v)) return true;
+        if (neighborColor === 0) {
+          color.set(neighbor, 1);
+          stackSet.add(neighbor);
+          stack.push({ id: neighbor, neighbors: [...(adj.get(neighbor) || [])], idx: 0 });
         }
+      } else {
+        // All neighbors processed — mark fully visited
+        color.set(frame.id, 2);
+        stackSet.delete(frame.id);
+        stack.pop();
       }
-    }
-    
-    visited.set(u, 2); // fully visited
-    return false;
-  }
-
-  // Check all nodes (graph can have multiple disconnected components)
-  for (const taskId of allTaskIds) {
-    if ((visited.get(taskId) || 0) === 0) {
-      if (dfs(taskId)) return true;
     }
   }
 

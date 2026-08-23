@@ -40,6 +40,7 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
       const items = [];
       snapshot.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
       setTasks(items);
+      console.info(`Tasks snapshot updated for board ${currentBoard.id}: ${items.length} tasks`);
     }, (err) => {
       console.error('Error fetching tasks:', err);
       setTasks([]);
@@ -72,15 +73,17 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
         archived: false,
         createdAt: serverTimestamp() 
       });
+      console.info('createTask: created task', docRef.id, 'on board', currentBoard.id);
 
       if (taskData.assigneeId && notifyAssignment && taskData.assigneeId !== user.uid) {
-        notifyAssignment(
+        // [fix] await with .catch so rejection is surfaced, not silently swallowed
+        await notifyAssignment(
           taskData.assigneeId,
           user.displayName || user.email || 'Unknown',
           taskData.title,
           currentBoard.id,
           docRef.id
-        );
+        ).catch(err => console.warn('Assignment notification failed:', err));
       }
     } catch (err) { 
         console.error("Error creating task:", err); 
@@ -89,7 +92,7 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
   };
 
   const updateTask = async (taskId, taskData, oldTaskData) => {
-    if (!user) return;
+    if (!user || !currentBoard) return; // [fix] null guard added for currentBoard
     try {
         // Authorization check: only owner or editor can update
         if (taskOwnerId !== user.uid && (!currentBoard.role || currentBoard.role === 'viewer')) {
@@ -106,24 +109,26 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
         }
 
         await updateDoc(doc(db, 'users', taskOwnerId, 'tasks', taskId), {
-            ...taskData,
-            updatedAt: serverTimestamp()
+          ...taskData,
+          updatedAt: serverTimestamp()
         });
+        console.info('updateTask: updated task', taskId, 'on board', currentBoard.id);
 
-        // if an assignment changed, notify new assignee
+        // if an assignment changed, notify new assignee (fire-and-forget with logged error)
         if (
           taskData.assigneeId &&
           taskData.assigneeId !== oldTaskData?.assigneeId &&
           taskData.assigneeId !== user.uid &&
           notifyAssignment
         ) {
-          notifyAssignment(
+          // [fix] await with .catch so rejection is surfaced, not silently swallowed
+          await notifyAssignment(
             taskData.assigneeId,
             user.displayName || user.email || 'Unknown',
             taskData.title || oldTaskData?.title || 'a task',
             currentBoard.id,
             taskId
-          );
+          ).catch(err => console.warn('Assignment notification failed:', err));
         }
     } catch (err) {
         console.error("Error updating task:", err);
@@ -132,9 +137,14 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
   };
 
   const deleteTask = async (taskId) => {
-    if (!user) return;
+    if (!user || !currentBoard) return;
+    // [fix] Authorization check missing from original code
+    if (taskOwnerId !== user.uid && (!currentBoard.role || currentBoard.role === 'viewer')) {
+      throw new Error('Unauthorized task deletion');
+    }
     try { 
         await deleteDoc(doc(db, 'users', taskOwnerId, 'tasks', taskId)); 
+        console.info('deleteTask: deleted task', taskId, 'from board', currentBoard.id);
     } catch (err) { 
         console.error("Error deleting task:", err); 
         throw err;
@@ -142,7 +152,11 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
   };
 
   const archiveTask = async (taskId) => {
-    if (!user) return;
+    if (!user || !currentBoard) return;
+    // [fix] Authorization check missing from original code
+    if (taskOwnerId !== user.uid && (!currentBoard.role || currentBoard.role === 'viewer')) {
+      throw new Error('Unauthorized task archive');
+    }
     try {
       await updateDoc(doc(db, 'users', taskOwnerId, 'tasks', taskId), {
         archived: true,
@@ -156,7 +170,11 @@ export const useTasks = (user, currentBoard, notifyAssignment) => {
   };
 
   const restoreTask = async (taskId) => {
-    if (!user) return;
+    if (!user || !currentBoard) return;
+    // [fix] Authorization check missing from original code
+    if (taskOwnerId !== user.uid && (!currentBoard.role || currentBoard.role === 'viewer')) {
+      throw new Error('Unauthorized task restore');
+    }
     try {
       await updateDoc(doc(db, 'users', taskOwnerId, 'tasks', taskId), {
         archived: false,

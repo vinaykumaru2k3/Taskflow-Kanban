@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   collection, 
   query, 
@@ -17,6 +17,15 @@ import { db } from '../lib/firebase';
 export const useComments = (user, boardId, taskId, taskTitle, notifyMention, showToast) => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // [fix] Stable refs so onSnapshot error handler always calls the latest
+  // showToast without needing to re-subscribe the listener.
+  const showToastRef = useRef(showToast);
+  const notifyMentionRef = useRef(notifyMention);
+  const taskTitleRef = useRef(taskTitle);
+  useEffect(() => { showToastRef.current = showToast; }, [showToast]);
+  useEffect(() => { notifyMentionRef.current = notifyMention; }, [notifyMention]);
+  useEffect(() => { taskTitleRef.current = taskTitle; }, [taskTitle]);
 
   // Fetch comments for a specific task
   useEffect(() => {
@@ -45,12 +54,13 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention, sho
       setLoading(false);
     }, (error) => {
       console.error("[useComments] Firestore onSnapshot Error:", error);
-      showToast?.("Comments Error: " + error.message, 'error');
+      // [fix] Use ref so the latest showToast is always called, not stale closure
+      showToastRef.current?.("Comments Error: " + error.message, 'error');
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [boardId, taskId]);
+  }, [boardId, taskId]); // [fix] showToast/notifyMention accessed via stable refs
 
   // Add a new comment
   const addComment = async (text, mentions = []) => {
@@ -61,6 +71,17 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention, sho
       return;
     }
 
+    // [fix] Input validation before writing to Firestore
+    const MAX_COMMENT_LENGTH = 10000;
+    if (text.trim().length > MAX_COMMENT_LENGTH) {
+      showToastRef.current?.(`Comment too long (max ${MAX_COMMENT_LENGTH} characters)`, 'error');
+      return { success: false, error: 'Comment too long' };
+    }
+    // Validate and sanitize mentions array: must be non-empty strings, cap at 50
+    const safeMentions = Array.isArray(mentions)
+      ? mentions.filter(id => typeof id === 'string' && id.length > 0 && id.length <= 128).slice(0, 50)
+      : [];
+
     try {
       console.log("[useComments] Sending addDoc request out to Firestore...");
       const docRef = await addDoc(collection(db, 'comments'), {
@@ -70,19 +91,19 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention, sho
         authorName: user.displayName || 'Unknown',
         authorAvatar: user.photoURL || null,
         content: text.trim(),
-        mentions: mentions, // Array of mentioned user IDs
+        mentions: safeMentions,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
       
       console.log("[useComments] Successfully added document with ID:", docRef.id);
       
-      // Notify mentioned users (skip self)
-      if (notifyMention && mentions.length > 0) {
+      // Notify mentioned users (skip self) — use ref for latest notifyMention
+      if (notifyMentionRef.current && safeMentions.length > 0) {
         const mentionerName = user.displayName || user.email || 'Unknown';
-        mentions.forEach(mentionedUserId => {
+        safeMentions.forEach(mentionedUserId => {
           if (mentionedUserId !== user.uid) {
-            notifyMention(mentionedUserId, mentionerName, taskTitle || 'Task', boardId, taskId, docRef.id);
+            notifyMentionRef.current(mentionedUserId, mentionerName, taskTitleRef.current || 'Task', boardId, taskId, docRef.id);
           }
         });
       }
@@ -90,7 +111,7 @@ export const useComments = (user, boardId, taskId, taskTitle, notifyMention, sho
       return { success: true };
     } catch (error) {
       console.error('[useComments] Error adding comment:', error);
-      showToast?.('Failed to add comment: ' + error.message, 'error');
+      showToastRef.current?.('Failed to add comment: ' + error.message, 'error');
       return { success: false, error: error.message };
     }
   };

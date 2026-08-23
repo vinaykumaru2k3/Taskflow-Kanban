@@ -11,6 +11,10 @@ import {
 import { PRIORITIES } from './utils/constants';
 import Modal from './components/Modal';
 
+// [fix] Moved outside component: this function has no deps on props/state,
+// re-creating it every render was wasteful and caused an eslint exhaustive-deps warning.
+const formatKey = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
+
 const CalendarView = ({ tasks, onTaskClick }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
@@ -28,8 +32,6 @@ const CalendarView = ({ tasks, onTaskClick }) => {
   const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   const goToToday = () => setCurrentDate(new Date());
 
-  const formatKey = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
-
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const daysCount = getDaysInMonth(year, month);
@@ -46,28 +48,23 @@ const CalendarView = ({ tasks, onTaskClick }) => {
       grouped[key].push(task);
     });
     return grouped;
-  }, [tasks]);
+  }, [tasks]); // [fix] formatKey is now module-level so no longer needs to be in deps
 
-  const calendarDays = [];
-  for (let i = 0; i < firstDay; i++) {
-    calendarDays.push({ key: `prev-${i}`, type: 'empty' });
-  }
-
-  for (let i = 1; i <= daysCount; i++) {
-    const fullDate = new Date(year, month, i);
-    const dateKey = formatKey(fullDate);
-    const dayTasks = tasksByDate[dateKey] || [];
-    const isToday = i === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-
-    calendarDays.push({
-      key: dateKey,
-      type: 'day',
-      day: i,
-      tasks: dayTasks,
-      isToday,
-      fullDate
-    });
-  }
+  // [fix] Wrapped in useMemo to avoid rebuilding the grid on every unrelated render.
+  const calendarDays = useMemo(() => {
+    const days = [];
+    for (let i = 0; i < firstDay; i++) {
+      days.push({ key: `prev-${i}`, type: 'empty' });
+    }
+    for (let i = 1; i <= daysCount; i++) {
+      const fullDate = new Date(year, month, i);
+      const dateKey = formatKey(fullDate);
+      const dayTasks = tasksByDate[dateKey] || [];
+      const isToday = i === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+      days.push({ key: dateKey, type: 'day', day: i, tasks: dayTasks, isToday, fullDate });
+    }
+    return days;
+  }, [year, month, daysCount, firstDay, tasksByDate, today.getDate(), today.getMonth(), today.getFullYear()]);
 
   const handleDayClick = (day) => {
     setSelectedDay({

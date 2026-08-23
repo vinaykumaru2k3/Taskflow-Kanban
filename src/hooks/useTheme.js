@@ -1,55 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
+// Simplified theme hook: application no longer supports dark mode.
+// This forces a single 'light' theme and removes any stored preference or toggling.
 export const useTheme = () => {
-  const [theme, setTheme] = useState(() => {
-    if (typeof window !== 'undefined') {
-      let savedTheme;
-      try {
-        savedTheme = localStorage.getItem('theme');
-      } catch (e) {
-        savedTheme = null;
-      }
-      
-      if (savedTheme) {
-        return savedTheme;
-      }
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        return 'dark';
-      }
-    }
-    return 'light';
-  });
-
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-    
-    try {
-      localStorage.setItem('theme', theme);
-    } catch (e) {
-      // Ignore write errors to localStorage
-    }
-  }, [theme]);
-
-  // Sync theme across multiple tabs
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    const handler = (e) => {
-      if (e.key === 'theme' && (e.newValue === 'light' || e.newValue === 'dark')) {
-        setTheme(e.newValue);
-      }
-    };
-    
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
+    // Ensure no 'dark' class remains and set 'light' for consistency.
+    root.classList.remove('dark');
+    root.classList.add('light');
   }, []);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    // no-op: dark mode removed
+    console.info('Theme toggle disabled: dark mode removed from app.');
   };
 
-  return { theme, toggleTheme };
+  return { theme: 'light', toggleTheme };
 };

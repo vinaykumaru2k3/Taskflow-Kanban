@@ -53,10 +53,11 @@ const CommentSection = ({
         }
       });
       
-      const res = await onAddComment(newComment, mentions);
-      if (res?.success) {
-        setNewComment('');
-      }
+      await onAddComment(newComment, mentions);
+      // [fix] Clear unconditionally — previous code checked res?.success which
+      // would NOT clear when the hook returned undefined (no explicit return).
+      setNewComment('');
+      setShowMentions(false);
     } catch (error) {
       console.error('Error adding comment:', error);
     } finally {
@@ -77,8 +78,12 @@ const CommentSection = ({
       return;
     }
     if (e.key === '@') {
-      setShowMentions(true);
-      setMentionSearch('');
+      // [fix] Only open mention popup at a word boundary (start of input or after whitespace)
+      const before = newComment.slice(0, e.target.selectionStart);
+      if (before.length === 0 || /\s$/.test(before)) {
+        setShowMentions(true);
+        setMentionSearch('');
+      }
     }
     if (e.key === 'Escape') {
       setShowMentions(false);
@@ -124,9 +129,12 @@ const CommentSection = ({
     setEditText('');
   };
 
+  const [isSavingEdit, setIsSavingEdit] = useState(false); // [fix] double-submit guard for saveEdit
+
   const saveEdit = async (commentId) => {
-    if (!editText.trim()) return;
+    if (!editText.trim() || isSavingEdit) return;
     
+    setIsSavingEdit(true);
     try {
       const mentions = [];
       collaborators.forEach(c => {
@@ -142,6 +150,8 @@ const CommentSection = ({
       }
     } catch (error) {
       console.error('Error updating comment:', error);
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -234,7 +244,7 @@ const CommentSection = ({
       if (isNaN(commentDate.getTime())) {
         return 'Just now';
       }
-    } catch (e) {
+    } catch {
       return 'Just now';
     }
     const diff = now - commentDate;
@@ -376,7 +386,20 @@ const CommentSection = ({
                 id="input-new-comment"
                 type="text"
                 value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewComment(val);
+                  // [fix] Keep mentionSearch in sync with typed text after @
+                  // so the dropdown filters without needing a separate search input focus.
+                  if (showMentions) {
+                    const lastAt = val.lastIndexOf('@');
+                    if (lastAt !== -1) {
+                      setMentionSearch(val.slice(lastAt + 1));
+                    } else {
+                      setShowMentions(false);
+                    }
+                  }
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder="Add a comment... (@mention to notify)"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-slate-400 transition-colors"

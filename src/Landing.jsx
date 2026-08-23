@@ -11,6 +11,33 @@ const FadeIn = ({ children, delay = 0, className = "", direction = "up" }) => {
   const yOffset = direction === "up" ? 30 : direction === "down" ? -30 : 0;
   const xOffset = direction === "left" ? 30 : direction === "right" ? -30 : 0;
   
+  const [forceHideLoading, setForceHideLoading] = useState(false);
+  const [stalled, setStalled] = useState(false);
+
+  // If `isLoading` stays true for a while, show actionable controls so it
+  // doesn't feel stuck. This doesn't affect the auth flow; it only gives
+  // the user a way to retry or continue without blocking the UI.
+  React.useEffect(() => {
+    let t;
+    if (isLoading) {
+      setStalled(false);
+      t = setTimeout(() => setStalled(true), 8000);
+    } else {
+      setStalled(false);
+    }
+    return () => clearTimeout(t);
+  }, [isLoading]);
+
+  const handleRetry = () => {
+    // Soft-retry by reloading the page to restart auth flows.
+    window.location.reload();
+  };
+
+  const handleContinue = () => {
+    // Hide the overlay locally; auth will continue in background.
+    setForceHideLoading(true);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: yOffset, x: xOffset }}
@@ -107,6 +134,25 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
     }
   };
 
+  const handleGoogleClick = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await onGoogleSignIn();
+    } catch (err) {
+      console.error('Google sign-in error (UI):', err);
+      if (err && err.code === 'auth/internal-error' && typeof navigator !== 'undefined' && !navigator.onLine) {
+        setError('No internet connection. Please go online and try again.');
+      } else if (err && err.message) {
+        setError(err.message);
+      } else {
+        setError('Google sign-in failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const features = [
     {
       icon: LayoutDashboard,
@@ -179,6 +225,25 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
     <div className="min-h-screen bg-slate-50 dark:bg-[#09090b] selection:bg-blue-500/30 font-sans overflow-x-hidden transition-colors duration-300"
       style={{ minHeight: '100svh' }}
     >
+      {/* Full-screen loading overlay for better perceived loading state */}
+      {isLoading && !forceHideLoading && (
+        <div role="status" aria-live="polite" className="fixed inset-0 z-[70] flex items-center justify-center bg-white/60 dark:bg-black/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 max-w-xs text-center">
+            <div className="w-12 h-12 border-4 border-current border-t-transparent rounded-full animate-spin" />
+            <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Syncing your data…</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Checking authentication and loading your workspace.</div>
+            {stalled && (
+              <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                This is taking longer than expected.
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <button onClick={handleRetry} className="px-3 py-1 bg-slate-900 text-white rounded-md text-xs">Retry</button>
+                  <button onClick={handleContinue} className="px-3 py-1 bg-white border border-slate-200 rounded-md text-xs">Continue anyway</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       
       {/* Dynamic Background Elements - Only in Dark Mode or Subtle in Light */}
       {/* [perf/safari] pointer-events-none blurs can be expensive; use contain:strict to isolate paint */}
@@ -351,8 +416,12 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
 
                 <button
                   id="btn-google-signin"
-                  onClick={onGoogleSignIn}
-                  className="mt-6 w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-all shadow-sm active:scale-[0.98]"
+                  onClick={handleGoogleClick}
+                  disabled={isLoading || loading}
+                  className={
+                    `mt-6 w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-all shadow-sm active:scale-[0.98] ` +
+                    (isLoading || loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-slate-800')
+                  }
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -361,7 +430,14 @@ const Landing = ({ onGoogleSignIn, onEmailSignIn, isLoading }) => {
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     <path fill="none" d="M1 1h22v22H1z" />
                   </svg>
-                  Continue with Google
+                  {isLoading || loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      <span>Signing in…</span>
+                    </>
+                  ) : (
+                    'Continue with Google'
+                  )}
                 </button>
 
                 <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">

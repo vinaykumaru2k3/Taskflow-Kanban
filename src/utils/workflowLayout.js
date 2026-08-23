@@ -25,23 +25,26 @@ export function buildDepthMap(tasks) {
 
   tasks.forEach(t => {
     if (!childToParents.has(t.id))    childToParents.set(t.id, new Set());
-    if (!parentToChildren.has(t.id)) parentToChildren.set(t.id, []);
+    if (!parentToChildren.has(t.id)) parentToChildren.set(t.id, new Set()); // [fix] Set not array to dedupe
 
     // blockedBy: t depends on bid → bid is a parent of t
     (t.blockedBy || []).forEach(bid => {
       if (!taskIds.has(bid)) return;
       childToParents.get(t.id).add(bid);
-      if (!parentToChildren.has(bid)) parentToChildren.set(bid, []);
-      parentToChildren.get(bid).push(t.id);
+      if (!parentToChildren.has(bid)) parentToChildren.set(bid, new Set());
+      parentToChildren.get(bid).add(t.id); // [fix] .add() dedupes automatically
     });
 
     // blocks: t blocks bid → t is a parent of bid
+    // [fix] When both A.blocks=[B] and B.blockedBy=[A] exist (canonical model),
+    // the same edge A→B was added twice (once per field), doubling B's inDegree.
+    // Using Set-of-Sets ensures each edge is recorded exactly once.
     (t.blocks || []).forEach(bid => {
       if (!taskIds.has(bid)) return;
       if (!childToParents.has(bid))    childToParents.set(bid, new Set());
-      if (!parentToChildren.has(t.id)) parentToChildren.set(t.id, []);
+      if (!parentToChildren.has(t.id)) parentToChildren.set(t.id, new Set());
       childToParents.get(bid).add(t.id);
-      parentToChildren.get(t.id).push(bid);
+      parentToChildren.get(t.id).add(bid);
     });
   });
 
@@ -61,6 +64,7 @@ export function buildDepthMap(tasks) {
     const nodeDepth = depthMap.get(nodeId) ?? 0;
 
     (parentToChildren.get(nodeId) || []).forEach(childId => {
+      // [fix] parentToChildren values are now Sets; convert to iterable consistently
       // Keep the maximum depth seen so far (longest path)
       const candidate = nodeDepth + 1;
       if (!depthMap.has(childId) || depthMap.get(childId) < candidate) {
@@ -115,6 +119,9 @@ export function computeCriticalPath(tasks, depthMap) {
 
   // 2. Greedy walk-back: always take the highest-depth parent
   while (currentId !== null) {
+    // [fix] Guard against cycles in blockedBy data that bypassed client-side
+    // validation — prevents an infinite loop if a cycle exists in the graph.
+    if (criticalSet.has(currentId)) break;
     criticalSet.add(currentId);
     const task = taskById.get(currentId);
     if (!task) break;

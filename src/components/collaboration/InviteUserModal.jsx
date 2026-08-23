@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, Mail, UserPlus, CheckCircle2, AlertCircle } from 'lucide-react';
-import { ROLES, getRoleLabel } from '../../lib/permissions';
+import { ROLES } from '../../lib/permissions';
 
 const InviteUserModal = ({ isOpen, onClose, onInvite, boardName }) => {
   const [email, setEmail] = useState('');
@@ -8,6 +8,12 @@ const InviteUserModal = ({ isOpen, onClose, onInvite, boardName }) => {
   const [isInviting, setIsInviting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  // [fix] Store the auto-close timer so it can be cancelled on unmount
+  const successTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => clearTimeout(successTimerRef.current);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,7 +35,8 @@ const InviteUserModal = ({ isOpen, onClose, onInvite, boardName }) => {
       await onInvite(email.trim(), role);
       setSuccess(true);
       setEmail('');
-      setTimeout(() => {
+      // [fix] Store ref so the timer is cancellable on unmount
+      successTimerRef.current = setTimeout(() => {
         setSuccess(false);
         onClose();
       }, 1500);

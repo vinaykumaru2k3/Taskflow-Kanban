@@ -1,4 +1,4 @@
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 /**
@@ -29,7 +29,7 @@ export const getActiveTeamMemberIds = async (boardId) => {
   if (!boardId) return [];
   
   try {
-    const { collection, getDocs } = await import('firebase/firestore');
+    // [fix] Use static imports (collection/getDocs now imported at top of file)
     const membersRef = collection(db, 'boards', boardId, 'members');
     const snapshot = await getDocs(membersRef);
     return snapshot.docs.map(doc => doc.id);

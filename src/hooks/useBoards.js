@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   collection, 
   query, 
@@ -7,7 +7,6 @@ import {
   onSnapshot, 
   addDoc, 
   updateDoc, 
-  deleteDoc, 
   doc, 
   getDoc,
   getDocs,
@@ -34,30 +33,36 @@ export const useBoards = (user) => {
       const items = [];
       snapshot.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
       setBoards(items);
+      console.info(`Boards snapshot updated for user ${user.uid}: ${items.length} boards`);
       setLoading(false);
     });
     return () => unsubscribe();
   }, [user]);
 
-  // Effect to ensure currentBoard is valid or set to default
+  // Sync currentBoard whenever the boards list changes.
+  // [fix] Only depend on boards/loading/user — reading currentBoard as a ref
+  // to avoid re-firing the effect every time currentBoard is set here.
+  const currentBoardRef = useRef(currentBoard);
+  useEffect(() => { currentBoardRef.current = currentBoard; }, [currentBoard]);
+
   useEffect(() => {
     if (loading) return;
 
+    const cb = currentBoardRef.current;
+
     // IMPORTANT: If the current board belongs to another user (shared board),
     // don't override it — useTasks handles fetching from the owner's collection.
-    if (currentBoard?.ownerId && currentBoard.ownerId !== user?.uid) {
-      return;
-    }
+    if (cb?.ownerId && cb.ownerId !== user?.uid) return;
 
     if (boards.length > 0) {
       // If no board selected, or selected own board no longer exists
-      if (!currentBoard || !boards.find(b => b.id === currentBoard.id)) {
+      if (!cb || !boards.find(b => b.id === cb.id)) {
         setCurrentBoard(boards[0]);
       }
     } else {
       setCurrentBoard(null);
     }
-  }, [boards, currentBoard, loading, user]);
+  }, [boards, loading, user?.uid]);
 
   const createBoard = async (boardData) => {
     if (!user) return;
@@ -66,6 +71,7 @@ export const useBoards = (user) => {
         ...boardData,
         createdAt: serverTimestamp(),
       });
+      console.info('createBoard: board created for user', user.uid);
     } catch (err) {
       console.error('Error creating board:', err);
       throw err;
@@ -76,6 +82,7 @@ export const useBoards = (user) => {
     if (!user) return;
     try {
       await updateDoc(doc(db, 'users', user.uid, 'boards', boardId), boardData);
+      console.info('updateBoard: updated board', boardId, 'for user', user.uid);
     } catch (err) {
       console.error('Error updating board:', err);
       throw err;
@@ -148,7 +155,7 @@ export const useBoards = (user) => {
         await chunkBatch.commit();
       }
 
-      console.log(`Cascading delete successful for board: ${boardId}`);
+      console.info(`Cascading delete successful for board: ${boardId}`);
     } catch (err) {
       console.error('Error cascading delete board:', err);
       throw err;
@@ -161,6 +168,7 @@ export const useBoards = (user) => {
     setCurrentBoard, 
     createBoard, 
     updateBoard, 
-    deleteBoard 
+    deleteBoard,
+    loading // [fix] expose loading so callers can show skeleton state
   };
 };

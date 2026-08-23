@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Search, X, Check } from 'lucide-react';
 
 const MultiSelect = ({
@@ -19,8 +19,9 @@ const MultiSelect = ({
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    // [fix] pointerdown fires on touch AND mouse; mousedown is mouse-only.
+    document.addEventListener('pointerdown', handleClickOutside);
+    return () => document.removeEventListener('pointerdown', handleClickOutside);
   }, []);
 
   const handleToggleOption = (optionId) => {
@@ -50,7 +51,19 @@ const MultiSelect = ({
     <div className="relative w-full" ref={containerRef}>
       {/* Trigger Area */}
       <div
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        tabIndex={disabled ? -1 : 0}
         onClick={() => !disabled && setIsOpen(!isOpen)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (!disabled) setIsOpen(o => !o);
+          } else if (e.key === 'Escape') {
+            setIsOpen(false);
+          }
+        }}
         className={`w-full min-h-[46px] px-3 py-2 bg-slate-50 dark:bg-slate-800 border-2 rounded-xl flex items-center justify-between gap-2 cursor-pointer transition-all ${
           disabled ? 'opacity-60 cursor-not-allowed' : 'hover:border-slate-300 dark:hover:border-slate-700'
         } ${isOpen ? 'border-slate-900/10 dark:border-slate-600 bg-white dark:bg-slate-950' : 'border-transparent'}`}

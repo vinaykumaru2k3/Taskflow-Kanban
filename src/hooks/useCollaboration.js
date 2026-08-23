@@ -35,12 +35,16 @@ export const useCollaboration = (user, currentBoard) => {
 
     setLoading(true);
     
-    // Check if this is an owned board or a shared board
+    // [fix] mounted-flag prevents stale state updates when the board changes
+    // or the component unmounts during the multi-await async chain.
+    let active = true;
+
     const checkBoardAndCollaborators = async () => {
       try {
         // First check if user owns this board
         const ownedBoardRef = doc(db, 'users', user.uid, 'boards', currentBoard.id);
         const ownedBoardSnap = await getDoc(ownedBoardRef);
+        if (!active) return;
 
         if (ownedBoardSnap.exists()) {
           // User owns this board
@@ -50,11 +54,12 @@ export const useCollaboration = (user, currentBoard) => {
             photoURL: user.photoURL, email: user.email,
             role: ROLES.OWNER
           };
-          setCollaborators([ownerCollaborator]);
+          if (active) setCollaborators([ownerCollaborator]);
 
           // ── Backfill ── ensure owner entry exists in boards/{boardId}/members
           const ownerMemberRef = doc(db, 'boards', currentBoard.id, 'members', user.uid);
           const ownerMemberSnap = await getDoc(ownerMemberRef);
+          if (!active) return;
           if (!ownerMemberSnap.exists()) {
             await setDoc(ownerMemberRef, {
               uid: user.uid,
@@ -69,6 +74,7 @@ export const useCollaboration = (user, currentBoard) => {
           // Check if this is a shared board
           const sharedBoardRef = doc(db, 'users', user.uid, 'sharedBoards', currentBoard.id);
           const sharedSnap = await getDoc(sharedBoardRef);
+          if (!active) return;
 
           if (sharedSnap.exists()) {
             const sharedData = sharedSnap.data();
@@ -83,11 +89,12 @@ export const useCollaboration = (user, currentBoard) => {
               email: sharedData.ownerEmail || '', photoURL: null,
               role: ROLES.OWNER, isOwner: true
             };
-            setCollaborators([boardOwnerCollaborator, currentUserCollaborator]);
+            if (active) setCollaborators([boardOwnerCollaborator, currentUserCollaborator]);
 
             // ── Backfill ── ensure this member's entry exists in boards/{boardId}/members
             const memberRef = doc(db, 'boards', currentBoard.id, 'members', user.uid);
             const memberSnap = await getDoc(memberRef);
+            if (!active) return;
             if (!memberSnap.exists()) {
               await setDoc(memberRef, {
                 uid: user.uid,
@@ -105,18 +112,21 @@ export const useCollaboration = (user, currentBoard) => {
               displayName: user.displayName || 'You', photoURL: user.photoURL,
               email: user.email, role: ROLES.OWNER
             };
-            setCollaborators([ownerCollaborator]);
+            if (active) setCollaborators([ownerCollaborator]);
           }
         }
-        setLoading(false);
+        if (active) setLoading(false);
       } catch (err) {
         console.error('Error checking board collaborators:', err);
-        setCollaborators([]);
-        setLoading(false);
+        if (active) {
+          setCollaborators([]);
+          setLoading(false);
+        }
       }
     };
 
     checkBoardAndCollaborators();
+    return () => { active = false; };
   }, [user, currentBoard?.id]);
 
   // Real-time team members listener: boards/{boardId}/members
@@ -217,26 +227,30 @@ export const useCollaboration = (user, currentBoard) => {
 
   // Look up user by email from users collection
   const findUserByEmail = async (email) => {
+    // [fix] Validate email format before querying to prevent unnecessary reads
+    // and malformed Firestore queries.
+    if (!email || typeof email !== 'string') throw new Error('Email is required');
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      throw new Error('Invalid email format');
+    }
     try {
-      // Query the users collection - requires an index on email
-      // For now, we'll try a simple approach
       const q = query(
         collection(db, 'users'),
-        where('email', '==', email.toLowerCase()),
+        where('email', '==', trimmedEmail),
         limit(1)
       );
       
       const snapshot = await getDocs(q);
       
       if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        return { id: doc.id, ...doc.data() };
+        const userDoc = snapshot.docs[0];
+        return { id: userDoc.id, ...userDoc.data() };
       }
       
       return null;
     } catch (err) {
       console.error('Error finding user by email:', err);
-      // If query fails (e.g., no index), return null
       return null;
     }
   };
@@ -345,6 +359,11 @@ export const useCollaboration = (user, currentBoard) => {
     if (!user || !notification) return;
 
     const { boardId, boardName, boardColor, fromUserId, fromUserName, fromUserEmail, role } = notification;
+
+    // [fix] Guard against malformed/old notifications with missing required fields
+    if (!boardId || !fromUserId) {
+      throw new Error('Invalid invite: missing boardId or fromUserId');
+    }
 
     try {
       // 1. Write to sharedBoards — this grants access

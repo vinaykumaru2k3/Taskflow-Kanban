@@ -7,9 +7,11 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-3xl' }) => 
 
   // [a11y] Focus the close button when the modal opens for keyboard/screen-reader accessibility
   useEffect(() => {
-    if (isOpen && closeButtonRef.current) {
-      setTimeout(() => closeButtonRef.current?.focus(), 50);
-    }
+    if (!isOpen) return;
+    // [fix] Return a cleanup so the timeout is cancelled if the modal unmounts
+    // before the 50ms fires (e.g., rapid open/close).
+    const timer = setTimeout(() => closeButtonRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   // [cross-browser] Close on Escape key and Trap Focus — works in all browsers
